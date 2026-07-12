@@ -337,8 +337,12 @@ app.delete("/api/groups/:id", (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🟢 BACKEND SERVER IS RUNNING ON http://localhost:${PORT}`);
-  console.log(`====================================================`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🟢 BACKEND SERVER IS RUNNING ON http://localhost:${PORT}`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = app;
