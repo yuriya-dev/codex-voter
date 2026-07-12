@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useVoter } from "@/components/VoterContext";
-import { Heart, LayoutDashboard, KeyRound, Vote } from "lucide-react";
+import { Heart, Trophy, KeyRound, Vote } from "lucide-react";
 
 export default function Header() {
   const { shortlist, setIsDrawerOpen, visitor } = useVoter();
@@ -30,9 +30,9 @@ export default function Header() {
             </Link>
           )}
 
-          <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <LayoutDashboard size={16} />
-            Dashboard
+          <Link href="/dashboard-publik" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <Trophy size={16} />
+            Leaderboard
           </Link>
 
           <button 

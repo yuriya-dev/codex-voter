@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Header from "@/components/Header";
-import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -121,12 +122,36 @@ export default function DashboardPage() {
             display: "flex", 
             justifyContent: "flex-end", 
             gap: "12px",
-            marginBottom: "24px"
+            marginBottom: "24px",
+            flexWrap: "wrap"
           }}
         >
-          <button onClick={handleExportCSV} className="btn btn-secondary" style={{ gap: "8px", fontSize: "0.85rem" }}>
+          <Link 
+            href="/admin" 
+            className="btn btn-secondary" 
+            style={{ 
+              gap: "8px", 
+              fontSize: "0.85rem",
+              borderWidth: "2px",
+              boxShadow: "3px 3px 0px var(--color-delft-blue)"
+            }}
+          >
+            <Settings size={16} />
+            Manajemen Kelompok
+          </Link>
+
+          <button 
+            onClick={handleExportCSV} 
+            className="btn btn-secondary" 
+            style={{ 
+              gap: "8px", 
+              fontSize: "0.85rem",
+              borderWidth: "2px",
+              boxShadow: "3px 3px 0px var(--color-delft-blue)"
+            }}
+          >
             <Download size={16} />
-            Ekspor Data (CSV)
+            Ekspor Laporan (CSV)
           </button>
         </div>
 

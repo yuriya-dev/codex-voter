@@ -167,6 +167,84 @@ export default function Home() {
         {/* Whitespace Section Gap */}
         <div style={{ height: "40px" }} />
 
+        {/* Filosofi Jungle Tech Section */}
+        <section 
+          style={{ 
+            margin: "var(--space-xl) 0 var(--space-2xl) 0",
+            backgroundColor: "rgba(67, 113, 24, 0.05)",
+            border: "2px solid var(--color-delft-blue)",
+            borderRadius: "var(--radius-sm)",
+            padding: "48px var(--space-lg)",
+            position: "relative",
+            boxShadow: "5px 5px 0px var(--color-delft-blue)"
+          }}
+        >
+          <div style={{ position: "absolute", top: "-15px", left: "24px" }}>
+            <span className="badge" style={{ backgroundColor: "var(--color-delft-blue)", color: "white", fontSize: "0.8rem" }}>
+              Tema Pameran
+            </span>
+          </div>
+
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <h2 
+              style={{ 
+                fontSize: "1.75rem", 
+                fontFamily: "var(--font-heading)", 
+                color: "var(--color-delft-blue)",
+                marginBottom: "20px"
+              }}
+            >
+              Filosofi <span style={{ color: "var(--color-fern-green)", fontStyle: "italic" }}>Jungle Tech</span>
+            </h2>
+            
+            <p 
+              style={{ 
+                fontSize: "1.1rem", 
+                lineHeight: "1.7", 
+                color: "var(--color-delft-blue)", 
+                fontWeight: "500",
+                marginBottom: "36px"
+              }}
+            >
+              Jungle Tech bukanlah tentang mesin yang menaklukkan alam, melainkan tentang simbiosis mutualisme antara sirkuit dan akar, antara inovasi dan ekologi.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "24px" }}>
+              
+              {/* Pilar 1 */}
+              <div>
+                <h4 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-fern-green)", marginBottom: "8px" }}>
+                  1. Inovasi yang Berakar
+                </h4>
+                <p style={{ fontSize: "0.85rem", opacity: 0.9, lineHeight: "1.6" }}>
+                  Teknologi harus memiliki pijakan yang kuat pada kelestarian bumi. Ia tidak merampas, melainkan memelihara.
+                </p>
+              </div>
+
+              {/* Pilar 2 */}
+              <div>
+                <h4 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-fern-green)", marginBottom: "8px" }}>
+                  2. Pertumbuhan Organik
+                </h4>
+                <p style={{ fontSize: "0.85rem", opacity: 0.9, lineHeight: "1.6" }}>
+                  Seperti hutan yang perlahan membentuk ekosistem yang kompleks dan menghidupi, teknologi yang baik harus berkembang untuk memberi manfaat abadi bagi seluruh makhluk hidup, bukan hanya manusia.
+                </p>
+              </div>
+
+              {/* Pilar 3 */}
+              <div>
+                <h4 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-fern-green)", marginBottom: "8px" }}>
+                  3. Harmoni Tanpa Jejak Buruk
+                </h4>
+                <p style={{ fontSize: "0.85rem", opacity: 0.9, lineHeight: "1.6" }}>
+                  Kemajuan peradaban tidak boleh diukur dari seberapa banyak pohon yang ditebang, melainkan dari seberapa pintar teknologi kita meniru siklus alam yang tidak pernah menyisakan limbah (semua kembali menjadi kehidupan).
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
         {/* Alur Voting Section */}
         <section className="section-gap">
           <h2 
@@ -209,9 +287,9 @@ export default function Home() {
               >
                 1
               </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Jelajahi Booth</h3>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Registrasi Nama</h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Kelilingi ruang pameran fisik, temukan proyek capstone mahasiswa yang inovatif, dan berinteraksi dengan tim.
+                Daftarkan Nama Lengkap dan Kategori Pemilih Anda (Mahasiswa, Siswa, Dosen/Staf, Umum) untuk memulai sesi voting Anda.
               </p>
             </div>
 
@@ -241,9 +319,9 @@ export default function Home() {
               >
                 2
               </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Simpan Favorit</h3>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Jelajahi & Shortlist</h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Scan QR Code di booth atau klik tombol Hati (<Heart size={14} />) di website untuk menyimpan kelompok ke daftar favorit Anda.
+                Kunjungi booth capstone fisik, pindai QR Code di booth, dan tambahkan kelompok proyek terbaik ke dalam daftar favorit Anda.
               </p>
             </div>
 
@@ -273,9 +351,9 @@ export default function Home() {
               >
                 3
               </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Verifikasi Identitas</h3>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Scan QR Pintu Keluar</h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Masukkan Email/WhatsApp aktif Anda dan pilih kategori pengunjung untuk menerima kode OTP verifikasi anti-fraud.
+                Setelah selesai menjelajahi seluruh area pameran, pindai QR Code di Pintu Keluar (Exit Gate) untuk membuka akses tombol voting.
               </p>
             </div>
 
@@ -306,9 +384,9 @@ export default function Home() {
               >
                 4
               </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Vote & Ambil Bukti</h3>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Vote & Simpan Bukti</h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Pilih satu kelompok terbaik untuk diberikan suara Anda, lalu simpan kode bukti vote unik (`VOTE-XXXX`) yang diberikan.
+                Kirim suara Anda ke kelompok capstone pilihan Anda dan catat kode bukti vote unik (`VOTE-XXXX`) untuk penjaminan keaslian.
               </p>
             </div>
 

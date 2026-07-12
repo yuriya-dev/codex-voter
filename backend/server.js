@@ -243,6 +243,99 @@ app.get("/api/dashboard/logs", (req, res) => {
   res.json(auditLogs);
 });
 
+// Admin - Upload/Import Groups via CSV/JSON
+app.post("/api/admin/upload-groups", (req, res) => {
+  const { groups: newGroups, overwrite } = req.body;
+  if (!Array.isArray(newGroups)) {
+    return res.status(400).json({ error: "Data kelompok tidak valid" });
+  }
+  
+  const formattedGroups = newGroups.map((g, idx) => {
+    const id = g.id || `g-${Date.now()}-${idx}`;
+    const name = g.name || `Kelompok Tanpa Nama ${idx + 1}`;
+    const booth_number = g.booth_number || `Booth ${idx + 1}`;
+    const category = g.category || "Umum";
+    const description = g.description || "";
+    const fullDescription = g.fullDescription || description;
+    const members = Array.isArray(g.members) ? g.members : (g.members ? g.members.split(";").map(m => m.trim()) : []);
+    const slug = g.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const photoColor = g.photoColor || `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`;
+    const votesVal = parseInt(g.votes) || 0;
+
+    return {
+      id,
+      name,
+      slug,
+      booth_number,
+      category,
+      description,
+      fullDescription,
+      members,
+      photoColor,
+      votes: votesVal
+    };
+  });
+
+  if (overwrite) {
+    groups = formattedGroups;
+    addAuditLog("Admin Action", `Mengimpor ${formattedGroups.length} kelompok baru (menghapus data lama)`, "warning");
+  } else {
+    // Append or update existing by ID/slug
+    formattedGroups.forEach(newG => {
+      const existsIdx = groups.findIndex(g => g.slug === newG.slug || g.id === newG.id);
+      if (existsIdx !== -1) {
+        groups[existsIdx] = newG;
+      } else {
+        groups.push(newG);
+      }
+    });
+    addAuditLog("Admin Action", `Menambahkan/memperbarui ${formattedGroups.length} kelompok dari CSV`, "success");
+  }
+
+  res.json({ message: "Data kelompok berhasil diimpor", count: formattedGroups.length });
+});
+
+// Admin - Add Single Group Manually
+app.post("/api/groups", (req, res) => {
+  const { name, booth_number, category, description, fullDescription, members, photoColor } = req.body;
+  if (!name || !booth_number || !category) {
+    return res.status(400).json({ error: "Nama, Booth, dan Kategori wajib diisi" });
+  }
+
+  const id = `g-${Date.now()}`;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  
+  const newGroup = {
+    id,
+    name,
+    slug,
+    booth_number,
+    category,
+    description: description || "",
+    fullDescription: fullDescription || description || "",
+    members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
+    photoColor: photoColor || "linear-gradient(135deg, #1B4D3E, #4B8B3B)",
+    votes: 0
+  };
+
+  groups.push(newGroup);
+  addAuditLog("Admin Action", `Menambahkan kelompok manual: ${name} (${booth_number})`, "success");
+  res.status(201).json(newGroup);
+});
+
+// Admin - Delete Group by ID
+app.delete("/api/groups/:id", (req, res) => {
+  const { id } = req.params;
+  const exists = groups.some(g => g.id === id);
+  if (!exists) {
+    return res.status(404).json({ error: "Kelompok tidak ditemukan" });
+  }
+  groups = groups.filter(g => g.id !== id);
+  votes = votes.filter(v => v.groupId !== id);
+  addAuditLog("Admin Action", `Menghapus kelompok dengan ID: ${id}`, "warning");
+  res.json({ message: "Kelompok berhasil dihapus" });
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`====================================================`);

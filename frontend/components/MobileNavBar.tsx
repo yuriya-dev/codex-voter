@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useVoter } from "@/components/VoterContext";
-import { Compass, Heart, QrCode, ClipboardCheck, LayoutDashboard } from "lucide-react";
+import { Compass, Heart, QrCode, ClipboardCheck, Trophy } from "lucide-react";
 
 export default function MobileNavBar() {
   const pathname = usePathname();
@@ -64,11 +64,11 @@ export default function MobileNavBar() {
       </button>
 
       <button 
-        className={`mobile-nav-item ${pathname === "/dashboard" ? "active" : ""}`}
-        onClick={() => handleNavigation("/dashboard")}
+        className={`mobile-nav-item ${pathname === "/dashboard-publik" ? "active" : ""}`}
+        onClick={() => handleNavigation("/dashboard-publik")}
       >
-        <LayoutDashboard size={20} />
-        <span>Panitia</span>
+        <Trophy size={20} />
+        <span>Leaderboard</span>
       </button>
     </div>
   );
