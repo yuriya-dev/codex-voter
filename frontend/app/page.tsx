@@ -130,7 +130,7 @@ export default function Home() {
 
                 <div>
                   <h3 style={{ fontSize: "1.75rem", fontFamily: "var(--font-heading)", marginBottom: "8px" }}>
-                    Explore the Tech Jungle
+                    Explore the Codex Voter
                   </h3>
                   <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem" }}>
                     Gunakan handphone Anda untuk memindai QR Code di papan fisik setiap booth, simpan kelompok ke daftar favorit, lalu kirim suara Anda saat selesai berkeliling.
