@@ -48,6 +48,8 @@ interface VoterContextType {
   setQrScannerOpen: (open: boolean) => void;
   groupsList: Group[];
   refreshGroupsList: () => Promise<void>;
+  isVoteUnlocked: boolean;
+  unlockVoting: () => void;
 }
 
 const VoterContext = createContext<VoterContextType | undefined>(undefined);
@@ -59,6 +61,7 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [groupsList, setGroupsList] = useState<Group[]>([]);
+  const [isVoteUnlocked, setIsVoteUnlocked] = useState(false);
 
   // Fetch groups list from Backend API
   const refreshGroupsList = async () => {
@@ -73,6 +76,11 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const unlockVoting = () => {
+    setIsVoteUnlocked(true);
+    localStorage.setItem("voter_is_unlocked", "true");
+  };
+
   // Load from localStorage & fetch groups on mount
   useEffect(() => {
     refreshGroupsList();
@@ -81,10 +89,20 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       const savedShortlist = localStorage.getItem("voter_shortlist");
       const savedVisitor = localStorage.getItem("voter_visitor");
       const savedVote = localStorage.getItem("voter_active_vote");
+      const savedUnlocked = localStorage.getItem("voter_is_unlocked");
 
       if (savedShortlist) setShortlist(JSON.parse(savedShortlist));
       if (savedVisitor) setVisitor(JSON.parse(savedVisitor));
       if (savedVote) setActiveVote(JSON.parse(savedVote));
+      if (savedUnlocked === "true") setIsVoteUnlocked(true);
+
+      // Check URL query parameters for exit gate unlock QR link
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("unlock") === "exit") {
+        setIsVoteUnlocked(true);
+        localStorage.setItem("voter_is_unlocked", "true");
+        alert("🔒 Akses Voting Berhasil Dibuka! Anda sekarang dapat mengirimkan suara final.");
+      }
     }
   }, []);
 
@@ -189,7 +207,9 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         qrScannerOpen,
         setQrScannerOpen,
         groupsList,
-        refreshGroupsList
+        refreshGroupsList,
+        isVoteUnlocked,
+        unlockVoting
       }}
     >
       {children}

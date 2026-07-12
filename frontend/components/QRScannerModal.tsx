@@ -6,11 +6,21 @@ import { X, Camera, Scan, CheckCircle } from "lucide-react";
 import { Group } from "@/lib/data";
 
 export default function QRScannerModal() {
-  const { qrScannerOpen, setQrScannerOpen, addToShortlist, groupsList } = useVoter();
+  const { qrScannerOpen, setQrScannerOpen, addToShortlist, groupsList, unlockVoting } = useVoter();
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [simulatedScanResult, setSimulatedScanResult] = useState<Group | null>(null);
+  const [simulatedUnlockResult, setSimulatedUnlockResult] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const handleSimulateUnlock = () => {
+    setSimulatedUnlockResult(true);
+    unlockVoting();
+    setTimeout(() => {
+      setSimulatedUnlockResult(false);
+      setQrScannerOpen(false);
+    }, 1500);
+  };
 
   // Jalankan kamera saat scanner dibuka
   useEffect(() => {
@@ -94,6 +104,20 @@ export default function QRScannerModal() {
               Ditambahkan ke Shortlist Anda...
             </p>
           </div>
+        ) : simulatedUnlockResult ? (
+          /* Tampilan Sukses Unlock Pintu Keluar */
+          <div style={{ textAlign: "center", padding: "20px" }}>
+            <CheckCircle size={64} style={{ color: "var(--color-carolina-blue)", marginBottom: "16px", animation: "heartPulse 0.4s" }} />
+            <h4 style={{ fontSize: "1.25rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>
+              Akses Voting Terbuka!
+            </h4>
+            <p style={{ color: "var(--color-pistachio)", fontWeight: "600", fontSize: "0.9rem" }}>
+              QR Pintu Keluar Terdeteksi
+            </p>
+            <p style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: "8px" }}>
+              Membuka tombol vote final...
+            </p>
+          </div>
         ) : (
           /* Viewfinder Scan */
           <>
@@ -142,10 +166,33 @@ export default function QRScannerModal() {
           background: "rgba(0,0,0,0.3)", 
           borderTop: "1px solid rgba(255,255,255,0.1)",
           maxHeight: "220px",
-          overflowY: "auto"
+          overflowY: "auto",
+          padding: "16px"
         }}
       >
-        <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-carolina-blue)", marginBottom: "12px" }}>
+        {/* Tombol Simulasi Exit QR */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+          <button
+            onClick={handleSimulateUnlock}
+            style={{
+              background: "var(--color-pistachio)",
+              border: "2px solid var(--color-delft-blue)",
+              color: "var(--color-delft-blue)",
+              padding: "8px 16px",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "0.8rem",
+              fontWeight: "700",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+              transition: "var(--transition-fast)"
+            }}
+          >
+            🔒 Simulasi Scan QR Pintu Keluar
+          </button>
+        </div>
+
+        <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-carolina-blue)", marginBottom: "12px", textAlign: "center" }}>
           Simulasi Scan QR Booth (Klik untuk Simulasi):
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>

@@ -5,11 +5,11 @@ import { useVoter } from "@/components/VoterContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { CheckCircle2, Copy, Check, Leaf, Heart, ArrowRight } from "lucide-react";
+import { CheckCircle2, Copy, Check, Leaf, Heart, ArrowRight, Lock, Unlock } from "lucide-react";
 
 export default function VotePage() {
   const router = useRouter();
-  const { visitor, shortlist, groupsList, submitVote, activeVote } = useVoter();
+  const { visitor, shortlist, groupsList, submitVote, activeVote, isVoteUnlocked, setQrScannerOpen, unlockVoting } = useVoter();
 
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -171,6 +171,75 @@ export default function VotePage() {
                 Lihat Hasil Live Dashboard
                 <ArrowRight size={16} />
               </Link>
+            </div>
+
+          </div>
+
+        </main>
+      </>
+    );
+  }
+
+  // 1.5 Tampilan Terkunci (Belum scan QR pintu keluar)
+  if (!isVoteUnlocked) {
+    return (
+      <>
+        <Header />
+        <main className="container" style={{ paddingBottom: "120px" }}>
+          
+          <div className="card" style={{ maxWidth: "600px", margin: "var(--space-2xl) auto", textAlign: "center", padding: "48px var(--space-lg)" }}>
+            <div 
+              style={{ 
+                width: "70px", 
+                height: "70px", 
+                borderRadius: "50%", 
+                backgroundColor: "var(--color-beige)", 
+                border: "3px solid var(--color-delft-blue)",
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                margin: "0 auto 24px auto"
+              }}
+            >
+              <Lock size={32} style={{ color: "var(--color-delft-blue)" }} />
+            </div>
+
+            <span className="badge" style={{ backgroundColor: "#ef4444", color: "white" }}>Voting Terkunci 🔒</span>
+            
+            <h2 style={{ fontSize: "1.75rem", fontFamily: "var(--font-heading)", marginTop: "16px", marginBottom: "12px", textTransform: "uppercase" }}>
+              Scan QR Pintu Keluar
+            </h2>
+            
+            <p style={{ fontSize: "0.95rem", opacity: 0.9, lineHeight: "1.6", color: "var(--color-delft-blue)", maxWidth: "460px", margin: "0 auto 28px auto" }}>
+              Untuk memastikan Anda telah meninjau dan mengunjungi booth pameran, silakan memindai QR Code khusus yang disediakan panitia di **Pintu Keluar (Exit Gate)** sebelum mengirimkan suara Anda.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "320px", margin: "0 auto" }}>
+              <button 
+                type="button"
+                onClick={() => setQrScannerOpen(true)}
+                className="btn btn-primary" 
+                style={{ gap: "10px", justifyContent: "center" }}
+              >
+                <Unlock size={18} />
+                Pindai QR Pintu Keluar
+              </button>
+              
+              <button 
+                type="button"
+                onClick={unlockVoting}
+                style={{ 
+                  background: "none", 
+                  border: "none", 
+                  color: "var(--color-fern-green)", 
+                  fontSize: "0.75rem", 
+                  fontWeight: 700, 
+                  cursor: "pointer", 
+                  textDecoration: "underline" 
+                }}
+              >
+                Simulasi Lewati Penguncian (Developer Test)
+              </button>
             </div>
 
           </div>
