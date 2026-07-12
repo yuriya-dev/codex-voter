@@ -5,6 +5,9 @@ import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard } from "lucide-react";
+import { getBackendUrl } from "@/lib/config";
+
+const BACKEND_URL = getBackendUrl();
 
 export default function AdminManagementPage() {
   const { groupsList, refreshGroupsList } = useVoter();
@@ -95,7 +98,7 @@ export default function AdminManagementPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5050/api/admin/upload-groups", {
+      const res = await fetch(`${BACKEND_URL}/api/admin/upload-groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groups: csvPreview, overwrite })
@@ -124,11 +127,7 @@ export default function AdminManagementPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5500/api/groups", { // wait, port is 5050! let's use 5050
-        method: "POST", // wait, let's fix URL to 5050 in code
-      });
-      // I'll make sure the fetch below is correct
-      const response = await fetch("http://localhost:5050/api/groups", {
+      const response = await fetch(`${BACKEND_URL}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -164,7 +163,7 @@ export default function AdminManagementPage() {
     if (!confirm("Apakah Anda yakin ingin menghapus kelompok ini? Seluruh vote terasosiasi juga akan dihapus.")) return;
 
     try {
-      const res = await fetch(`http://localhost:5050/api/groups/${id}`, {
+      const res = await fetch(`${BACKEND_URL}/api/groups/${id}`, {
         method: "DELETE"
       });
 

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { getBackendUrl } from "@/lib/config";
 
-const BACKEND_URL = "http://localhost:5050";
+const BACKEND_URL = getBackendUrl();
+
 
 export interface Group {
   id: string;

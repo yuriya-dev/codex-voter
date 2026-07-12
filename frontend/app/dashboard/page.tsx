@@ -5,6 +5,9 @@ import { useVoter } from "@/components/VoterContext";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings } from "lucide-react";
+import { getBackendUrl } from "@/lib/config";
+
+const BACKEND_URL = getBackendUrl();
 
 interface AuditLog {
   id: string;
@@ -67,7 +70,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch("http://localhost:5050/api/dashboard/logs");
+        const res = await fetch(`${BACKEND_URL}/api/dashboard/logs`);
         if (res.ok) {
           const logs = await res.json();
           setAuditLogs(logs);

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Leaf, Award, Trophy, LayoutDashboard, Maximize2, Minimize2 } from "lucide-react";
+import { getBackendUrl } from "@/lib/config";
+
+const BACKEND_URL = getBackendUrl();
 
 interface GroupStat {
   id: string;
@@ -19,7 +22,7 @@ export default function DashboardPublikPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch("http://localhost:5050/api/dashboard/stats");
+      const res = await fetch(`${BACKEND_URL}/api/dashboard/stats`);
       if (res.ok) {
         const data = await res.json();
         setStats(data.groupStats);
