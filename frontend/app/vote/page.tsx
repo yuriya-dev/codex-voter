@@ -9,12 +9,18 @@ import { CheckCircle2, Copy, Check, Leaf, Heart, ArrowRight, Lock, Unlock } from
 
 export default function VotePage() {
   const router = useRouter();
-  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, unlockVoting } = useVoter();
+  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, unlockVoting, votingStatus, votingEndTime, refreshSettings } = useVoter();
 
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<number[]>([]);
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  // Load settings on mount
+  useEffect(() => {
+    refreshSettings();
+  }, []);
 
   // Redirect if visitor not verified
   useEffect(() => {
@@ -22,6 +28,33 @@ export default function VotePage() {
       router.push("/verifikasi");
     }
   }, [visitor, router]);
+
+  // Countdown timer hook
+  useEffect(() => {
+    if (votingStatus !== "started" || !votingEndTime) {
+      setTimeLeft("");
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      const difference = +new Date(votingEndTime) - +new Date();
+      if (difference <= 0) {
+        setTimeLeft("00:00:00");
+        return;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      const pad = (num: number) => String(num).padStart(2, "0");
+      setTimeLeft(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [votingStatus, votingEndTime]);
 
   // Compute voting state
   const votedGroupIds = activeVotes.map((v) => v.groupId);
@@ -81,27 +114,91 @@ export default function VotePage() {
     }
   };
 
-  // 1. Tampilan Sukses Setelah Semua Vote Selesai
-  if (hasFinishedVoting) {
+  // 0.5 Check if Voting has not started
+  if (votingStatus === "not_started" && activeVotes.length === 0) {
+    return (
+      <>
+        <Header />
+        <main className="container" style={{ paddingBottom: "120px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "70vh" }}>
+          <div className="card" style={{ maxWidth: "500px", width: "100%", padding: "40px", textAlign: "center", border: "3px solid var(--color-delft-blue)", borderRadius: "var(--radius-md)", backgroundColor: "white", boxShadow: "6px 6px 0px var(--color-delft-blue)", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "64px",
+              height: "64px",
+              borderRadius: "var(--radius-sm)",
+              border: "2px solid var(--color-delft-blue)",
+              background: "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
+            }}>
+              <Lock size={32} />
+            </div>
+            <h2 style={{ fontFamily: "var(--font-heading)", textTransform: "uppercase" }}>Voting Belum Dimulai</h2>
+            <p style={{ fontSize: "0.95rem", opacity: 0.8, lineHeight: 1.6 }}>
+              Sesi voting belum dibuka oleh panitia. Silakan tunggu informasi dari panitia pameran untuk mulai memberikan suara kelompok terfavorit Anda.
+            </p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // 0.6 Check if Voting has ended and user has no votes
+  if (votingStatus === "ended" && activeVotes.length === 0) {
+    return (
+      <>
+        <Header />
+        <main className="container" style={{ paddingBottom: "120px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "70vh" }}>
+          <div className="card" style={{ maxWidth: "500px", width: "100%", padding: "40px", textAlign: "center", border: "3px solid var(--color-delft-blue)", borderRadius: "var(--radius-md)", backgroundColor: "white", boxShadow: "6px 6px 0px var(--color-delft-blue)", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "64px",
+              height: "64px",
+              borderRadius: "var(--radius-sm)",
+              border: "2px solid var(--color-delft-blue)",
+              background: "#ff6b6b",
+              color: "white",
+              boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
+            }}>
+              <Lock size={32} />
+            </div>
+            <h2 style={{ fontFamily: "var(--font-heading)", textTransform: "uppercase" }}>Sesi Voting Selesai</h2>
+            <p style={{ fontSize: "0.95rem", opacity: 0.8, lineHeight: 1.6 }}>
+              Sesi voting telah ditutup oleh panitia. Terima kasih atas partisipasi Anda dalam pameran Capstone Tech Jungle.
+            </p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // 1. Tampilan Sukses Setelah Semua Vote Selesai ATAU Sesi Berakhir tapi sudah pernah vote
+  if (hasFinishedVoting || (votingStatus === "ended" && activeVotes.length > 0)) {
     return (
       <>
         <Header />
         
-        {/* Leaf Confetti Simulation */}
-        <div className="confetti-container">
-          {confetti.map((idx) => (
-            <div
-              key={idx}
-              className="leaf-particle"
-              style={{
-                left: `${Math.random() * 100}vw`,
-                animationDelay: `${Math.random() * 3}s`,
-                transform: `rotate(${Math.random() * 360}deg) scale(${0.5 + Math.random()})`,
-                backgroundColor: idx % 2 === 0 ? "var(--color-fern-green)" : "var(--color-pistachio)"
-              }}
-            />
-          ))}
-        </div>
+        {/* Leaf Confetti Simulation (hanya jika memang berhasil selesai voting penuh) */}
+        {hasFinishedVoting && (
+          <div className="confetti-container">
+            {confetti.map((idx) => (
+              <div
+                key={idx}
+                className="leaf-particle"
+                style={{
+                  left: `${Math.random() * 100}vw`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  transform: `rotate(${Math.random() * 360}deg) scale(${0.5 + Math.random()})`,
+                  backgroundColor: idx % 2 === 0 ? "var(--color-fern-green)" : "var(--color-pistachio)"
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <main className="container" style={{ paddingBottom: "120px" }}>
           
@@ -111,7 +208,7 @@ export default function VotePage() {
                 width: "70px", 
                 height: "70px", 
                 borderRadius: "50%", 
-                backgroundColor: "var(--color-pistachio)", 
+                backgroundColor: votingStatus === "ended" ? "#ff6b6b" : "var(--color-pistachio)", 
                 border: "3px solid var(--color-delft-blue)",
                 display: "flex", 
                 alignItems: "center", 
@@ -120,14 +217,20 @@ export default function VotePage() {
                 animation: "heartPulse 0.4s ease"
               }}
             >
-              <CheckCircle2 size={36} style={{ color: "var(--color-delft-blue)" }} />
+              {votingStatus === "ended" ? (
+                <Lock size={32} style={{ color: "white" }} />
+              ) : (
+                <CheckCircle2 size={36} style={{ color: "var(--color-delft-blue)" }} />
+              )}
             </div>
 
             <h1 style={{ fontSize: "2rem", fontFamily: "var(--font-heading)", marginBottom: "8px", textTransform: "uppercase" }}>
-              Seluruh Hak Suara Tercatat!
+              {votingStatus === "ended" ? "Sesi Voting Telah Ditutup" : "Seluruh Hak Suara Tercatat!"}
             </h1>
             <p style={{ fontSize: "0.95rem", opacity: 0.8, maxWidth: "480px", margin: "0 auto 28px auto" }}>
-              Terima kasih telah berpartisipasi. Anda telah memberikan suara untuk {maxVotesLimit} kelompok capstone terfavorit Anda.
+              {votingStatus === "ended" 
+                ? "Sesi voting telah berakhir. Berikut adalah bukti hak suara yang berhasil Anda kirimkan sebelum sesi ditutup:"
+                : `Terima kasih telah berpartisipasi. Anda telah memberikan suara untuk ${maxVotesLimit} kelompok capstone terfavorit Anda.`}
             </p>
 
             {/* List Rincian Pilihan */}
@@ -167,6 +270,7 @@ export default function VotePage() {
                             {vote.voteCode}
                           </code>
                           <button 
+                            type="button"
                             onClick={() => handleCopyCode(vote.voteCode)}
                             style={{ 
                               background: "none", 
@@ -280,10 +384,31 @@ export default function VotePage() {
       <main className="container" style={{ paddingBottom: "120px" }}>
         
         {/* Header Asimetris */}
-        <div className="asymmetric-header" style={{ marginBottom: "24px" }}>
-          <span className="badge">Verified Session</span>
-          <span className="bg-text-shadow">CAST VOTE</span>
-          <h1 style={{ color: "var(--color-delft-blue)" }}>Kirim Suara Anda</h1>
+        <div className="asymmetric-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
+          <div>
+            <span className="badge">Verified Session</span>
+            <span className="bg-text-shadow">CAST VOTE</span>
+            <h1 style={{ color: "var(--color-delft-blue)" }}>Kirim Suara Anda</h1>
+          </div>
+          {timeLeft && (
+            <div 
+              style={{ 
+                backgroundColor: "var(--color-pistachio)", 
+                border: "2px solid var(--color-delft-blue)", 
+                padding: "8px 16px", 
+                borderRadius: "var(--radius-sm)",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                marginBottom: "10px"
+              }}
+            >
+              ⏱️ SISA WAKTU: <span style={{ fontFamily: "monospace", fontSize: "1.05rem" }}>{timeLeft}</span>
+            </div>
+          )}
         </div>
 
         <div className="split-layout" style={{ maxWidth: "1000px", margin: "0 auto" }}>

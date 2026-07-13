@@ -45,6 +45,8 @@ interface VoterContextType {
   activeVote: Vote | null; // Keep for backward compatibility (last cast vote)
   activeVotes: Vote[];
   maxVotesLimit: number;
+  votingStatus: string;
+  votingEndTime: string;
   verifyOTP: (name: string, category: string) => Promise<boolean>;
   submitVote: (groupId: string) => Promise<string | null>;
   isDrawerOpen: boolean;
@@ -66,6 +68,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   const [activeVote, setActiveVote] = useState<Vote | null>(null);
   const [activeVotes, setActiveVotes] = useState<Vote[]>([]);
   const [maxVotesLimit, setMaxVotesLimit] = useState<number>(3);
+  const [votingStatus, setVotingStatus] = useState<string>("not_started");
+  const [votingEndTime, setVotingEndTime] = useState<string>("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [groupsList, setGroupsList] = useState<Group[]>([]);
@@ -91,6 +95,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setMaxVotesLimit(data.max_votes || 3);
+        setVotingStatus(data.voting_status || "not_started");
+        setVotingEndTime(data.voting_end_time || "");
       }
     } catch (err) {
       console.error("Gagal memuat batas voting dari backend:", err);
@@ -263,6 +269,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         activeVote,
         activeVotes,
         maxVotesLimit,
+        votingStatus,
+        votingEndTime,
         verifyOTP,
         submitVote,
         isDrawerOpen,
