@@ -45,3 +45,4 @@ Thumbs.db
 *.tsbuildinfo
 
 architecture/
+docs/feature_integration.md

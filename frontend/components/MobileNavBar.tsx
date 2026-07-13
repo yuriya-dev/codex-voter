@@ -13,8 +13,11 @@ export default function MobileNavBar() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<string>("groups");
+  const [mounted, setMounted] = useState(false);
 
-  const isAdminPath = pathname.startsWith("/admin") || pathname === "/dashboard";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -35,6 +38,11 @@ export default function MobileNavBar() {
   const handleNavigation = (path: string) => {
     router.push(path);
   };
+
+  const isAdminPath = pathname.startsWith("/admin") || pathname === "/dashboard";
+
+  // Jika belum dimuat di client, kembalikan null untuk mencocokkan render server
+  if (!mounted) return null;
 
   // Jika berada di halaman admin
   if (isAdminPath) {

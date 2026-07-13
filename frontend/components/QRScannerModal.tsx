@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import { X, Camera, Scan, CheckCircle, Loader2 } from "lucide-react";
 import { Group } from "@/lib/data";
+import jsQR from "jsqr";
 
 export default function QRScannerModal() {
   const { qrScannerOpen, setQrScannerOpen, addToShortlist, groupsList, unlockVoting } = useVoter();
@@ -14,13 +15,48 @@ export default function QRScannerModal() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const activeStreamRef = useRef<MediaStream | null>(null);
 
+  const handleQrCodeScanned = (scannedText: string) => {
+    // Hindari pemrosesan ganda jika sedang menampilkan hasil sukses
+    if (simulatedScanResult || simulatedUnlockResult) return;
+
+    // 1. Periksa apakah QR Code berisi bypass unlock exit gate
+    if (scannedText.includes("unlock=exit") || scannedText === "exit" || scannedText === "unlock-exit") {
+      setSimulatedUnlockResult(true);
+      unlockVoting();
+      setTimeout(() => {
+        setSimulatedUnlockResult(false);
+        setQrScannerOpen(false);
+      }, 1500);
+      return;
+    }
+
+    // 2. Periksa apakah QR Code mengarah ke kelompok tertentu
+    let matchedGroup: Group | undefined;
+
+    // Pola pencarian slug di dalam URL (misal: .../kelompok/arboris-iot?from=qr)
+    const urlMatch = scannedText.match(/\/kelompok\/([a-zA-Z0-9-]+)/);
+    if (urlMatch && urlMatch[1]) {
+      const slug = urlMatch[1];
+      matchedGroup = groupsList.find((g) => g.slug === slug);
+    }
+
+    // Jika tidak cocok URL, coba cocokkan teks mentah sebagai slug atau id kelompok
+    if (!matchedGroup) {
+      matchedGroup = groupsList.find((g) => g.slug === scannedText || g.id === scannedText);
+    }
+
+    if (matchedGroup) {
+      setSimulatedScanResult(matchedGroup);
+      addToShortlist(matchedGroup.id);
+      setTimeout(() => {
+        setSimulatedScanResult(null);
+        setQrScannerOpen(false);
+      }, 1500);
+    }
+  };
+
   const handleSimulateUnlock = () => {
-    setSimulatedUnlockResult(true);
-    unlockVoting();
-    setTimeout(() => {
-      setSimulatedUnlockResult(false);
-      setQrScannerOpen(false);
-    }, 1500);
+    handleQrCodeScanned("unlock=exit");
   };
 
   // Menghentikan stream kamera jika ada yang aktif
@@ -72,19 +108,53 @@ export default function QRScannerModal() {
     }
   }, [stream, cameraStatus]);
 
+  // Loop pemindaian QR Code dari frame kamera
+  useEffect(() => {
+    let animationFrameId: number;
+    let isScanning = true;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const tick = () => {
+      if (!isScanning) return;
+
+      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+        const video = videoRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+
+          if (code) {
+            console.log("QR Code terdeteksi oleh kamera:", code.data);
+            handleQrCodeScanned(code.data);
+          }
+        }
+      }
+      
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    if (cameraStatus === 'granted' && stream) {
+      animationFrameId = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      isScanning = false;
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [cameraStatus, stream, groupsList, simulatedScanResult, simulatedUnlockResult]);
+
   if (!qrScannerOpen) return null;
 
   const handleSimulateScan = (group: Group) => {
-    setSimulatedScanResult(group);
-    
-    // Tambah ke shortlist
-    addToShortlist(group.id);
-    
-    // Tutup scanner setelah 1.5 detik agar terlihat proses pemindaian
-    setTimeout(() => {
-      setSimulatedScanResult(null);
-      setQrScannerOpen(false);
-    }, 1500);
+    handleQrCodeScanned(group.id);
   };
 
   return (

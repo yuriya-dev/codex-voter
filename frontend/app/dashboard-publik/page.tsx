@@ -601,14 +601,7 @@ export default function DashboardPublikPage() {
         </Link>
       </footer>
 
-      {/* Responsive Inline CSS Helper */}
-      <style jsx global>{`
-        @media (min-width: 768px) {
-          .public-bar-desktop {
-            display: block !important;
-          }
-        }
-      `}</style>
+
 
     </div>
   );

@@ -10,8 +10,13 @@ export default function Header() {
   const { shortlist, setIsDrawerOpen, visitor } = useVoter();
   const pathname = usePathname();
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const isAdminPath = pathname.startsWith("/admin") || pathname === "/dashboard";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -23,6 +28,64 @@ export default function Header() {
     localStorage.removeItem("adminToken");
     window.location.href = "/admin";
   };
+
+  // Menjamin render pertama client cocok 100% dengan render HTML dari server
+  if (!mounted) {
+    if (isAdminPath) {
+      return (
+        <header className="site-header">
+          <div className="nav-container">
+            <Link href="/" className="logo">
+              <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
+              CODEX<span>Admin</span>
+            </Link>
+            <nav className="nav-links">
+              <Link href="/" className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
+                Kembali ke Halaman Publik
+              </Link>
+            </nav>
+          </div>
+        </header>
+      );
+    }
+
+    return (
+      <header className="site-header">
+        <div className="nav-container">
+          <Link href="/" className="logo">
+            <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
+            CODEX<span>Voter</span>
+          </Link>
+
+          <nav className="nav-links">
+            <Link href="/kelompok">Daftar Kelompok</Link>
+            <Link href="/verifikasi" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <KeyRound size={16} />
+              Verifikasi
+            </Link>
+            <Link href="/dashboard-publik" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Trophy size={16} />
+              Leaderboard
+            </Link>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setIsDrawerOpen(true)}
+              style={{ 
+                padding: "8px 16px", 
+                fontSize: "0.85rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+            >
+              <Heart size={16} fill="none" />
+              Shortlist
+            </button>
+          </nav>
+        </div>
+      </header>
+    );
+  }
 
   // 1. Jika di rute Admin dan Admin SUDAH LOGIN
   if (isAdminPath && adminToken) {
