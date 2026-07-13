@@ -29,6 +29,21 @@ router.post("/", async (req, res) => {
   try {
     const maxVotes = await getMaxVotesLimit();
 
+    // 0. Verify visitor exists in the database
+    const { data: visitorData, error: visitorErr } = await supabase
+      .from('visitors')
+      .select('identifier')
+      .eq('identifier', visitorIdentifier);
+    
+    if (visitorErr) throw visitorErr;
+
+    if (!visitorData || visitorData.length === 0) {
+      return res.status(401).json({ 
+        error: "Identitas pemilih tidak terdaftar di server. Silakan masuk/registrasi ulang.",
+        code: "VISITOR_NOT_FOUND"
+      });
+    }
+
     // 1. Get all votes cast by this visitor
     const { data: visitorVotes, error: vvErr } = await supabase
       .from('votes')

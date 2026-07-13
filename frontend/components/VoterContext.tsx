@@ -233,6 +233,16 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         return vote.voteCode;
       } else {
         const errorData = await res.json();
+        if (res.status === 401 || errorData.code === "VISITOR_NOT_FOUND") {
+          alert("Identitas Anda tidak terdaftar atau telah direset di server. Halaman akan dimuat ulang untuk mendaftar kembali.");
+          localStorage.removeItem("voter_visitor");
+          localStorage.removeItem("voter_active_vote");
+          localStorage.removeItem("voter_active_votes");
+          localStorage.removeItem("voter_shortlist");
+          localStorage.removeItem("voter_is_unlocked");
+          window.location.reload();
+          return null;
+        }
         alert(errorData.error || "Gagal melakukan voting");
         return null;
       }

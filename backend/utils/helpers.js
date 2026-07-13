@@ -66,10 +66,29 @@ function getClientIp(req) {
   return ip;
 }
 
+// Middleware to authenticate admin requests
+function adminAuth(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const password = process.env.ADMIN_PASSWORD || "admin123";
+  
+  if (!authHeader) {
+    return res.status(401).json({ error: "Akses ditolak. Token otentikasi admin diperlukan." });
+  }
+
+  const token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+  
+  if (token !== password) {
+    return res.status(401).json({ error: "Akses ditolak. Token otentikasi admin tidak valid." });
+  }
+
+  next();
+}
+
 module.exports = {
   mapGroup,
   mapVisitor,
   mapVote,
   addAuditLog,
-  getClientIp
+  getClientIp,
+  adminAuth
 };

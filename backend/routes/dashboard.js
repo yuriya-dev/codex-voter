@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { mapGroup } = require("../utils/helpers");
+const { mapGroup, adminAuth } = require("../utils/helpers");
 
 // 4. Admin Dashboard stats
 router.get("/stats", async (req, res) => {
@@ -38,7 +38,7 @@ router.get("/stats", async (req, res) => {
 });
 
 // 5. Admin Dashboard logs
-router.get("/logs", async (req, res) => {
+router.get("/logs", adminAuth, async (req, res) => {
   try {
     const { data: logs, error } = await supabase
       .from('audit_logs')

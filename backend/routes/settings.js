@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { addAuditLog } = require("../utils/helpers");
+const { addAuditLog, adminAuth } = require("../utils/helpers");
 
 // Get settings (max_votes)
 router.get("/", async (req, res) => {
@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
 });
 
 // Update settings (max_votes)
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   const { max_votes } = req.body;
   const limit = parseInt(max_votes);
   if (isNaN(limit) || limit < 1) {

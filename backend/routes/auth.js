@@ -99,4 +99,20 @@ router.post("/verify", async (req, res) => {
   }
 });
 
+// Admin Login verification
+router.post("/admin-login", (req, res) => {
+  const { password } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+
+  if (!password) {
+    return res.status(400).json({ error: "Password wajib diisi" });
+  }
+
+  if (password === adminPassword) {
+    return res.json({ success: true, token: adminPassword });
+  } else {
+    return res.status(401).json({ error: "Password admin salah" });
+  }
+});
+
 module.exports = router;

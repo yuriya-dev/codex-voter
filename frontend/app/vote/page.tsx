@@ -37,11 +37,12 @@ export default function VotePage() {
 
   // Pre-fill selected group if only 1 item in shortlist (and they haven't voted for it yet)
   useEffect(() => {
-    const unvotedShortlist = shortlist.filter(id => !votedGroupIds.includes(id));
+    const votedIds = activeVotes.map((v) => v.groupId);
+    const unvotedShortlist = shortlist.filter(id => !votedIds.includes(id));
     if (unvotedShortlist.length === 1) {
       setSelectedGroupId(unvotedShortlist[0]);
     }
-  }, [shortlist, votedGroupIds]);
+  }, [shortlist, activeVotes.length]);
 
   if (!visitor) {
     return (
@@ -349,7 +350,6 @@ export default function VotePage() {
                         checked={selectedGroupId === group.id}
                         onChange={() => setSelectedGroupId(group.id)}
                         style={{ width: "20px", height: "20px", accentColor: "var(--color-fern-green)" }}
-                        required
                       />
                       <div>
                         <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-fern-green)" }}>
@@ -394,7 +394,6 @@ export default function VotePage() {
                 className="form-control"
                 value={selectedGroupId}
                 onChange={(e) => setSelectedGroupId(e.target.value)}
-                required
                 style={{ 
                   height: "52px", 
                   backgroundColor: "white", 

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
+import AdminLoginForm from "@/components/AdminLoginForm";
 import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
 
@@ -11,6 +12,7 @@ const BACKEND_URL = getBackendUrl();
 
 export default function AdminManagementPage() {
   const { groupsList, refreshGroupsList } = useVoter();
+  const [adminToken, setAdminToken] = useState<string | null>(null);
 
   // Manual Form State
   const [name, setName] = useState("");
@@ -31,7 +33,18 @@ export default function AdminManagementPage() {
   // Settings State
   const [maxVotes, setMaxVotes] = useState(3);
 
+  // Cek token saat halaman dibuka
   useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      setAdminToken(token);
+    }
+  }, []);
+
+  // Ambil data jika terautentikasi
+  useEffect(() => {
+    if (!adminToken) return;
+
     refreshGroupsList();
     const fetchMaxVotes = async () => {
       try {
@@ -45,7 +58,12 @@ export default function AdminManagementPage() {
       }
     };
     fetchMaxVotes();
-  }, []);
+  }, [adminToken]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setAdminToken(null);
+  };
 
   const handleSaveMaxVotes = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +71,18 @@ export default function AdminManagementPage() {
     try {
       const res = await fetch(`${BACKEND_URL}/api/settings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ max_votes: maxVotes })
       });
+
+      if (res.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
 
       if (res.ok) {
         setStatusMessage({ text: `Batas voting berhasil diubah menjadi ${maxVotes} kelompok!`, type: "success" });
@@ -138,9 +165,18 @@ export default function AdminManagementPage() {
     try {
       const res = await fetch(`${BACKEND_URL}/api/admin/upload-groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ groups: csvPreview, overwrite })
       });
+
+      if (res.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
 
       if (res.ok) {
         setStatusMessage({ text: `Sukses mengimpor ${csvPreview.length} kelompok!`, type: "success" });
@@ -167,7 +203,10 @@ export default function AdminManagementPage() {
     try {
       const response = await fetch(`${BACKEND_URL}/api/groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
         body: JSON.stringify({
           name,
           booth_number: boothNumber,
@@ -177,6 +216,12 @@ export default function AdminManagementPage() {
           members
         })
       });
+
+      if (response.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
 
       if (response.ok) {
         setStatusMessage({ text: `Berhasil menambahkan kelompok: ${name}`, type: "success" });
@@ -202,8 +247,17 @@ export default function AdminManagementPage() {
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/groups/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${adminToken}`
+        }
       });
+
+      if (res.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
 
       if (res.ok) {
         setStatusMessage({ text: "Kelompok berhasil dihapus.", type: "success" });
@@ -221,29 +275,50 @@ export default function AdminManagementPage() {
       <Header />
       
       <main className="container" style={{ paddingBottom: "120px" }}>
-        
-        {/* Header Asimetris */}
-        <div className="asymmetric-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
-          <div>
-            <span className="badge">Data Management</span>
-            <span className="bg-text-shadow">MANAGE</span>
-            <h1 style={{ color: "var(--color-delft-blue)" }}>Manajemen Kelompok Capstone</h1>
-          </div>
-          <Link 
-            href="/dashboard" 
-            className="btn btn-secondary"
-            style={{ 
-              marginBottom: "10px", 
-              gap: "8px", 
-              height: "44px", 
-              borderWidth: "2px", 
-              boxShadow: "3px 3px 0px var(--color-delft-blue)" 
-            }}
-          >
-            <LayoutDashboard size={16} />
-            Dashboard Panitia (Logs & Ekspor)
-          </Link>
-        </div>
+        {!adminToken ? (
+          <AdminLoginForm onLoginSuccess={(token) => setAdminToken(token)} />
+        ) : (
+          <>
+            {/* Header Asimetris */}
+            <div className="asymmetric-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
+              <div>
+                <span className="badge">Data Management</span>
+                <span className="bg-text-shadow">MANAGE</span>
+                <h1 style={{ color: "var(--color-delft-blue)" }}>Manajemen Kelompok Capstone</h1>
+              </div>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <Link 
+                  href="/dashboard" 
+                  className="btn btn-secondary"
+                  style={{ 
+                    marginBottom: "10px", 
+                    gap: "8px", 
+                    height: "44px", 
+                    borderWidth: "2px", 
+                    boxShadow: "3px 3px 0px var(--color-delft-blue)" 
+                  }}
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard Panitia (Logs & Ekspor)
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn"
+                  style={{
+                    marginBottom: "10px",
+                    background: "#ff6b6b",
+                    color: "white",
+                    border: "2px solid var(--color-delft-blue)",
+                    boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                    height: "44px",
+                    cursor: "pointer",
+                    fontWeight: "700"
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
 
         {/* Notifikasi Status */}
         {statusMessage.text && (
@@ -533,7 +608,8 @@ export default function AdminManagementPage() {
           </div>
 
         </div>
-
+      </>
+    )}
       </main>
     </>
   );

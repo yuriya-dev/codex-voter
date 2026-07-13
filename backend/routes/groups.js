@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { mapGroup, addAuditLog } = require("../utils/helpers");
+const { mapGroup, addAuditLog, adminAuth } = require("../utils/helpers");
 
 // 1. GET all groups with vote counts
 router.get("/", async (req, res) => {
@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
 });
 
 // 7. Admin - Add Single Group Manually
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   const { name, booth_number, category, description, fullDescription, members, photoColor } = req.body;
   if (!name || !booth_number || !category) {
     return res.status(400).json({ error: "Nama, Booth, dan Kategori wajib diisi" });
@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
 });
 
 // 8. Admin - Delete Group by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     // Check if exists

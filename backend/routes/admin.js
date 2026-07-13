@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { addAuditLog } = require("../utils/helpers");
+const { addAuditLog, adminAuth } = require("../utils/helpers");
 
 // 6. Admin - Upload/Import Groups via CSV/JSON
-router.post("/upload-groups", async (req, res) => {
+router.post("/upload-groups", adminAuth, async (req, res) => {
   const { groups: newGroups, overwrite } = req.body;
   if (!Array.isArray(newGroups)) {
     return res.status(400).json({ error: "Data kelompok tidak valid" });

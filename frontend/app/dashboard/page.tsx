@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Header from "@/components/Header";
+import AdminLoginForm from "@/components/AdminLoginForm";
 import Link from "next/link";
 import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
@@ -59,6 +60,20 @@ export default function DashboardPage() {
   const { groupsList } = useVoter();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+
+  // Cek token saat halaman dibuka
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      setAdminToken(token);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setAdminToken(null);
+  };
 
   // Calculate stats
   useEffect(() => {
@@ -68,12 +83,21 @@ export default function DashboardPage() {
 
   // Fetch real audit logs periodically from backend
   useEffect(() => {
+    if (!adminToken) return;
+
     const fetchLogs = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/dashboard/logs`);
+        const res = await fetch(`${BACKEND_URL}/api/dashboard/logs`, {
+          headers: {
+            "Authorization": `Bearer ${adminToken}`
+          }
+        });
         if (res.ok) {
           const logs = await res.json();
           setAuditLogs(logs);
+        } else if (res.status === 401) {
+          // Token expired or invalid
+          handleLogout();
         }
       } catch (err) {
         console.error("Gagal memuat audit logs dari backend:", err);
@@ -86,7 +110,7 @@ export default function DashboardPage() {
     }, 4000); // refresh logs every 4 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [adminToken]);
 
   const handleExportCSV = () => {
     // Generate CSV content
@@ -111,52 +135,72 @@ export default function DashboardPage() {
       <Header />
       
       <main className="container" style={{ paddingBottom: "120px" }}>
-        
-        {/* Header Asimetris */}
-        <div className="asymmetric-header">
-          <span className="badge">Panitia Only</span>
-          <span className="bg-text-shadow">ADMIN BOARD</span>
-          <h1 style={{ color: "var(--color-delft-blue)" }}>Live Dashboard & Monitoring</h1>
-        </div>
+        {!adminToken ? (
+          <AdminLoginForm onLoginSuccess={(token) => setAdminToken(token)} />
+        ) : (
+          <>
+            {/* Header Asimetris */}
+            <div className="asymmetric-header">
+              <span className="badge">Panitia Only</span>
+              <span className="bg-text-shadow">ADMIN BOARD</span>
+              <h1 style={{ color: "var(--color-delft-blue)" }}>Live Dashboard & Monitoring</h1>
+            </div>
 
-        {/* Toolbar Aksi */}
-        <div 
-          style={{ 
-            display: "flex", 
-            justifyContent: "flex-end", 
-            gap: "12px",
-            marginBottom: "24px",
-            flexWrap: "wrap"
-          }}
-        >
-          <Link 
-            href="/admin" 
-            className="btn btn-secondary" 
-            style={{ 
-              gap: "8px", 
-              fontSize: "0.85rem",
-              borderWidth: "2px",
-              boxShadow: "3px 3px 0px var(--color-delft-blue)"
-            }}
-          >
-            <Settings size={16} />
-            Manajemen Kelompok
-          </Link>
+            {/* Toolbar Aksi */}
+            <div 
+              style={{ 
+                display: "flex", 
+                justifyContent: "flex-end", 
+                gap: "12px",
+                marginBottom: "24px",
+                flexWrap: "wrap"
+              }}
+            >
+              <Link 
+                href="/admin" 
+                className="btn btn-secondary" 
+                style={{ 
+                  gap: "8px", 
+                  fontSize: "0.85rem",
+                  borderWidth: "2px",
+                  boxShadow: "3px 3px 0px var(--color-delft-blue)"
+                }}
+              >
+                <Settings size={16} />
+                Manajemen Kelompok
+              </Link>
 
-          <button 
-            onClick={handleExportCSV} 
-            className="btn btn-secondary" 
-            style={{ 
-              gap: "8px", 
-              fontSize: "0.85rem",
-              borderWidth: "2px",
-              boxShadow: "3px 3px 0px var(--color-delft-blue)"
-            }}
-          >
-            <Download size={16} />
-            Ekspor Laporan (CSV)
-          </button>
-        </div>
+              <button 
+                onClick={handleExportCSV} 
+                className="btn btn-secondary" 
+                style={{ 
+                  gap: "8px", 
+                  fontSize: "0.85rem",
+                  borderWidth: "2px",
+                  boxShadow: "3px 3px 0px var(--color-delft-blue)"
+                }}
+              >
+                <Download size={16} />
+                Ekspor Laporan (CSV)
+              </button>
+
+              <button 
+                onClick={handleLogout} 
+                className="btn" 
+                style={{ 
+                  gap: "8px", 
+                  fontSize: "0.85rem",
+                  borderWidth: "2px",
+                  background: "#ff6b6b",
+                  color: "white",
+                  boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                  cursor: "pointer",
+                  fontWeight: "700"
+                }}
+              >
+                Logout
+              </button>
+            </div>
 
         {/* Baris Stats Ringkasan */}
         <section 
@@ -314,7 +358,8 @@ export default function DashboardPage() {
           </div>
 
         </div>
-
+      </>
+    )}
       </main>
 
       <style jsx global>{`
