@@ -23,6 +23,7 @@ export interface Group {
 
 interface Visitor {
   identifier: string;
+  name: string;
   category: string;
   verifiedAt: string;
   deviceFingerprint: string;
@@ -41,7 +42,9 @@ interface VoterContextType {
   removeFromShortlist: (id: string) => void;
   isShortlisted: (id: string) => boolean;
   visitor: Visitor | null;
-  activeVote: Vote | null;
+  activeVote: Vote | null; // Keep for backward compatibility (last cast vote)
+  activeVotes: Vote[];
+  maxVotesLimit: number;
   verifyOTP: (name: string, category: string) => Promise<boolean>;
   submitVote: (groupId: string) => Promise<string | null>;
   isDrawerOpen: boolean;
@@ -52,6 +55,7 @@ interface VoterContextType {
   refreshGroupsList: () => Promise<void>;
   isVoteUnlocked: boolean;
   unlockVoting: () => void;
+  refreshSettings: () => Promise<void>;
 }
 
 const VoterContext = createContext<VoterContextType | undefined>(undefined);
@@ -60,6 +64,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   const [shortlist, setShortlist] = useState<string[]>([]);
   const [visitor, setVisitor] = useState<Visitor | null>(null);
   const [activeVote, setActiveVote] = useState<Vote | null>(null);
+  const [activeVotes, setActiveVotes] = useState<Vote[]>([]);
+  const [maxVotesLimit, setMaxVotesLimit] = useState<number>(3);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [groupsList, setGroupsList] = useState<Group[]>([]);
@@ -78,6 +84,19 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Fetch settings from Backend API
+  const refreshSettings = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        setMaxVotesLimit(data.max_votes || 3);
+      }
+    } catch (err) {
+      console.error("Gagal memuat batas voting dari backend:", err);
+    }
+  };
+
   const unlockVoting = () => {
     setIsVoteUnlocked(true);
     localStorage.setItem("voter_is_unlocked", "true");
@@ -86,17 +105,29 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage & fetch groups on mount
   useEffect(() => {
     refreshGroupsList();
+    refreshSettings();
     
     if (typeof window !== "undefined") {
       const savedShortlist = localStorage.getItem("voter_shortlist");
       const savedVisitor = localStorage.getItem("voter_visitor");
       const savedVote = localStorage.getItem("voter_active_vote");
+      const savedVotes = localStorage.getItem("voter_active_votes");
       const savedUnlocked = localStorage.getItem("voter_is_unlocked");
 
       if (savedShortlist) setShortlist(JSON.parse(savedShortlist));
       if (savedVisitor) setVisitor(JSON.parse(savedVisitor));
-      if (savedVote) setActiveVote(JSON.parse(savedVote));
       if (savedUnlocked === "true") setIsVoteUnlocked(true);
+
+      if (savedVotes) {
+        const parsedVotes = JSON.parse(savedVotes);
+        setActiveVotes(parsedVotes);
+        setActiveVote(parsedVotes[parsedVotes.length - 1] || null);
+      } else if (savedVote) {
+        const parsedVote = JSON.parse(savedVote);
+        setActiveVote(parsedVote);
+        setActiveVotes([parsedVote]);
+        localStorage.setItem("voter_active_votes", JSON.stringify([parsedVote]));
+      }
 
       // Check URL query parameters for exit gate unlock QR link
       const params = new URLSearchParams(window.location.search);
@@ -139,13 +170,27 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         setVisitor(data.visitor);
         localStorage.setItem("voter_visitor", JSON.stringify(data.visitor));
 
-        if (data.activeVote) {
-          setActiveVote(data.activeVote);
-          localStorage.setItem("voter_active_vote", JSON.stringify(data.activeVote));
+        if (data.activeVotes) {
+          setActiveVotes(data.activeVotes);
+          localStorage.setItem("voter_active_votes", JSON.stringify(data.activeVotes));
+          if (data.activeVotes.length > 0) {
+            setActiveVote(data.activeVotes[data.activeVotes.length - 1]);
+            localStorage.setItem("voter_active_vote", JSON.stringify(data.activeVotes[data.activeVotes.length - 1]));
+          } else {
+            setActiveVote(null);
+            localStorage.removeItem("voter_active_vote");
+          }
         } else {
+          setActiveVotes([]);
+          localStorage.removeItem("voter_active_votes");
           setActiveVote(null);
           localStorage.removeItem("voter_active_vote");
         }
+
+        if (data.maxVotes) {
+          setMaxVotesLimit(data.maxVotes);
+        }
+
         return true;
       } else {
         const errorData = await res.json();
@@ -175,6 +220,10 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const vote = await res.json();
         
+        const updatedVotes = [...activeVotes, vote];
+        setActiveVotes(updatedVotes);
+        localStorage.setItem("voter_active_votes", JSON.stringify(updatedVotes));
+        
         setActiveVote(vote);
         localStorage.setItem("voter_active_vote", JSON.stringify(vote));
         
@@ -202,6 +251,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         isShortlisted,
         visitor,
         activeVote,
+        activeVotes,
+        maxVotesLimit,
         verifyOTP,
         submitVote,
         isDrawerOpen,
@@ -211,7 +262,8 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         groupsList,
         refreshGroupsList,
         isVoteUnlocked,
-        unlockVoting
+        unlockVoting,
+        refreshSettings
       }}
     >
       {children}

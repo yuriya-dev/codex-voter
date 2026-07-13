@@ -28,9 +28,47 @@ export default function AdminManagementPage() {
   const [statusMessage, setStatusMessage] = useState({ text: "", type: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Settings State
+  const [maxVotes, setMaxVotes] = useState(3);
+
   useEffect(() => {
     refreshGroupsList();
+    const fetchMaxVotes = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          setMaxVotes(data.max_votes || 3);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil limit voting:", err);
+      }
+    };
+    fetchMaxVotes();
   }, []);
+
+  const handleSaveMaxVotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_votes: maxVotes })
+      });
+
+      if (res.ok) {
+        setStatusMessage({ text: `Batas voting berhasil diubah menjadi ${maxVotes} kelompok!`, type: "success" });
+      } else {
+        const errData = await res.json();
+        setStatusMessage({ text: errData.error || "Gagal mengubah batas voting.", type: "error" });
+      }
+    } catch (err) {
+      setStatusMessage({ text: "Koneksi backend gagal.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // CSV Parser
   const parseCSV = (text: string) => {
@@ -234,6 +272,41 @@ export default function AdminManagementPage() {
           {/* Kolom Kiri: Upload CSV & Form Manual */}
           <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
             
+            {/* 0. Pengaturan Kuota Voting */}
+            <div className="card" style={{ border: "2px solid var(--color-delft-blue)" }}>
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase" }}>
+                Pengaturan Kuota Voting Pengunjung
+              </h3>
+              <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
+                Tentukan jumlah maksimum kelompok terfavorit yang boleh dipilih oleh setiap pengunjung pameran.
+              </p>
+
+              <form onSubmit={handleSaveMaxVotes} style={{ display: "flex", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
+                <div className="form-group" style={{ flex: 1, minWidth: "150px", margin: 0 }}>
+                  <label htmlFor="maxVotesLimitInput" style={{ marginBottom: "8px", display: "block" }}>Batas Maksimum Pilihan:</label>
+                  <input 
+                    id="maxVotesLimitInput"
+                    type="number" 
+                    min={1} 
+                    max={10}
+                    className="form-control" 
+                    value={maxVotes} 
+                    onChange={(e) => setMaxVotes(parseInt(e.target.value) || 1)}
+                    style={{ height: "48px" }}
+                    required 
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="btn btn-primary" 
+                  style={{ height: "48px", padding: "0 24px", whiteSpace: "nowrap" }}
+                >
+                  {loading ? "Menyimpan..." : "Simpan Pengaturan"}
+                </button>
+              </form>
+            </div>
+
             {/* 1. Uploader CSV */}
             <div className="card">
               <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase" }}>

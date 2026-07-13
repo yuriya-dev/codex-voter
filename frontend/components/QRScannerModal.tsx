@@ -2,16 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
-import { X, Camera, Scan, CheckCircle } from "lucide-react";
+import { X, Camera, Scan, CheckCircle, Loader2 } from "lucide-react";
 import { Group } from "@/lib/data";
 
 export default function QRScannerModal() {
   const { qrScannerOpen, setQrScannerOpen, addToShortlist, groupsList, unlockVoting } = useVoter();
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [cameraStatus, setCameraStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [simulatedScanResult, setSimulatedScanResult] = useState<Group | null>(null);
   const [simulatedUnlockResult, setSimulatedUnlockResult] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const activeStreamRef = useRef<MediaStream | null>(null);
 
   const handleSimulateUnlock = () => {
     setSimulatedUnlockResult(true);
@@ -22,31 +23,54 @@ export default function QRScannerModal() {
     }, 1500);
   };
 
+  // Menghentikan stream kamera jika ada yang aktif
+  const stopCamera = () => {
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach((track) => track.stop());
+      activeStreamRef.current = null;
+    }
+    setStream(null);
+  };
+
+  // Memulai stream kamera
+  const startCamera = async () => {
+    stopCamera();
+    setCameraStatus('loading');
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      activeStreamRef.current = s;
+      setStream(s);
+      setCameraStatus('granted');
+    } catch (err) {
+      console.warn("Kamera tidak diizinkan atau tidak tersedia:", err);
+      setCameraStatus('denied');
+    }
+  };
+
   // Jalankan kamera saat scanner dibuka
   useEffect(() => {
     if (qrScannerOpen) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then((stream) => {
-          setHasCameraPermission(true);
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        })
-        .catch((err) => {
-          console.warn("Kamera tidak diizinkan atau tidak tersedia:", err);
-          setHasCameraPermission(false);
-        });
+      startCamera();
+    } else {
+      stopCamera();
+      setCameraStatus('idle');
     }
 
     return () => {
-      // Matikan kamera saat modal ditutup
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
+      // Pastikan dibersihkan saat unmount
+      if (activeStreamRef.current) {
+        activeStreamRef.current.getTracks().forEach((track) => track.stop());
+        activeStreamRef.current = null;
       }
     };
   }, [qrScannerOpen]);
+
+  // Hubungkan stream ke elemen video setelah video dirender
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, cameraStatus]);
 
   if (!qrScannerOpen) return null;
 
@@ -122,7 +146,7 @@ export default function QRScannerModal() {
           /* Viewfinder Scan */
           <>
             <div className="scanner-viewfinder">
-              {hasCameraPermission ? (
+              {cameraStatus === 'granted' ? (
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -130,7 +154,7 @@ export default function QRScannerModal() {
                   muted 
                   style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-md)" }}
                 />
-              ) : (
+              ) : cameraStatus === 'loading' ? (
                 <div 
                   style={{ 
                     width: "100%", 
@@ -141,13 +165,64 @@ export default function QRScannerModal() {
                     alignItems: "center",
                     padding: "20px",
                     textAlign: "center",
-                    fontSize: "0.8rem",
-                    color: "rgba(255,255,255,0.6)"
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.8)"
                   }}
                 >
-                  <Camera size={40} style={{ marginBottom: "12px", opacity: 0.5 }} />
-                  <p style={{ marginBottom: "8px" }}>Akses kamera tidak aktif.</p>
-                  <p style={{ fontSize: "0.75rem" }}>Gunakan simulasi scan di bawah untuk mencoba fitur ini.</p>
+                  <Loader2 
+                    size={40} 
+                    className="animate-spin"
+                    style={{ color: "var(--color-pistachio)", marginBottom: "12px" }} 
+                  />
+                  <p style={{ fontWeight: "600", marginBottom: "4px" }}>Meminta akses kamera...</p>
+                  <p style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                    Silakan izinkan akses kamera di browser Anda.
+                  </p>
+                </div>
+              ) : (
+                <div 
+                  style={{ 
+                    width: "100%", 
+                    height: "100%", 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    justifyContent: "center", 
+                    alignItems: "center",
+                    padding: "24px 20px",
+                    textAlign: "center",
+                    fontSize: "0.8rem",
+                    color: "rgba(255,255,255,0.7)",
+                    background: "rgba(255, 99, 99, 0.05)"
+                  }}
+                >
+                  <Camera size={40} style={{ marginBottom: "12px", color: "#ff6b6b", opacity: 0.8 }} />
+                  <p style={{ marginBottom: "6px", fontWeight: "600", color: "#ff6b6b", fontSize: "0.9rem" }}>
+                    Akses Kamera Tidak Aktif
+                  </p>
+                  <p style={{ fontSize: "0.75rem", lineHeight: "1.4", marginBottom: "16px", opacity: 0.8 }}>
+                    Izin kamera belum diberikan atau diblokir. Klik ikon gembok di sebelah alamat URL browser Anda untuk mengaktifkan izin kamera.
+                  </p>
+                  <button
+                    onClick={startCamera}
+                    style={{
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.3)",
+                      color: "white",
+                      padding: "8px 16px",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: "0.75rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      transition: "var(--transition-fast)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                  >
+                    🔄 Aktifkan Kamera
+                  </button>
                 </div>
               )}
             </div>

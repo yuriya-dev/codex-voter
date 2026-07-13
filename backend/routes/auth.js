@@ -70,12 +70,28 @@ router.post("/verify", async (req, res) => {
       .eq('visitor_identifier', identifierHash);
       
     if (visitorVotesErr) throw visitorVotesErr;
-    const existingVote = visitorVotes.length > 0 ? mapVote(visitorVotes[0]) : null;
+
+    // Get max votes limit
+    let maxVotes = 3;
+    try {
+      const { data: settingsData } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "max_votes")
+        .single();
+      if (settingsData && settingsData.value) {
+        maxVotes = parseInt(settingsData.value) || 3;
+      }
+    } catch (err) {}
+
+    const mappedVotes = visitorVotes.map(mapVote);
+    const hasVotedAll = mappedVotes.length >= maxVotes;
 
     res.json({
       visitor,
-      hasVoted: !!existingVote || ipHasVoted,
-      activeVote: existingVote || null
+      hasVoted: hasVotedAll,
+      activeVotes: mappedVotes,
+      maxVotes
     });
   } catch (error) {
     console.error("POST /api/auth/verify error:", error);

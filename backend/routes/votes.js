@@ -3,7 +3,21 @@ const router = express.Router();
 const supabase = require("../config/supabase");
 const { mapGroup, mapVote, addAuditLog, getClientIp } = require("../utils/helpers");
 
-// 3. Cast Vote (Enforces 1 vote per visitor and 1 vote per IP)
+// Helper to get max votes limit
+async function getMaxVotesLimit() {
+  try {
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "max_votes")
+      .single();
+    return data && data.value ? parseInt(data.value) || 3 : 3;
+  } catch (err) {
+    return 3;
+  }
+}
+
+// 3. Cast Vote (Enforces max votes per visitor constraint)
 router.post("/", async (req, res) => {
   const { visitorIdentifier, groupId } = req.body;
   const ipAddress = getClientIp(req);
@@ -13,28 +27,38 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // 1. Enforce 1 visitor = 1 vote constraint
+    const maxVotes = await getMaxVotesLimit();
+
+    // 1. Get all votes cast by this visitor
     const { data: visitorVotes, error: vvErr } = await supabase
       .from('votes')
       .select('*')
       .eq('visitor_identifier', visitorIdentifier);
     if (vvErr) throw vvErr;
 
-    if (visitorVotes.length > 0) {
-      await addAuditLog("Double Vote Denied", `Mencegah vote ganda dari identitas: ${visitorIdentifier}`, "error");
-      return res.status(403).json({ error: "Nama Anda sudah tercatat memberikan suara!" });
+    // Check if already voted for this specific group
+    const alreadyVotedForGroup = visitorVotes.some(v => v.group_id === groupId);
+    if (alreadyVotedForGroup) {
+      return res.status(403).json({ error: "Anda sudah memberikan suara untuk kelompok ini!" });
     }
 
-    // 2. Enforce 1 IP = 1 vote constraint (Duplicate IP prevention)
+    // Check if visitor has reached the maximum vote limit
+    if (visitorVotes.length >= maxVotes) {
+      await addAuditLog("Vote Denied", `Mencegah vote tambahan dari identitas: ${visitorIdentifier} (batas ${maxVotes} tercapai)`, "error");
+      return res.status(403).json({ error: `Anda sudah mencapai batas maksimum ${maxVotes} pilihan kelompok!` });
+    }
+
+    // 2. Enforce unique visitors count per IP to prevent spam (max 5 unique visitors per IP)
     const { data: ipVotes, error: ipvErr } = await supabase
       .from('votes')
       .select('*')
       .eq('ip', ipAddress);
     if (ipvErr) throw ipvErr;
 
-    if (ipVotes.length > 0) {
-      await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress}`, "error");
-      return res.status(403).json({ error: "Perangkat/IP ini sudah digunakan untuk memberikan suara!" });
+    const uniqueVisitorsFromIp = new Set(ipVotes.map(v => v.visitor_identifier));
+    if (uniqueVisitorsFromIp.size >= 5 && !uniqueVisitorsFromIp.has(visitorIdentifier)) {
+      await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress} (batas 5 pengunjung unik terlampaui)`, "error");
+      return res.status(403).json({ error: "Perangkat/IP ini sudah melebihi batas kuota pemilih unik pameran!" });
     }
 
     // 3. Verify group exists
@@ -65,12 +89,20 @@ router.post("/", async (req, res) => {
       .select()
       .single();
     
-    if (insErr) throw insErr;
+    if (insErr) {
+      // If the unique constraint in DB is not dropped yet, output a friendly error
+      if (insErr.code === '23505') {
+        return res.status(403).json({ 
+          error: "Sistem mencatat Anda sudah pernah melakukan voting. (Admin: Harap jalankan migrasi SQL di Supabase untuk mengizinkan multi-voting)." 
+        });
+      }
+      throw insErr;
+    }
     const newVote = mapVote(insertedVote);
 
     await addAuditLog(
       "Vote Submitted", 
-      `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress}`, 
+      `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress} (Suara ke-${visitorVotes.length + 1}/${maxVotes})`, 
       "success"
     );
 

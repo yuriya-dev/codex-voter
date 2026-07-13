@@ -6,6 +6,7 @@ const authRouter = require("./routes/auth");
 const votesRouter = require("./routes/votes");
 const dashboardRouter = require("./routes/dashboard");
 const adminRouter = require("./routes/admin");
+const settingsRouter = require("./routes/settings");
 
 const app = express();
 
@@ -27,5 +28,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/votes", votesRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/settings", settingsRouter);
 
 module.exports = app;
