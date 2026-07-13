@@ -5,7 +5,7 @@ import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLoginForm from "@/components/AdminLoginForm";
-import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard } from "lucide-react";
+import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
 
 const BACKEND_URL = getBackendUrl();
@@ -13,6 +13,199 @@ const BACKEND_URL = getBackendUrl();
 export default function AdminManagementPage() {
   const { groupsList, refreshGroupsList } = useVoter();
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"groups" | "qr">("groups");
+  const [origin, setOrigin] = useState("http://localhost:3030");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  const getQrUrl = (data: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
+
+  const printSingleQR = (title: string, subtitle: string, url: string) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR - ${title}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              text-align: center;
+              color: #1d2a62;
+              background-color: #ffffff;
+            }
+            .card {
+              border: 3px solid #1d2a62;
+              border-radius: 8px;
+              padding: 40px;
+              max-width: 400px;
+              box-shadow: 6px 6px 0px 0px #1d2a62;
+              background-color: #ffffff;
+              display: inline-block;
+            }
+            h1 {
+              font-size: 24px;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            p {
+              font-size: 14px;
+              opacity: 0.8;
+              margin-top: 0;
+              margin-bottom: 25px;
+            }
+            img {
+              width: 250px;
+              height: 250px;
+              border: 2px solid #1d2a62;
+              padding: 10px;
+              border-radius: 4px;
+            }
+            .footer-text {
+              margin-top: 25px;
+              font-size: 12px;
+              font-weight: bold;
+              opacity: 0.6;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>${title}</h1>
+            <p>${subtitle}</p>
+            <img src="${getQrUrl(url)}" alt="QR Code" />
+            <div class="footer-text">SCAN UNTUK MENGAKSES</div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const printAllGroupQRs = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    
+    let qrCardsHtml = groupsList.map(group => {
+      const groupUrl = `${origin}/kelompok/${group.slug}?from=qr`;
+      return `
+        <div class="card">
+          <div class="booth-number">${group.booth_number}</div>
+          <h2>${group.name}</h2>
+          <p class="category">${group.category}</p>
+          <img src="${getQrUrl(groupUrl)}" alt="QR Code" />
+          <div class="footer-text">SCAN BOOTH UNTUK SHORTLIST</div>
+        </div>
+      `;
+    }).join("");
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Semua QR Kelompok</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              margin: 20px;
+              background-color: #fff;
+              color: #1d2a62;
+            }
+            .grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 30px;
+            }
+            .card {
+              border: 3px solid #1d2a62;
+              border-radius: 8px;
+              padding: 25px;
+              text-align: center;
+              background-color: #ffffff;
+              box-shadow: 4px 4px 0px 0px #1d2a62;
+              page-break-inside: avoid;
+              position: relative;
+            }
+            .booth-number {
+              background-color: #afd06e;
+              color: #1d2a62;
+              border: 2px solid #1d2a62;
+              display: inline-block;
+              padding: 4px 12px;
+              font-weight: bold;
+              font-size: 14px;
+              border-radius: 4px;
+              margin-bottom: 10px;
+            }
+            h2 {
+              font-size: 16px;
+              margin: 5px 0;
+              text-transform: uppercase;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .category {
+              font-size: 12px;
+              opacity: 0.7;
+              margin: 0 0 15px 0;
+            }
+            img {
+              width: 180px;
+              height: 180px;
+              border: 2px solid #1d2a62;
+              padding: 8px;
+              border-radius: 4px;
+            }
+            .footer-text {
+              margin-top: 15px;
+              font-size: 11px;
+              font-weight: bold;
+              opacity: 0.6;
+            }
+            @media print {
+              body {
+                margin: 0;
+              }
+              .card {
+                box-shadow: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">Daftar QR Code Kelompok Capstone</h1>
+          <div class="grid">
+            ${qrCardsHtml}
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   // Manual Form State
   const [name, setName] = useState("");
@@ -341,8 +534,62 @@ export default function AdminManagementPage() {
           </div>
         )}
 
-        {/* Layout Utama Split Asimetris */}
-        <div className="split-layout">
+        {/* Tab Switcher */}
+        <div style={{ 
+          display: "flex", 
+          gap: "12px", 
+          marginBottom: "32px",
+          borderBottom: "2px solid var(--color-delft-blue)",
+          paddingBottom: "1px"
+        }}>
+          <button
+            onClick={() => setActiveTab("groups")}
+            style={{
+              padding: "12px 24px",
+              fontSize: "0.95rem",
+              fontWeight: "700",
+              fontFamily: "var(--font-heading)",
+              textTransform: "uppercase",
+              border: "2px solid var(--color-delft-blue)",
+              borderBottom: activeTab === "groups" ? "2px solid white" : "2px solid var(--color-delft-blue)",
+              backgroundColor: activeTab === "groups" ? "white" : "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              cursor: "pointer",
+              borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
+              marginBottom: "-2px",
+              zIndex: activeTab === "groups" ? 2 : 1,
+              boxShadow: activeTab === "groups" ? "none" : "3px 3px 0 0 var(--color-delft-blue)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            📁 Kelompok & Pengaturan
+          </button>
+          <button
+            onClick={() => setActiveTab("qr")}
+            style={{
+              padding: "12px 24px",
+              fontSize: "0.95rem",
+              fontWeight: "700",
+              fontFamily: "var(--font-heading)",
+              textTransform: "uppercase",
+              border: "2px solid var(--color-delft-blue)",
+              borderBottom: activeTab === "qr" ? "2px solid white" : "2px solid var(--color-delft-blue)",
+              backgroundColor: activeTab === "qr" ? "white" : "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              cursor: "pointer",
+              borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
+              marginBottom: "-2px",
+              zIndex: activeTab === "qr" ? 2 : 1,
+              boxShadow: activeTab === "qr" ? "none" : "3px 3px 0 0 var(--color-delft-blue)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            📷 Manajemen QR Code
+          </button>
+        </div>
+
+        {activeTab === "groups" && (
+          <div className="split-layout">
           
           {/* Kolom Kiri: Upload CSV & Form Manual */}
           <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
@@ -608,6 +855,208 @@ export default function AdminManagementPage() {
           </div>
 
         </div>
+        )}
+
+        {activeTab === "qr" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
+            {/* Row 1: Web Utama & Pintu Keluar QR Codes */}
+            <div className="split-layout" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+              {/* Card 1: QR Web Utama */}
+              <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "16px" }}>
+                <span className="badge" style={{ backgroundColor: "var(--color-carolina-blue)" }}>Web Utama</span>
+                <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", textTransform: "uppercase" }}>QR Website Utama</h3>
+                <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                  Ditempatkan di meja registrasi agar pengunjung dapat langsung membuka situs web voting.
+                </p>
+                <div style={{ 
+                  border: "3px solid var(--color-delft-blue)", 
+                  padding: "12px", 
+                  borderRadius: "var(--radius-sm)", 
+                  backgroundColor: "white",
+                  boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
+                }}>
+                  <img 
+                    src={getQrUrl(`${origin}/`)} 
+                    alt="QR Web Utama" 
+                    style={{ width: "200px", height: "200px", display: "block" }} 
+                  />
+                </div>
+                <div style={{ fontSize: "0.75rem", fontFamily: "monospace", wordBreak: "break-all", background: "var(--color-beige)", padding: "4px 8px", border: "1px dashed var(--color-delft-blue)" }}>
+                  {origin}/
+                </div>
+                <div style={{ display: "flex", gap: "12px", width: "100%" }}>
+                  <button 
+                    onClick={() => printSingleQR("Website Utama", "Scan untuk masuk ke sistem voting", `${origin}/`)}
+                    className="btn btn-primary" 
+                    style={{ flex: 1, gap: "8px", justifyContent: "center", height: "42px" }}
+                  >
+                    <Printer size={16} /> Print
+                  </button>
+                  <a 
+                    href={getQrUrl(`${origin}/`)} 
+                    download="qr_web_utama.png"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary" 
+                    style={{ flex: 1, gap: "8px", justifyContent: "center", height: "42px", display: "inline-flex", alignItems: "center" }}
+                  >
+                    <Download size={16} /> Unduh
+                  </a>
+                </div>
+              </div>
+
+              {/* Card 2: QR Pintu Keluar */}
+              <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "16px" }}>
+                <span className="badge" style={{ backgroundColor: "#ff6b6b", color: "white" }}>Exit Gate Only</span>
+                <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", textTransform: "uppercase" }}>QR Pintu Keluar (Exit Gate)</h3>
+                <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                  Ditempatkan di pintu keluar. Wajib dipindai pengunjung untuk membuka kunci tombol kirim suara.
+                </p>
+                <div style={{ 
+                  border: "3px solid var(--color-delft-blue)", 
+                  padding: "12px", 
+                  borderRadius: "var(--radius-sm)", 
+                  backgroundColor: "white",
+                  boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
+                }}>
+                  <img 
+                    src={getQrUrl(`${origin}/?unlock=exit`)} 
+                    alt="QR Pintu Keluar" 
+                    style={{ width: "200px", height: "200px", display: "block" }} 
+                  />
+                </div>
+                <div style={{ fontSize: "0.75rem", fontFamily: "monospace", wordBreak: "break-all", background: "var(--color-beige)", padding: "4px 8px", border: "1px dashed var(--color-delft-blue)" }}>
+                  {origin}/?unlock=exit
+                </div>
+                <div style={{ display: "flex", gap: "12px", width: "100%" }}>
+                  <button 
+                    onClick={() => printSingleQR("Pintu Keluar (Exit Gate)", "Pindai untuk membuka kunci tombol voting", `${origin}/?unlock=exit`)}
+                    className="btn btn-primary" 
+                    style={{ flex: 1, gap: "8px", justifyContent: "center", height: "42px" }}
+                  >
+                    <Printer size={16} /> Print
+                  </button>
+                  <a 
+                    href={getQrUrl(`${origin}/?unlock=exit`)} 
+                    download="qr_pintu_keluar.png"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary" 
+                    style={{ flex: 1, gap: "8px", justifyContent: "center", height: "42px", display: "inline-flex", alignItems: "center" }}
+                  >
+                    <Download size={16} /> Unduh
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Kelompok QR Codes Grid */}
+            <div className="card" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                  <h3 style={{ fontSize: "1.3rem", fontFamily: "var(--font-heading)", textTransform: "uppercase" }}>QR Code Kelompok Capstone ({groupsList.length})</h3>
+                  <p style={{ fontSize: "0.85rem", opacity: 0.8, marginTop: "4px" }}>
+                    QR Code otomatis dibuat untuk setiap kelompok baru. Tempelkan di booth kelompok fisik agar pengunjung dapat memindai untuk menambahkannya ke shortlist.
+                  </p>
+                </div>
+                <button 
+                  onClick={printAllGroupQRs}
+                  className="btn btn-primary"
+                  style={{ gap: "8px", height: "44px", boxShadow: "4px 4px 0 0 var(--color-delft-blue)" }}
+                  disabled={groupsList.length === 0}
+                >
+                  <Printer size={18} /> Print Semua QR Kelompok (Grid)
+                </button>
+              </div>
+
+              {groupsList.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px", border: "2px dashed var(--color-delft-blue)", borderRadius: "var(--radius-sm)" }}>
+                  <p style={{ fontWeight: 600 }}>Belum ada data kelompok.</p>
+                  <p style={{ fontSize: "0.8rem", opacity: 0.7 }}>Tambahkan kelompok di tab "Kelompok & Pengaturan" terlebih dahulu.</p>
+                </div>
+              ) : (
+                <div style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", 
+                  gap: "20px" 
+                }}>
+                  {groupsList.map((group) => {
+                    const groupUrl = `${origin}/kelompok/${group.slug}?from=qr`;
+                    return (
+                      <div 
+                        key={group.id} 
+                        style={{ 
+                          border: "2px solid var(--color-delft-blue)", 
+                          borderRadius: "var(--radius-sm)", 
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          textAlign: "center",
+                          backgroundColor: "var(--color-white)",
+                          boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                          gap: "12px"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "white", backgroundColor: "var(--color-delft-blue)", padding: "2px 8px", borderRadius: "2px" }}>
+                            {group.booth_number}
+                          </span>
+                        </div>
+                        <h4 style={{ fontSize: "0.9rem", color: "var(--color-delft-blue)", fontWeight: "700", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
+                          {group.name}
+                        </h4>
+                        <div style={{ 
+                          border: "1px solid var(--color-delft-blue)",
+                          padding: "6px",
+                          borderRadius: "var(--radius-sm)",
+                          backgroundColor: "white"
+                        }}>
+                          <img 
+                            src={getQrUrl(groupUrl)} 
+                            alt={`QR ${group.booth_number}`} 
+                            style={{ width: "120px", height: "120px", display: "block" }} 
+                          />
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", width: "100%", marginTop: "auto" }}>
+                          <button 
+                            onClick={() => printSingleQR(group.booth_number, group.name, groupUrl)}
+                            className="btn btn-secondary" 
+                            style={{ flex: 1, padding: "0", height: "36px", fontSize: "0.8rem", gap: "4px", justifyContent: "center" }}
+                          >
+                            <Printer size={14} /> Print
+                          </button>
+                          <a 
+                            href={getQrUrl(groupUrl)} 
+                            download={`qr_${group.booth_number}.png`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn" 
+                            style={{ 
+                              flex: 1, 
+                              padding: "0", 
+                              height: "36px", 
+                              fontSize: "0.8rem", 
+                              gap: "4px", 
+                              justifyContent: "center", 
+                              display: "inline-flex", 
+                              alignItems: "center",
+                              border: "1px solid var(--color-delft-blue)",
+                              backgroundColor: "var(--color-white)",
+                              color: "var(--color-delft-blue)"
+                            }}
+                          >
+                            <Download size={14} /> Unduh
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </>
     )}
       </main>

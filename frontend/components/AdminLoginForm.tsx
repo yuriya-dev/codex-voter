@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Loader2, KeyRound, ArrowLeft } from "lucide-react";
+import { Lock, Loader2, KeyRound, ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
 import { getBackendUrl } from "@/lib/config";
 
@@ -10,12 +10,17 @@ interface AdminLoginFormProps {
 }
 
 export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username) {
+      setError("Username wajib diisi");
+      return;
+    }
     if (!password) {
       setError("Password wajib diisi");
       return;
@@ -29,15 +34,16 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
       const res = await fetch(`${BACKEND_URL}/api/auth/admin-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ username, password })
       });
 
       if (res.ok) {
         const data = await res.json();
+        localStorage.setItem("adminToken", data.token);
         onLoginSuccess(data.token);
       } else {
         const errData = await res.json();
-        setError(errData.error || "Password admin salah");
+        setError(errData.error || "Username atau Password admin salah");
       }
     } catch (err) {
       setError("Koneksi backend gagal.");
@@ -92,11 +98,40 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
             Admin Authentication
           </h2>
           <p style={{ fontSize: "0.85rem", color: "var(--color-delft-blue)", opacity: 0.8, fontWeight: "500" }}>
-            Masukkan password administrator untuk melanjutkan.
+            Masukkan username dan password administrator untuk melanjutkan.
           </p>
         </div>
 
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
+              Username Admin
+            </label>
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Masukkan username admin..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                style={{
+                  paddingLeft: "42px"
+                }}
+              />
+              <User 
+                size={18} 
+                style={{ 
+                  position: "absolute", 
+                  left: "14px", 
+                  top: "50%", 
+                  transform: "translateY(-50%)", 
+                  color: "var(--color-delft-blue)",
+                  opacity: 0.7 
+                }} 
+              />
+            </div>
+          </div>
+
           <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <label style={{ fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
               Password Admin

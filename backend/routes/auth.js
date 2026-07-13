@@ -101,11 +101,20 @@ router.post("/verify", async (req, res) => {
 
 // Admin Login verification
 router.post("/admin-login", (req, res) => {
-  const { password } = req.body;
+  const { username, password } = req.body;
   const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+  const expectedUsername = "panitiacodex";
+
+  if (!username) {
+    return res.status(400).json({ error: "Username wajib diisi" });
+  }
 
   if (!password) {
     return res.status(400).json({ error: "Password wajib diisi" });
+  }
+
+  if (username !== expectedUsername) {
+    return res.status(401).json({ error: "Username admin salah" });
   }
 
   if (password === adminPassword) {

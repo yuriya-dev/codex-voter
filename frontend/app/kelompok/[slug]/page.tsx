@@ -14,12 +14,26 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
   
   const group = groupsList.find((g) => g.slug === slug);
   const [active, setActive] = useState(false);
+  const [scannedFromQR, setScannedFromQR] = useState(false);
 
   useEffect(() => {
     if (group) {
       setActive(isShortlisted(group.id));
     }
   }, [group, isShortlisted]);
+
+  useEffect(() => {
+    if (group && typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("from") === "qr" || urlParams.get("scan") === "true") {
+        setScannedFromQR(true);
+        if (!isShortlisted(group.id)) {
+          addToShortlist(group.id);
+          setActive(true);
+        }
+      }
+    }
+  }, [group, addToShortlist, isShortlisted]);
 
   if (!group) {
     return (
@@ -76,6 +90,32 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
           <ArrowLeft size={16} />
           Kembali ke Daftar Kelompok
         </Link>
+
+        {scannedFromQR && (
+          <div 
+            style={{ 
+              padding: "16px 20px", 
+              border: "2px solid var(--color-delft-blue)",
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "rgba(175, 208, 110, 0.15)",
+              color: "var(--color-delft-blue)",
+              marginBottom: "24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+              animation: "heartPulse 0.4s"
+            }}
+          >
+            <span style={{ fontSize: "1.5rem" }}>✨</span>
+            <div>
+              <strong style={{ display: "block" }}>Berhasil Memindai QR Code!</strong>
+              <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
+                Kelompok <strong>{group.name}</strong> telah otomatis ditambahkan ke daftar shortlist favorit Anda.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Banner Utama Asimetris */}
         <div className="detail-hero-card">
