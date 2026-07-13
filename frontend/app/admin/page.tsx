@@ -1,26 +1,35 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
+import { useSearchParams } from "next/navigation";
 
 const BACKEND_URL = getBackendUrl();
 
-export default function AdminManagementPage() {
+function AdminManagementContent() {
   const { groupsList, refreshGroupsList } = useVoter();
   const [adminToken, setAdminToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"groups" | "qr">("groups");
+  const [activeTab, setActiveTab] = useState<"groups" | "qr" | "voting">("groups");
   const [origin, setOrigin] = useState("http://localhost:3030");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
   }, []);
+
+  useEffect(() => {
+    if (tabParam === "groups" || tabParam === "qr" || tabParam === "voting") {
+      setActiveTab(tabParam as "groups" | "qr" | "voting");
+    }
+  }, [tabParam]);
 
   const getQrUrl = (data: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
 
@@ -225,6 +234,11 @@ export default function AdminManagementPage() {
 
   // Settings State
   const [maxVotes, setMaxVotes] = useState(3);
+  const [leaderboardVisible, setLeaderboardVisible] = useState("false");
+  const [votingStatus, setVotingStatus] = useState("not_started");
+  const [votingEndTime, setVotingEndTime] = useState("");
+  const [timerMinutes, setTimerMinutes] = useState(60);
+  const [adminTimeLeft, setAdminTimeLeft] = useState<string>("");
 
   // Cek token saat halaman dibuka
   useEffect(() => {
@@ -239,27 +253,58 @@ export default function AdminManagementPage() {
     if (!adminToken) return;
 
     refreshGroupsList();
-    const fetchMaxVotes = async () => {
+    const fetchSettings = async () => {
       try {
         const res = await fetch(`${BACKEND_URL}/api/settings`);
         if (res.ok) {
           const data = await res.json();
           setMaxVotes(data.max_votes || 3);
+          setLeaderboardVisible(data.leaderboard_visible || "false");
+          setVotingStatus(data.voting_status || "not_started");
+          setVotingEndTime(data.voting_end_time || "");
         }
       } catch (err) {
-        console.error("Gagal mengambil limit voting:", err);
+        console.error("Gagal mengambil pengaturan:", err);
       }
     };
-    fetchMaxVotes();
+    fetchSettings();
   }, [adminToken]);
+
+  // Timer countdown untuk tampilan admin
+  useEffect(() => {
+    if (votingStatus !== "started" || !votingEndTime) {
+      setAdminTimeLeft("");
+      return;
+    }
+
+    const calculateTime = () => {
+      const diff = +new Date(votingEndTime) - +new Date();
+      if (diff <= 0) {
+        setAdminTimeLeft("Waktu Habis");
+        return;
+      }
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff / 1000 / 60) % 60);
+      const secs = Math.floor((diff / 1000) % 60);
+      setAdminTimeLeft(`${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [votingStatus, votingEndTime]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     setAdminToken(null);
   };
 
-  const handleSaveMaxVotes = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSettings = async (updates: {
+    max_votes?: number;
+    leaderboard_visible?: string;
+    voting_status?: string;
+    voting_end_time?: string;
+  }) => {
     setLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/settings`, {
@@ -268,7 +313,7 @@ export default function AdminManagementPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`
         },
-        body: JSON.stringify({ max_votes: maxVotes })
+        body: JSON.stringify(updates)
       });
 
       if (res.status === 401) {
@@ -278,16 +323,24 @@ export default function AdminManagementPage() {
       }
 
       if (res.ok) {
-        setStatusMessage({ text: `Batas voting berhasil diubah menjadi ${maxVotes} kelompok!`, type: "success" });
+        setStatusMessage({ text: "Pengaturan berhasil diperbarui!", type: "success" });
+        if (updates.max_votes !== undefined) setMaxVotes(updates.max_votes);
+        if (updates.leaderboard_visible !== undefined) setLeaderboardVisible(updates.leaderboard_visible);
+        if (updates.voting_status !== undefined) setVotingStatus(updates.voting_status);
+        if (updates.voting_end_time !== undefined) setVotingEndTime(updates.voting_end_time);
       } else {
-        const errData = await res.json();
-        setStatusMessage({ text: errData.error || "Gagal mengubah batas voting.", type: "error" });
+        setStatusMessage({ text: "Gagal menyimpan pengaturan.", type: "error" });
       }
     } catch (err) {
       setStatusMessage({ text: "Koneksi backend gagal.", type: "error" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveMaxVotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSaveSettings({ max_votes: maxVotes });
   };
 
   // CSV Parser
@@ -479,38 +532,6 @@ export default function AdminManagementPage() {
                 <span className="bg-text-shadow">MANAGE</span>
                 <h1 style={{ color: "var(--color-delft-blue)" }}>Manajemen Kelompok Capstone</h1>
               </div>
-              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <Link 
-                  href="/dashboard" 
-                  className="btn btn-secondary"
-                  style={{ 
-                    marginBottom: "10px", 
-                    gap: "8px", 
-                    height: "44px", 
-                    borderWidth: "2px", 
-                    boxShadow: "3px 3px 0px var(--color-delft-blue)" 
-                  }}
-                >
-                  <LayoutDashboard size={16} />
-                  Dashboard Panitia (Logs & Ekspor)
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="btn"
-                  style={{
-                    marginBottom: "10px",
-                    background: "#ff6b6b",
-                    color: "white",
-                    border: "2px solid var(--color-delft-blue)",
-                    boxShadow: "3px 3px 0px var(--color-delft-blue)",
-                    height: "44px",
-                    cursor: "pointer",
-                    fontWeight: "700"
-                  }}
-                >
-                  Logout
-                </button>
-              </div>
             </div>
 
         {/* Notifikasi Status */}
@@ -535,18 +556,22 @@ export default function AdminManagementPage() {
         )}
 
         {/* Tab Switcher */}
-        <div style={{ 
-          display: "flex", 
-          gap: "12px", 
-          marginBottom: "32px",
-          borderBottom: "2px solid var(--color-delft-blue)",
-          paddingBottom: "1px"
-        }}>
+        <div 
+          className="admin-tab-switcher"
+          style={{ 
+            display: "flex", 
+            gap: "12px", 
+            marginBottom: "32px",
+            borderBottom: "2px solid var(--color-delft-blue)",
+            paddingBottom: "1px",
+            flexWrap: "wrap"
+          }}
+        >
           <button
             onClick={() => setActiveTab("groups")}
             style={{
-              padding: "12px 24px",
-              fontSize: "0.95rem",
+              padding: "12px 20px",
+              fontSize: "0.9rem",
               fontWeight: "700",
               fontFamily: "var(--font-heading)",
               textTransform: "uppercase",
@@ -562,13 +587,13 @@ export default function AdminManagementPage() {
               transition: "all 0.2s ease"
             }}
           >
-            📁 Kelompok & Pengaturan
+            📁 Manajemen Kelompok
           </button>
           <button
             onClick={() => setActiveTab("qr")}
             style={{
-              padding: "12px 24px",
-              fontSize: "0.95rem",
+              padding: "12px 20px",
+              fontSize: "0.9rem",
               fontWeight: "700",
               fontFamily: "var(--font-heading)",
               textTransform: "uppercase",
@@ -586,6 +611,28 @@ export default function AdminManagementPage() {
           >
             📷 Manajemen QR Code
           </button>
+          <button
+            onClick={() => setActiveTab("voting")}
+            style={{
+              padding: "12px 20px",
+              fontSize: "0.9rem",
+              fontWeight: "700",
+              fontFamily: "var(--font-heading)",
+              textTransform: "uppercase",
+              border: "2px solid var(--color-delft-blue)",
+              borderBottom: activeTab === "voting" ? "2px solid white" : "2px solid var(--color-delft-blue)",
+              backgroundColor: activeTab === "voting" ? "white" : "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              cursor: "pointer",
+              borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
+              marginBottom: "-2px",
+              zIndex: activeTab === "voting" ? 2 : 1,
+              boxShadow: activeTab === "voting" ? "none" : "3px 3px 0 0 var(--color-delft-blue)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            🗳️ Manajemen Voting
+          </button>
         </div>
 
         {activeTab === "groups" && (
@@ -594,41 +641,6 @@ export default function AdminManagementPage() {
           {/* Kolom Kiri: Upload CSV & Form Manual */}
           <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
             
-            {/* 0. Pengaturan Kuota Voting */}
-            <div className="card" style={{ border: "2px solid var(--color-delft-blue)" }}>
-              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase" }}>
-                Pengaturan Kuota Voting Pengunjung
-              </h3>
-              <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
-                Tentukan jumlah maksimum kelompok terfavorit yang boleh dipilih oleh setiap pengunjung pameran.
-              </p>
-
-              <form onSubmit={handleSaveMaxVotes} style={{ display: "flex", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
-                <div className="form-group" style={{ flex: 1, minWidth: "150px", margin: 0 }}>
-                  <label htmlFor="maxVotesLimitInput" style={{ marginBottom: "8px", display: "block" }}>Batas Maksimum Pilihan:</label>
-                  <input 
-                    id="maxVotesLimitInput"
-                    type="number" 
-                    min={1} 
-                    max={10}
-                    className="form-control" 
-                    value={maxVotes} 
-                    onChange={(e) => setMaxVotes(parseInt(e.target.value) || 1)}
-                    style={{ height: "48px" }}
-                    required 
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="btn btn-primary" 
-                  style={{ height: "48px", padding: "0 24px", whiteSpace: "nowrap" }}
-                >
-                  {loading ? "Menyimpan..." : "Simpan Pengaturan"}
-                </button>
-              </form>
-            </div>
-
             {/* 1. Uploader CSV */}
             <div className="card">
               <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase" }}>
@@ -853,8 +865,195 @@ export default function AdminManagementPage() {
               ))}
             </div>
           </div>
-
         </div>
+      )}
+
+        {activeTab === "voting" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "36px", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+            
+            {/* 0. Pengaturan Kuota Voting */}
+            <div className="card" style={{ border: "2px solid var(--color-delft-blue)" }}>
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase" }}>
+                Pengaturan Kuota Voting Pengunjung
+              </h3>
+              <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
+                Tentukan jumlah maksimum kelompok terfavorit yang boleh dipilih oleh setiap pengunjung pameran.
+              </p>
+
+              <form onSubmit={handleSaveMaxVotes} style={{ display: "flex", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
+                <div className="form-group" style={{ flex: 1, minWidth: "150px", margin: 0 }}>
+                  <label htmlFor="maxVotesLimitInput" style={{ marginBottom: "8px", display: "block" }}>Batas Maksimum Pilihan:</label>
+                  <input 
+                    id="maxVotesLimitInput"
+                    type="number" 
+                    min={1} 
+                    max={10}
+                    className="form-control" 
+                    value={maxVotes} 
+                    onChange={(e) => setMaxVotes(parseInt(e.target.value) || 1)}
+                    style={{ height: "48px" }}
+                    required 
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="btn btn-primary" 
+                  style={{ height: "48px", padding: "0 24px", whiteSpace: "nowrap" }}
+                >
+                  {loading ? "Menyimpan..." : "Simpan Pengaturan"}
+                </button>
+              </form>
+            </div>
+
+            {/* 0.1 Pengaturan Sesi Voting & Live Leaderboard */}
+            <div className="card" style={{ border: "2px solid var(--color-delft-blue)", display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div>
+                <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "4px", textTransform: "uppercase" }}>
+                  Kontrol Sesi Voting & Live Leaderboard
+                </h3>
+                <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                  Kelola status mulai/selesai voting, timer mundur, dan status penampilan leaderboard publik.
+                </p>
+              </div>
+
+              {/* Status Sesi & Timer Info */}
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+                gap: "16px",
+                background: "var(--color-beige)",
+                padding: "16px",
+                border: "2px solid var(--color-delft-blue)",
+                borderRadius: "var(--radius-sm)",
+                boxShadow: "2px 2px 0 0 var(--color-delft-blue)"
+              }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", opacity: 0.7 }}>Status Voting:</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                    <span style={{ 
+                      width: "12px", 
+                      height: "12px", 
+                      borderRadius: "50%", 
+                      backgroundColor: votingStatus === "started" ? "#afd06e" : votingStatus === "ended" ? "#ff6b6b" : "var(--color-carolina-blue)" 
+                    }} />
+                    <strong style={{ fontSize: "1rem", textTransform: "uppercase" }}>
+                      {votingStatus === "started" ? "Sesi Berjalan" : votingStatus === "ended" ? "Sesi Selesai" : "Belum Dimulai"}
+                    </strong>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", opacity: 0.7 }}>Timer Sesi:</span>
+                  <div style={{ fontSize: "1.1rem", fontWeight: "bold", marginTop: "4px", fontFamily: "monospace" }}>
+                    {votingStatus === "started" ? (adminTimeLeft || "Menghitung...") : votingStatus === "ended" ? "Waktu Habis" : "Timer Nonaktif"}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", opacity: 0.7 }}>Leaderboard Publik:</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                    <strong style={{ fontSize: "1rem", textTransform: "uppercase", color: leaderboardVisible === "true" ? "var(--color-fern-green)" : "#ff6b6b" }}>
+                      {leaderboardVisible === "true" ? "Ditampilkan" : "Disembunyikan"}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kontrol Sesi */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>Kelola Sesi</span>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" }}>
+                  {votingStatus !== "started" ? (
+                    <div style={{ display: "flex", gap: "12px", flex: 1, minWidth: "240px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <div className="form-group" style={{ flex: 1, minWidth: "100px", margin: 0 }}>
+                        <label style={{ fontSize: "0.75rem", fontWeight: "bold", marginBottom: "8px", display: "block" }}>Durasi (Menit):</label>
+                        <input 
+                          type="number" 
+                          min={1} 
+                          max={360} 
+                          value={timerMinutes} 
+                          onChange={(e) => setTimerMinutes(parseInt(e.target.value) || 1)}
+                          className="form-control"
+                          style={{ height: "48px" }}
+                        />
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const endTime = new Date(Date.now() + timerMinutes * 60 * 1000).toISOString();
+                          handleSaveSettings({ voting_status: "started", voting_end_time: endTime });
+                        }}
+                        className="btn btn-primary"
+                        style={{ height: "48px", flex: 1.5, justifyContent: "center" }}
+                      >
+                        ▶️ Mulai Voting
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => handleSaveSettings({ voting_status: "ended" })}
+                      className="btn"
+                      style={{ 
+                        flex: 1, 
+                        minWidth: "150px", 
+                        height: "48px", 
+                        backgroundColor: "#ff6b6b", 
+                        color: "white",
+                        border: "2px solid var(--color-delft-blue)",
+                        boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                        fontWeight: "bold",
+                        cursor: "pointer"
+                      }}
+                    >
+                      ⏹️ Hentikan Voting
+                    </button>
+                  )}
+
+                  <button 
+                    onClick={() => handleSaveSettings({ voting_status: "not_started", voting_end_time: "" })}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, minWidth: "150px", height: "48px", justifyContent: "center" }}
+                  >
+                    🔄 Reset Sesi
+                  </button>
+                </div>
+              </div>
+
+              {/* Kontrol Leaderboard */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", borderTop: "1px dashed var(--color-delft-blue)", paddingTop: "16px" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>Tampilkan/Sembunyikan Hasil Leaderboard</span>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  <button 
+                    onClick={() => handleSaveSettings({ leaderboard_visible: "true" })}
+                    className="btn btn-primary"
+                    style={{ 
+                      flex: 1, 
+                      minWidth: "160px",
+                      height: "44px", 
+                      backgroundColor: leaderboardVisible === "true" ? "var(--color-fern-green)" : "",
+                      justifyContent: "center"
+                    }}
+                  >
+                    👁️ Buka Leaderboard
+                  </button>
+                  <button 
+                    onClick={() => handleSaveSettings({ leaderboard_visible: "false" })}
+                    className="btn btn-secondary"
+                    style={{ 
+                      flex: 1, 
+                      minWidth: "160px",
+                      height: "44px", 
+                      backgroundColor: leaderboardVisible === "false" ? "#ff6b6b" : "",
+                      color: leaderboardVisible === "false" ? "white" : "",
+                      justifyContent: "center"
+                    }}
+                  >
+                    🙈 Sembunyikan Leaderboard
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "qr" && (
@@ -1061,5 +1260,13 @@ export default function AdminManagementPage() {
     )}
       </main>
     </>
+  );
+}
+
+export default function AdminManagementPage() {
+  return (
+    <Suspense fallback={<div className="container" style={{ padding: "40px", textAlign: "center" }}>Memuat halaman admin...</div>}>
+      <AdminManagementContent />
+    </Suspense>
   );
 }

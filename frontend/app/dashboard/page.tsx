@@ -156,20 +156,6 @@ export default function DashboardPage() {
                 flexWrap: "wrap"
               }}
             >
-              <Link 
-                href="/admin" 
-                className="btn btn-secondary" 
-                style={{ 
-                  gap: "8px", 
-                  fontSize: "0.85rem",
-                  borderWidth: "2px",
-                  boxShadow: "3px 3px 0px var(--color-delft-blue)"
-                }}
-              >
-                <Settings size={16} />
-                Manajemen Kelompok
-              </Link>
-
               <button 
                 onClick={handleExportCSV} 
                 className="btn btn-secondary" 
@@ -182,23 +168,6 @@ export default function DashboardPage() {
               >
                 <Download size={16} />
                 Ekspor Laporan (CSV)
-              </button>
-
-              <button 
-                onClick={handleLogout} 
-                className="btn" 
-                style={{ 
-                  gap: "8px", 
-                  fontSize: "0.85rem",
-                  borderWidth: "2px",
-                  background: "#ff6b6b",
-                  color: "white",
-                  boxShadow: "3px 3px 0px var(--color-delft-blue)",
-                  cursor: "pointer",
-                  fontWeight: "700"
-                }}
-              >
-                Logout
               </button>
             </div>
 

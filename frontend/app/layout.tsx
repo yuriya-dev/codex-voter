@@ -4,6 +4,7 @@ import { VoterProvider } from "@/components/VoterContext";
 import ShortlistDrawer from "@/components/ShortlistDrawer";
 import QRScannerModal from "@/components/QRScannerModal";
 import MobileNavBar from "@/components/MobileNavBar";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "CODEX Voter — Capstone Voting",
@@ -22,7 +23,9 @@ export default function RootLayout({
           {children}
           <ShortlistDrawer />
           <QRScannerModal />
-          <MobileNavBar />
+          <Suspense fallback={null}>
+            <MobileNavBar />
+          </Suspense>
         </VoterProvider>
       </body>
     </html>

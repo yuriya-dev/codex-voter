@@ -843,3 +843,10 @@ a:hover {
   animation: spin 1.2s linear infinite;
 }
 
+/* Sembunyikan tab switcher internal pada halaman admin saat di mobile */
+@media (max-width: 640px) {
+  .admin-tab-switcher {
+    display: none !important;
+  }
+}
+

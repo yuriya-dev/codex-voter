@@ -1,18 +1,85 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useVoter } from "@/components/VoterContext";
-import { Compass, Heart, QrCode, ClipboardCheck, Trophy } from "lucide-react";
+import { Compass, Heart, QrCode, ClipboardCheck, Trophy, FolderCog, LayoutDashboard } from "lucide-react";
 
 export default function MobileNavBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { shortlist, setIsDrawerOpen, setQrScannerOpen } = useVoter();
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<string>("groups");
+
+  const isAdminPath = pathname.startsWith("/admin") || pathname === "/dashboard";
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setAdminToken(localStorage.getItem("adminToken"));
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (tabParam === "groups" || tabParam === "qr" || tabParam === "voting") {
+      setActiveTab(tabParam);
+    } else {
+      if (pathname === "/admin") {
+        setActiveTab("groups");
+      }
+    }
+  }, [pathname, tabParam]);
 
   const handleNavigation = (path: string) => {
     router.push(path);
   };
 
+  // Jika berada di halaman admin
+  if (isAdminPath) {
+    // Jika admin belum login (token kosong), sembunyikan navbar agar tidak merusak tampilan login
+    if (!adminToken) return null;
+
+    // Jika admin sudah login, tampilkan navbar khusus admin (Kelompok, QR Code, Voting, Dashboard)
+    return (
+      <div className="mobile-nav-bar" style={{ borderTop: "2px solid var(--color-delft-blue)", background: "var(--color-white)" }}>
+        <button 
+          className={`mobile-nav-item ${pathname === "/admin" && activeTab === "groups" ? "active" : ""}`}
+          onClick={() => handleNavigation("/admin?tab=groups")}
+        >
+          <FolderCog size={20} />
+          <span>Kelompok</span>
+        </button>
+
+        <button 
+          className={`mobile-nav-item ${pathname === "/admin" && activeTab === "qr" ? "active" : ""}`}
+          onClick={() => handleNavigation("/admin?tab=qr")}
+        >
+          <QrCode size={20} />
+          <span>QR Code</span>
+        </button>
+
+        <button 
+          className={`mobile-nav-item ${pathname === "/admin" && activeTab === "voting" ? "active" : ""}`}
+          onClick={() => handleNavigation("/admin?tab=voting")}
+        >
+          <ClipboardCheck size={20} />
+          <span>Voting</span>
+        </button>
+
+        <button 
+          className={`mobile-nav-item ${pathname === "/dashboard" ? "active" : ""}`}
+          onClick={() => handleNavigation("/dashboard")}
+        >
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Tampilan navbar reguler untuk pemilih/pengunjung
   return (
     <div className="mobile-nav-bar">
       <button 

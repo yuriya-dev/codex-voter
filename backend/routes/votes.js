@@ -17,6 +17,30 @@ async function getMaxVotesLimit() {
   }
 }
 
+// Helper to get voting status and end time
+async function getVotingStatusAndEndTime() {
+  try {
+    const { data: statusData } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "voting_status")
+      .single();
+    
+    const { data: endTimeData } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "voting_end_time")
+      .single();
+      
+    return {
+      status: statusData && statusData.value ? statusData.value : "not_started",
+      endTime: endTimeData && endTimeData.value ? endTimeData.value : ""
+    };
+  } catch (err) {
+    return { status: "not_started", endTime: "" };
+  }
+}
+
 // 3. Cast Vote (Enforces max votes per visitor constraint)
 router.post("/", async (req, res) => {
   const { visitorIdentifier, groupId } = req.body;
@@ -27,6 +51,23 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    const { status, endTime } = await getVotingStatusAndEndTime();
+    if (status === "not_started") {
+      return res.status(403).json({ error: "Sesi voting belum dimulai oleh panitia!" });
+    }
+    
+    if (status === "started" && endTime) {
+      const now = new Date();
+      const end = new Date(endTime);
+      if (now > end) {
+        return res.status(403).json({ error: "Waktu voting telah habis!" });
+      }
+    }
+    
+    if (status === "ended") {
+      return res.status(403).json({ error: "Sesi voting telah selesai/ditutup!" });
+    }
+
     const maxVotes = await getMaxVotesLimit();
 
     // 0. Verify visitor exists in the database
