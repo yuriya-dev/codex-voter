@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Loader2, KeyRound, ArrowLeft, User } from "lucide-react";
+import { Lock, Loader2, KeyRound, ArrowLeft, User, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { getBackendUrl } from "@/lib/config";
 
@@ -175,7 +175,7 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
               gap: "8px",
               boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
             }}>
-              <span>⚠️</span> {error}
+              <AlertTriangle size={18} /> {error}
             </div>
           )}
 

@@ -5,7 +5,7 @@ import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLoginForm from "@/components/AdminLoginForm";
-import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download } from "lucide-react";
+import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History } from "lucide-react";
 import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { useSearchParams } from "next/navigation";
 
@@ -1163,9 +1163,9 @@ function AdminManagementContent() {
                           handleSaveSettings({ voting_status: "started", voting_end_time: endTime });
                         }}
                         className="btn btn-primary"
-                        style={{ height: "48px", flex: 1.5, justifyContent: "center" }}
+                        style={{ height: "48px", flex: 1.5, justifyContent: "center", display: "inline-flex", alignItems: "center", gap: "8px" }}
                       >
-                        ▶️ Mulai Voting
+                        <Play size={18} fill="currentColor" /> Mulai Voting
                       </button>
                     </div>
                   ) : (
@@ -1181,19 +1181,23 @@ function AdminManagementContent() {
                         border: "2px solid var(--color-delft-blue)",
                         boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
                         fontWeight: "bold",
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
                       }}
                     >
-                      ⏹️ Hentikan Voting
+                      <Square size={18} fill="currentColor" /> Hentikan Voting
                     </button>
                   )}
 
                   <button 
                     onClick={() => handleSaveSettings({ voting_status: "not_started", voting_end_time: "" })}
                     className="btn btn-secondary"
-                    style={{ flex: 1, minWidth: "150px", height: "48px", justifyContent: "center" }}
+                    style={{ flex: 1, minWidth: "150px", height: "48px", justifyContent: "center", display: "inline-flex", alignItems: "center", gap: "8px" }}
                   >
-                    🔄 Reset Sesi
+                    <RotateCcw size={18} /> Reset Sesi
                   </button>
                 </div>
               </div>
@@ -1210,10 +1214,13 @@ function AdminManagementContent() {
                       minWidth: "160px",
                       height: "44px", 
                       backgroundColor: leaderboardVisible === "true" ? "var(--color-fern-green)" : "",
-                      justifyContent: "center"
+                      justifyContent: "center",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
                     }}
                   >
-                    👁️ Buka Leaderboard
+                    <Eye size={18} /> Buka Leaderboard
                   </button>
                   <button 
                     onClick={() => handleSaveSettings({ leaderboard_visible: "false" })}
@@ -1224,10 +1231,13 @@ function AdminManagementContent() {
                       height: "44px", 
                       backgroundColor: leaderboardVisible === "false" ? "#ff6b6b" : "",
                       color: leaderboardVisible === "false" ? "white" : "",
-                      justifyContent: "center"
+                      justifyContent: "center",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
                     }}
                   >
-                    🙈 Sembunyikan Leaderboard
+                    <EyeOff size={18} /> Sembunyikan Leaderboard
                   </button>
                 </div>
               </div>
@@ -1235,8 +1245,8 @@ function AdminManagementContent() {
 
             {/* Card 3: Arsipkan Sesi & Hard Reset */}
             <div className="card" style={{ border: "2px solid var(--color-delft-blue)", borderColor: "#ff6b6b" }}>
-              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase", color: "#ff6b6b" }}>
-                ⚠️ Arsipkan Sesi & Bersihkan Database
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase", color: "#ff6b6b", display: "flex", alignItems: "center", gap: "8px" }}>
+                <AlertTriangle size={20} /> Arsipkan Sesi & Bersihkan Database
               </h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
                 Gunakan fitur ini untuk menyelesaikan sesi pameran saat ini, menyimpan ringkasan suaranya ke dalam riwayat, dan membersihkan seluruh data pemilih (IP, Device Fingerprint, & Suara) untuk memulai sesi pemilu baru yang bersih.
@@ -1269,18 +1279,22 @@ function AdminManagementContent() {
                     border: "2px solid var(--color-delft-blue)",
                     boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
                     fontWeight: "bold",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    justifyContent: "center"
                   }}
                 >
-                  {archiving ? "Mengarsipkan..." : "📦 Arsipkan & Mulai Baru"}
+                  {archiving ? "Mengarsipkan..." : <><Archive size={18} /> Arsipkan & Mulai Baru</>}
                 </button>
               </form>
             </div>
 
             {/* Card 4: Riwayat Sesi */}
             <div className="card" style={{ border: "2px solid var(--color-delft-blue)" }}>
-              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase" }}>
-                📜 Riwayat Sesi Terarsipkan
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "8px" }}>
+                <History size={20} /> Riwayat Sesi Terarsipkan
               </h3>
               
               {sessionHistory.length === 0 ? (

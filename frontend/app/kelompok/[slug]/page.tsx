@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { ArrowLeft, Heart, CheckCircle2, User, Landmark, HelpCircle } from "lucide-react";
+import { ArrowLeft, Heart, CheckCircle2, User, Landmark, HelpCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function GroupDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -107,7 +107,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
               animation: "heartPulse 0.4s"
             }}
           >
-            <span style={{ fontSize: "1.5rem" }}>✨</span>
+            <Sparkles size={24} style={{ color: "var(--color-pistachio)" }} />
             <div>
               <strong style={{ display: "block" }}>Berhasil Memindai QR Code!</strong>
               <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
