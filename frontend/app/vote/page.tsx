@@ -9,7 +9,7 @@ import { CheckCircle2, Copy, Check, Leaf, Heart, ArrowRight, Lock, Unlock } from
 
 export default function VotePage() {
   const router = useRouter();
-  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, unlockVoting, votingStatus, votingEndTime, refreshSettings } = useVoter();
+  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, votingStatus, votingEndTime, refreshSettings } = useVoter();
 
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -350,22 +350,6 @@ export default function VotePage() {
               >
                 <Unlock size={18} />
                 Pindai QR Pintu Keluar
-              </button>
-              
-              <button 
-                type="button"
-                onClick={unlockVoting}
-                style={{ 
-                  background: "none", 
-                  border: "none", 
-                  color: "var(--color-fern-green)", 
-                  fontSize: "0.75rem", 
-                  fontWeight: 700, 
-                  cursor: "pointer", 
-                  textDecoration: "underline" 
-                }}
-              >
-                Simulasi Lewati Penguncian (Developer Test)
               </button>
             </div>
 
