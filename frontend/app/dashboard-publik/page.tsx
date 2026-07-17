@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Leaf, Award, Trophy, LayoutDashboard, Maximize2, Minimize2, Clock } from "lucide-react";
+import { Award, Trophy, LayoutDashboard, Maximize2, Minimize2, Clock } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
 import { supabase } from "@/lib/supabase";
 
@@ -194,7 +194,7 @@ export default function DashboardPublikPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Leaf size={28} className="leaf-icon" style={{ color: "var(--color-fern-green)", transform: "rotate(-15deg)" }} />
+          <Award size={28} className="leaf-icon" style={{ color: "var(--color-fern-green)", transform: "rotate(-15deg)" }} />
           <div>
             <h1 style={{ fontSize: "1.5rem", fontFamily: "var(--font-heading)", textTransform: "uppercase", lineHeight: 1 }}>
               LIVE SCOREBOARD
@@ -258,7 +258,7 @@ export default function DashboardPublikPage() {
 
           <button 
             onClick={toggleFullscreen} 
-            className="btn btn-secondary" 
+            className="btn btn-secondary fullscreen-btn" 
             style={{ padding: "8px", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center" }}
             title="Layar Penuh"
           >
@@ -400,169 +400,336 @@ export default function DashboardPublikPage() {
         >
           
           {/* PODIUM TIGA BESAR */}
+          {/* PODIUM TIGA BESAR */}
           {sortedStats.length > 0 && (
-            <section 
-              style={{ 
-                display: "flex", 
-                justifyContent: "center", 
-                alignItems: "flex-end", 
-                gap: "24px", 
-                marginTop: "20px",
-                paddingBottom: "20px",
-                flexWrap: "wrap"
-              }}
-            >
-              
-              {/* Podium Juara 2 (Kiri) */}
-              {secondPlace && (
-                <div 
-                  style={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    width: "280px"
-                  }}
-                >
-                  <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
-                      {secondPlace.booth_number}
-                    </span>
-                    <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "240px" }}>
-                      {secondPlace.name}
-                    </h3>
-                  </div>
+            <>
+              {/* Desktop View (Horizontal Podium 3D) */}
+              <section className="podium-desktop">
+                
+                {/* Podium Juara 2 (Kiri) */}
+                {secondPlace && (
                   <div 
                     style={{ 
-                      height: "140px", 
-                      width: "100%", 
-                      backgroundColor: "white", 
-                      border: "3px solid var(--color-delft-blue)", 
-                      borderRadius: "var(--radius-md) var(--radius-md) 0 0",
                       display: "flex", 
                       flexDirection: "column", 
-                      justifyContent: "space-between", 
-                      alignItems: "center",
-                      padding: "20px",
-                      boxShadow: "4px 4px 0px var(--color-delft-blue)",
-                      position: "relative"
+                      alignItems: "center", 
+                      width: "280px"
                     }}
                   >
-                    <div style={{ fontSize: "1.75rem", fontWeight: "700", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
-                      2
+                    <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        {secondPlace.booth_number}
+                      </span>
+                      <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "240px" }}>
+                        {secondPlace.name}
+                      </h3>
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
-                        {secondPlace.votes}
+                    <div 
+                      style={{ 
+                        height: "140px", 
+                        width: "100%", 
+                        backgroundColor: "white", 
+                        border: "3px solid var(--color-delft-blue)", 
+                        borderRadius: "var(--radius-md) var(--radius-md) 0 0",
+                        display: "flex", 
+                        flexDirection: "column", 
+                        justifyContent: "space-between", 
+                        alignItems: "center",
+                        padding: "20px",
+                        boxShadow: "4px 4px 0px var(--color-delft-blue)",
+                        position: "relative"
+                      }}
+                    >
+                      <div style={{ fontSize: "1.75rem", fontWeight: "700", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
+                        2
                       </div>
-                      <div style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
-                        Suara
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
+                          {secondPlace.votes}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
+                          Suara
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Podium Juara 1 (Tengah - Lebih Tinggi & Menonjol) */}
-              {firstPlace && (
-                <div 
-                  style={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    width: "320px",
-                    zIndex: 2
-                  }}
-                >
-                  <Trophy size={40} style={{ color: "var(--color-pistachio)", marginBottom: "8px", filter: "drop-shadow(2px 2px 0 var(--color-delft-blue))" }} />
-                  <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
-                    <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
-                      {firstPlace.booth_number}
-                    </span>
-                    <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "280px" }}>
-                      {firstPlace.name}
-                    </h3>
-                  </div>
+                {/* Podium Juara 1 (Tengah - Lebih Tinggi & Menonjol) */}
+                {firstPlace && (
                   <div 
                     style={{ 
-                      height: "190px", 
-                      width: "100%", 
-                      backgroundColor: "var(--color-pistachio)", 
-                      border: "3px solid var(--color-delft-blue)", 
-                      borderRadius: "var(--radius-md) var(--radius-md) 0 0",
                       display: "flex", 
                       flexDirection: "column", 
-                      justifyContent: "space-between", 
-                      alignItems: "center",
-                      padding: "24px",
-                      boxShadow: "6px 6px 0px var(--color-delft-blue)",
+                      alignItems: "center", 
+                      width: "320px",
+                      zIndex: 2
+                    }}
+                  >
+                    <Trophy size={40} style={{ color: "var(--color-pistachio)", marginBottom: "8px", filter: "drop-shadow(2px 2px 0 var(--color-delft-blue))" }} />
+                    <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
+                      <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        {firstPlace.booth_number}
+                      </span>
+                      <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "280px" }}>
+                        {firstPlace.name}
+                      </h3>
+                    </div>
+                    <div 
+                      style={{ 
+                        height: "190px", 
+                        width: "100%", 
+                        backgroundColor: "var(--color-pistachio)", 
+                        border: "3px solid var(--color-delft-blue)", 
+                        borderRadius: "var(--radius-md) var(--radius-md) 0 0",
+                        display: "flex", 
+                        flexDirection: "column", 
+                        justifyContent: "space-between", 
+                        alignItems: "center",
+                        padding: "24px",
+                        boxShadow: "6px 6px 0px var(--color-delft-blue)",
+                        position: "relative"
+                      }}
+                    >
+                      <div style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
+                        1
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "2rem", fontWeight: "800", color: "var(--color-delft-blue)" }}>
+                          {firstPlace.votes}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
+                          Suara
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Podium Juara 3 (Kanan) */}
+                {thirdPlace && (
+                  <div 
+                    style={{ 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      alignItems: "center", 
+                      width: "280px"
+                    }}
+                  >
+                    <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        {thirdPlace.booth_number}
+                      </span>
+                      <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "240px" }}>
+                        {thirdPlace.name}
+                      </h3>
+                    </div>
+                    <div 
+                      style={{ 
+                        height: "110px", 
+                        width: "100%", 
+                        backgroundColor: "white", 
+                        border: "3px solid var(--color-delft-blue)", 
+                        borderRadius: "var(--radius-md) var(--radius-md) 0 0",
+                        display: "flex", 
+                        flexDirection: "column", 
+                        justifyContent: "space-between", 
+                        alignItems: "center",
+                        padding: "16px",
+                        boxShadow: "4px 4px 0px var(--color-delft-blue)",
+                        position: "relative"
+                      }}
+                    >
+                      <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
+                        3
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "1.25rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
+                          {thirdPlace.votes}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
+                          Suara
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Mobile View (Stacked List Cards, Sorted 1st -> 2nd -> 3rd) */}
+              <section className="podium-mobile">
+                {/* Card Juara 1 */}
+                {firstPlace && (
+                  <div 
+                    style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "16px", 
+                      padding: "16px 20px", 
+                      border: "3px solid var(--color-delft-blue)", 
+                      borderRadius: "var(--radius-md)", 
+                      backgroundColor: "var(--color-pistachio)",
+                      boxShadow: "4px 4px 0 var(--color-delft-blue)",
                       position: "relative"
                     }}
                   >
-                    <div style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
+                    {/* Rank Badge */}
+                    <div 
+                      style={{ 
+                        width: "48px", 
+                        height: "48px", 
+                        borderRadius: "50%", 
+                        backgroundColor: "var(--color-white)", 
+                        border: "2px solid var(--color-delft-blue)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--color-delft-blue)",
+                        fontWeight: "800",
+                        fontSize: "1.25rem",
+                        flexShrink: 0
+                      }}
+                    >
                       1
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "2rem", fontWeight: "800", color: "var(--color-delft-blue)" }}>
+                    
+                    {/* Info Kelompok */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        🏆 {firstPlace.booth_number} &bull; {firstPlace.category}
+                      </span>
+                      <h3 style={{ fontSize: "1.05rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
+                        {firstPlace.name}
+                      </h3>
+                    </div>
+
+                    {/* Vote Count */}
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--color-delft-blue)" }}>
                         {firstPlace.votes}
-                      </div>
-                      <div style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
+                      </span>
+                      <span style={{ fontSize: "0.7rem", display: "block", color: "var(--color-delft-blue)", textTransform: "uppercase", fontWeight: "700", marginTop: "-2px" }}>
                         Suara
-                      </div>
+                      </span>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Podium Juara 3 (Kanan) */}
-              {thirdPlace && (
-                <div 
-                  style={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    width: "280px"
-                  }}
-                >
-                  <div style={{ textAlign: "center", marginBottom: "12px", padding: "0 10px" }}>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
-                      {thirdPlace.booth_number}
-                    </span>
-                    <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "240px" }}>
-                      {thirdPlace.name}
-                    </h3>
-                  </div>
+                {/* Card Juara 2 */}
+                {secondPlace && (
                   <div 
                     style={{ 
-                      height: "110px", 
-                      width: "100%", 
-                      backgroundColor: "white", 
-                      border: "3px solid var(--color-delft-blue)", 
-                      borderRadius: "var(--radius-md) var(--radius-md) 0 0",
                       display: "flex", 
-                      flexDirection: "column", 
-                      justifyContent: "space-between", 
-                      alignItems: "center",
-                      padding: "16px",
-                      boxShadow: "4px 4px 0px var(--color-delft-blue)",
+                      alignItems: "center", 
+                      gap: "16px", 
+                      padding: "16px 20px", 
+                      border: "3px solid var(--color-delft-blue)", 
+                      borderRadius: "var(--radius-md)", 
+                      backgroundColor: "var(--color-white)",
+                      boxShadow: "4px 4px 0 var(--color-delft-blue)",
                       position: "relative"
                     }}
                   >
-                    <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--color-delft-blue)", fontFamily: "var(--font-heading)" }}>
-                      3
+                    {/* Rank Badge */}
+                    <div 
+                      style={{ 
+                        width: "44px", 
+                        height: "44px", 
+                        borderRadius: "50%", 
+                        backgroundColor: "var(--color-beige)", 
+                        border: "2px solid var(--color-delft-blue)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--color-delft-blue)",
+                        fontWeight: "800",
+                        fontSize: "1.1rem",
+                        flexShrink: 0
+                      }}
+                    >
+                      2
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "1.25rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
-                        {thirdPlace.votes}
-                      </div>
-                      <div style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
+                    
+                    {/* Info Kelompok */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        🥈 {secondPlace.booth_number} &bull; {secondPlace.category}
+                      </span>
+                      <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
+                        {secondPlace.name}
+                      </h3>
+                    </div>
+
+                    {/* Vote Count */}
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "1.3rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
+                        {secondPlace.votes}
+                      </span>
+                      <span style={{ fontSize: "0.7rem", display: "block", color: "rgba(29, 42, 98, 0.6)", textTransform: "uppercase", fontWeight: "700", marginTop: "-2px" }}>
                         Suara
-                      </div>
+                      </span>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-            </section>
+                {/* Card Juara 3 */}
+                {thirdPlace && (
+                  <div 
+                    style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "16px", 
+                      padding: "16px 20px", 
+                      border: "3px solid var(--color-delft-blue)", 
+                      borderRadius: "var(--radius-md)", 
+                      backgroundColor: "var(--color-white)",
+                      boxShadow: "4px 4px 0 var(--color-delft-blue)",
+                      position: "relative"
+                    }}
+                  >
+                    {/* Rank Badge */}
+                    <div 
+                      style={{ 
+                        width: "44px", 
+                        height: "44px", 
+                        borderRadius: "50%", 
+                        backgroundColor: "var(--color-beige)", 
+                        border: "2px solid var(--color-delft-blue)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--color-delft-blue)",
+                        fontWeight: "800",
+                        fontSize: "1.1rem",
+                        flexShrink: 0
+                      }}
+                    >
+                      3
+                    </div>
+                    
+                    {/* Info Kelompok */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "var(--color-fern-green)", textTransform: "uppercase" }}>
+                        🥉 {thirdPlace.booth_number} &bull; {thirdPlace.category}
+                      </span>
+                      <h3 style={{ fontSize: "1rem", fontFamily: "var(--font-heading)", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
+                        {thirdPlace.name}
+                      </h3>
+                    </div>
+
+                    {/* Vote Count */}
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "1.3rem", fontWeight: "700", color: "var(--color-fern-green)" }}>
+                        {thirdPlace.votes}
+                      </span>
+                      <span style={{ fontSize: "0.7rem", display: "block", color: "rgba(29, 42, 98, 0.6)", textTransform: "uppercase", fontWeight: "700", marginTop: "-2px" }}>
+                        Suara
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </section>
+            </>
           )}
 
           {/* DAFTAR PERINGKAT LAINNYA */}

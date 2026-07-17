@@ -8,7 +8,7 @@ import { GraduationCap, School, Award, User, ArrowRight, ShieldCheck } from "luc
 
 export default function VerifikasiPage() {
   const router = useRouter();
-  const { verifyOTP, visitor } = useVoter();
+  const { verifyOTP, visitor, maxVotesLimit } = useVoter();
 
   // Form states
   const [name, setName] = useState("");
@@ -160,7 +160,7 @@ export default function VerifikasiPage() {
             </p>
             <ul style={{ fontSize: "0.85rem", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "12px", opacity: 0.9 }}>
               <li>
-                <strong>Verifikasi Alamat IP:</strong> Setiap perangkat/koneksi IP hanya diizinkan mengirimkan **1 suara final**. Percobaan pengiriman ganda dari perangkat yang sama akan diblokir otomatis oleh server.
+                <strong>Verifikasi Alamat IP:</strong> Setiap perangkat/koneksi IP hanya diizinkan mengirimkan **{maxVotesLimit} suara final**. Percobaan pengiriman ganda dari perangkat yang sama akan diblokir otomatis oleh server.
               </li>
               <li>
                 <strong>Kategori Pemilih Akurat:</strong> Tetap pisahkan kategori suara untuk Mahasiswa, Siswa, Dosen/Staf, dan Umum untuk analisis data pameran yang komprehensif.

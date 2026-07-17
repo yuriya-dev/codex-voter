@@ -857,4 +857,34 @@ a:hover {
   }
 }
 
+/* --- Public Dashboard Leaderboard Responsive --- */
+.podium-desktop {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+}
+
+.podium-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .podium-desktop {
+    display: none !important;
+  }
+  .podium-mobile {
+    display: flex !important;
+  }
+  .fullscreen-btn {
+    display: none !important;
+  }
+}
+
 

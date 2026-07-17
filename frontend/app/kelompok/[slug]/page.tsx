@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 export default function GroupDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  const { groupsList, isShortlisted, addToShortlist, removeFromShortlist, visitor } = useVoter();
+  const { groupsList, isShortlisted, addToShortlist, removeFromShortlist, visitor, maxVotesLimit } = useVoter();
   
   const group = groupsList.find((g) => g.slug === slug);
   const [active, setActive] = useState(false);
@@ -298,7 +298,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
             >
               <HelpCircle size={16} style={{ flexShrink: 0, color: "var(--color-fern-green)" }} />
               <div>
-                <span style={{ fontWeight: 700 }}>PENTING:</span> Setiap pengunjung hanya berhak memberikan 1 suara final. Pilihan yang dikirim tidak dapat dibatalkan atau diedit kembali.
+                <span style={{ fontWeight: 700 }}>PENTING:</span> Setiap pengunjung hanya berhak memberikan {maxVotesLimit} suara final. Pilihan yang dikirim tidak dapat dibatalkan atau diedit kembali.
               </div>
             </div>
           </div>
