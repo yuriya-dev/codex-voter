@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
-import { X, Camera, Scan, CheckCircle, Loader2 } from "lucide-react";
+import { X, Camera, Scan, CheckCircle, Loader2, RotateCcw } from "lucide-react";
 import { Group } from "@/lib/data";
 import { EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import jsQR from "jsqr";
@@ -284,7 +284,7 @@ export default function QRScannerModal() {
                     onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
                     onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
                   >
-                    🔄 Aktifkan Kamera
+                    <RotateCcw size={14} /> Aktifkan Kamera
                   </button>
                 </div>
               )}

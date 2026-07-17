@@ -82,6 +82,25 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setGroupsList(data);
+
+        // Bersihkan ID kelompok yang tidak valid dari shortlist (misal setelah reset data admin)
+        if (Array.isArray(data)) {
+          const savedShortlist = localStorage.getItem("voter_shortlist");
+          if (savedShortlist) {
+            try {
+              const parsed = JSON.parse(savedShortlist);
+              if (Array.isArray(parsed)) {
+                const valid = parsed.filter(id => data.some(g => g.id === id));
+                if (valid.length !== parsed.length) {
+                  setShortlist(valid);
+                  localStorage.setItem("voter_shortlist", JSON.stringify(valid));
+                }
+              }
+            } catch (e) {
+              console.error("Gagal memproses parsing shortlist dari localStorage:", e);
+            }
+          }
+        }
       }
     } catch (err) {
       console.error("Gagal memuat daftar kelompok dari backend:", err);
@@ -120,7 +139,16 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       const savedVotes = localStorage.getItem("voter_active_votes");
       const savedUnlocked = localStorage.getItem("voter_is_unlocked");
 
-      if (savedShortlist) setShortlist(JSON.parse(savedShortlist));
+      if (savedShortlist) {
+        try {
+          const parsed = JSON.parse(savedShortlist);
+          if (Array.isArray(parsed)) {
+            setShortlist(parsed.filter(id => id && typeof id === "string" && id.trim() !== ""));
+          }
+        } catch (e) {
+          console.error("Gagal parse voter_shortlist pada mount:", e);
+        }
+      }
       if (savedVisitor) {
         const parsedVisitor = JSON.parse(savedVisitor);
         setVisitor(parsedVisitor);
@@ -174,6 +202,7 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   const isShortlisted = (id: string) => shortlist.includes(id);
 
   const addToShortlist = (id: string) => {
+    if (!id || typeof id !== "string" || id.trim() === "") return;
     if (shortlist.includes(id)) return;
     const newShortlist = [...shortlist, id];
     setShortlist(newShortlist);

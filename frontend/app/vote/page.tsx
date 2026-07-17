@@ -331,7 +331,9 @@ export default function VotePage() {
               <Lock size={32} style={{ color: "var(--color-delft-blue)" }} />
             </div>
 
-            <span className="badge" style={{ backgroundColor: "#ef4444", color: "white" }}>Voting Terkunci 🔒</span>
+            <span className="badge" style={{ backgroundColor: "#ef4444", color: "white", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              Voting Terkunci <Lock size={12} />
+            </span>
             
             <h2 style={{ fontSize: "1.75rem", fontFamily: "var(--font-heading)", marginTop: "16px", marginBottom: "12px", textTransform: "uppercase" }}>
               Scan QR Pintu Keluar
