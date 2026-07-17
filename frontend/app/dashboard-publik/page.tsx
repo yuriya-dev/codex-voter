@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Leaf, Award, Trophy, LayoutDashboard, Maximize2, Minimize2, Clock } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
+import { supabase } from "@/lib/supabase";
 
 const BACKEND_URL = getBackendUrl();
 
@@ -48,9 +49,45 @@ export default function DashboardPublikPage() {
   };
 
   useEffect(() => {
+    // 1. Fetch data awal
     fetchStats();
-    const interval = setInterval(fetchStats, 3000); // Polling setiap 3 detik
-    return () => clearInterval(interval);
+
+    // 2. Buat channel subscription untuk realtime database dari Supabase
+    const channel = supabase
+      .channel("db-changes")
+      // Listen to changes on votes table
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "votes" },
+        (payload) => {
+          console.log("Realtime: Perubahan terdeteksi di tabel votes", payload);
+          fetchStats();
+        }
+      )
+      // Listen to changes on settings table
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "settings" },
+        (payload) => {
+          console.log("Realtime: Perubahan terdeteksi di tabel settings", payload);
+          fetchStats();
+        }
+      )
+      // Listen to changes on groups table (jika ada nama/booth diubah)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "groups" },
+        (payload) => {
+          console.log("Realtime: Perubahan terdeteksi di tabel groups", payload);
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription saat unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Timer countdown hook

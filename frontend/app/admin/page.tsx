@@ -5,8 +5,8 @@ import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLoginForm from "@/components/AdminLoginForm";
-import { Upload, Plus, Trash2, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download } from "lucide-react";
-import { getBackendUrl } from "@/lib/config";
+import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download } from "lucide-react";
+import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { useSearchParams } from "next/navigation";
 
 const BACKEND_URL = getBackendUrl();
@@ -239,6 +239,75 @@ function AdminManagementContent() {
   const [votingEndTime, setVotingEndTime] = useState("");
   const [timerMinutes, setTimerMinutes] = useState(60);
   const [adminTimeLeft, setAdminTimeLeft] = useState<string>("");
+  const [sessionHistory, setSessionHistory] = useState<any[]>([]);
+  const [newSessionName, setNewSessionName] = useState("");
+  const [archiving, setArchiving] = useState(false);
+
+  // Edit State
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+
+  const startEditGroup = (group: any) => {
+    setEditingGroupId(group.id);
+    setName(group.name);
+    setBoothNumber(group.booth_number);
+    setCategory(group.category);
+    setDescription(group.description || "");
+    setFullDescription(group.fullDescription || group.description || "");
+    setMembers(group.members ? group.members.join("; ") : "");
+  };
+
+  const cancelEditGroup = () => {
+    setEditingGroupId(null);
+    setName("");
+    setBoothNumber("");
+    setCategory("IoT & Hardware");
+    setDescription("");
+    setFullDescription("");
+    setMembers("");
+  };
+
+  const handleUpdateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGroupId || !name || !boothNumber || !category || !adminToken) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/groups/${editingGroupId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          name,
+          booth_number: boothNumber,
+          category,
+          description,
+          fullDescription: fullDescription || description,
+          members
+        })
+      });
+
+      if (response.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
+
+      if (response.ok) {
+        setStatusMessage({ text: `Berhasil memperbarui kelompok: ${name}`, type: "success" });
+        cancelEditGroup();
+        refreshGroupsList();
+      } else {
+        const err = await response.json();
+        setStatusMessage({ text: err.error || "Gagal memperbarui kelompok ke server.", type: "error" });
+      }
+    } catch (err) {
+      setStatusMessage({ text: "Koneksi backend gagal.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Cek token saat halaman dibuka
   useEffect(() => {
@@ -247,6 +316,65 @@ function AdminManagementContent() {
       setAdminToken(token);
     }
   }, []);
+
+  const handleArchiveSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSessionName.trim() || !adminToken) return;
+
+    if (!confirm("PENTING: Mengarsipkan sesi akan MENGHAPUS seluruh data pengunjung, IP, dan perolehan suara saat ini dari database untuk memulai sesi baru. Apakah Anda yakin?")) {
+      return;
+    }
+
+    setArchiving(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/settings/archive`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ sessionName: newSessionName })
+      });
+
+      if (res.status === 401) {
+        handleLogout();
+        setStatusMessage({ text: "Sesi admin kedaluwarsa atau tidak valid.", type: "error" });
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setStatusMessage({ text: `Sesi '${newSessionName}' berhasil diarsipkan dan database dibersihkan!`, type: "success" });
+        setNewSessionName("");
+        
+        // Refresh groups list
+        refreshGroupsList();
+        
+        // Refetch settings
+        const settingsRes = await fetch(`${BACKEND_URL}/api/settings`);
+        if (settingsRes.ok) {
+          const sData = await settingsRes.json();
+          setMaxVotes(sData.max_votes || 3);
+          setLeaderboardVisible(sData.leaderboard_visible || "false");
+          setVotingStatus(sData.voting_status || "not_started");
+          setVotingEndTime(sData.voting_end_time || "");
+          try {
+            const parsedHistory = JSON.parse(sData.session_history || "[]");
+            setSessionHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
+          } catch (e) {
+            setSessionHistory([]);
+          }
+        }
+      } else {
+        const errData = await res.json();
+        setStatusMessage({ text: errData.error || "Gagal mengarsipkan sesi.", type: "error" });
+      }
+    } catch (err) {
+      setStatusMessage({ text: "Koneksi backend gagal saat mengarsipkan.", type: "error" });
+    } finally {
+      setArchiving(false);
+    }
+  };
 
   // Ambil data jika terautentikasi
   useEffect(() => {
@@ -262,6 +390,12 @@ function AdminManagementContent() {
           setLeaderboardVisible(data.leaderboard_visible || "false");
           setVotingStatus(data.voting_status || "not_started");
           setVotingEndTime(data.voting_end_time || "");
+          try {
+            const parsedHistory = JSON.parse(data.session_history || "[]");
+            setSessionHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
+          } catch (e) {
+            setSessionHistory([]);
+          }
         }
       } catch (err) {
         console.error("Gagal mengambil pengaturan:", err);
@@ -713,13 +847,13 @@ function AdminManagementContent() {
               </form>
             </div>
 
-            {/* 2. Tambah Kelompok Manual */}
-            <div className="card">
-              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase" }}>
-                Tambah Kelompok Manual
+            {/* 2. Tambah / Edit Kelompok Manual */}
+            <div className="card" style={{ border: editingGroupId ? "3px solid var(--color-fern-green)" : "3px solid var(--color-delft-blue)" }}>
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase", color: editingGroupId ? "var(--color-fern-green)" : "var(--color-delft-blue)" }}>
+                {editingGroupId ? "✏️ Edit Kelompok" : "Tambah Kelompok Manual"}
               </h3>
               
-              <form onSubmit={handleAddManual} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <form onSubmit={editingGroupId ? handleUpdateGroup : handleAddManual} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label htmlFor="name">Nama Proyek / Kelompok</label>
                   <input 
@@ -789,15 +923,36 @@ function AdminManagementContent() {
                   />
                 </div>
 
-                <button 
-                  type="submit" 
-                  disabled={loading || !name || !boothNumber} 
-                  className="btn btn-primary"
-                  style={{ gap: "10px", height: "48px", justifyContent: "center", marginTop: "8px" }}
-                >
-                  <Plus size={18} />
-                  {loading ? "Menambahkan..." : "Tambah Kelompok"}
-                </button>
+                <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                  <button 
+                    type="submit" 
+                    disabled={loading || !name || !boothNumber} 
+                    className="btn btn-primary"
+                    style={{ 
+                      flex: 2, 
+                      gap: "10px", 
+                      height: "48px", 
+                      justifyContent: "center",
+                      backgroundColor: editingGroupId ? "var(--color-fern-green)" : "var(--color-delft-blue)",
+                      color: "white",
+                      boxShadow: editingGroupId ? "3px 3px 0 0 var(--color-delft-blue)" : "3px 3px 0 0 var(--color-delft-blue)"
+                    }}
+                  >
+                    {!editingGroupId && <Plus size={18} />}
+                    {loading ? (editingGroupId ? "Menyimpan..." : "Menambahkan...") : (editingGroupId ? "Simpan Perubahan" : "Tambah Kelompok")}
+                  </button>
+
+                  {editingGroupId && (
+                    <button 
+                      type="button" 
+                      onClick={cancelEditGroup} 
+                      className="btn btn-secondary"
+                      style={{ flex: 1, height: "48px", justifyContent: "center" }}
+                    >
+                      Batal
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -842,25 +997,49 @@ function AdminManagementContent() {
                     </p>
                   </div>
 
-                  <button 
-                    onClick={() => handleDeleteGroup(group.id)}
-                    style={{
-                      background: "rgba(239, 68, 68, 0.1)",
-                      border: "1px solid #ef4444",
-                      color: "#ef4444",
-                      padding: "10px",
-                      borderRadius: "var(--radius-sm)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "var(--transition-fast)"
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#ef4444" + "22"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button 
+                      onClick={() => startEditGroup(group)}
+                      style={{
+                        background: "rgba(175, 208, 110, 0.1)",
+                        border: "1px solid var(--color-fern-green)",
+                        color: "var(--color-fern-green)",
+                        padding: "10px",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "var(--transition-fast)"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(175, 208, 110, 0.2)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(175, 208, 110, 0.1)"}
+                      title="Edit Kelompok"
+                    >
+                      <Edit size={16} />
+                    </button>
+
+                    <button 
+                      onClick={() => handleDeleteGroup(group.id)}
+                      style={{
+                        background: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid #ef4444",
+                        color: "#ef4444",
+                        padding: "10px",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "var(--transition-fast)"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#ef4444" + "22"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
+                      title="Hapus Kelompok"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1053,6 +1232,102 @@ function AdminManagementContent() {
                 </div>
               </div>
             </div>
+
+            {/* Card 3: Arsipkan Sesi & Hard Reset */}
+            <div className="card" style={{ border: "2px solid var(--color-delft-blue)", borderColor: "#ff6b6b" }}>
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "12px", textTransform: "uppercase", color: "#ff6b6b" }}>
+                ⚠️ Arsipkan Sesi & Bersihkan Database
+              </h3>
+              <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
+                Gunakan fitur ini untuk menyelesaikan sesi pameran saat ini, menyimpan ringkasan suaranya ke dalam riwayat, dan membersihkan seluruh data pemilih (IP, Device Fingerprint, & Suara) untuk memulai sesi pemilu baru yang bersih.
+              </p>
+
+              <form onSubmit={handleArchiveSession} style={{ display: "flex", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
+                <div className="form-group" style={{ flex: 1, minWidth: "240px", margin: 0 }}>
+                  <label htmlFor="sessionNameInput" style={{ marginBottom: "8px", display: "block" }}>Nama Sesi Arsip (contoh: Hari 1 - Pagi):</label>
+                  <input 
+                    id="sessionNameInput"
+                    type="text" 
+                    placeholder="Masukkan nama sesi arsip..."
+                    className="form-control" 
+                    value={newSessionName} 
+                    onChange={(e) => setNewSessionName(e.target.value)}
+                    style={{ height: "48px" }}
+                    required 
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={archiving || !newSessionName.trim()}
+                  className="btn" 
+                  style={{ 
+                    height: "48px", 
+                    padding: "0 24px", 
+                    whiteSpace: "nowrap",
+                    backgroundColor: "#ff6b6b",
+                    color: "white",
+                    border: "2px solid var(--color-delft-blue)",
+                    boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                    fontWeight: "bold",
+                    cursor: "pointer"
+                  }}
+                >
+                  {archiving ? "Mengarsipkan..." : "📦 Arsipkan & Mulai Baru"}
+                </button>
+              </form>
+            </div>
+
+            {/* Card 4: Riwayat Sesi */}
+            <div className="card" style={{ border: "2px solid var(--color-delft-blue)" }}>
+              <h3 style={{ fontSize: "1.2rem", fontFamily: "var(--font-heading)", marginBottom: "16px", textTransform: "uppercase" }}>
+                📜 Riwayat Sesi Terarsipkan
+              </h3>
+              
+              {sessionHistory.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "24px", border: "2px dashed var(--color-delft-blue)", borderRadius: "var(--radius-sm)", backgroundColor: "var(--color-beige)" }}>
+                  <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>Belum ada riwayat sesi yang diarsipkan.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {sessionHistory.map((session, idx) => (
+                    <div 
+                      key={session.id || idx}
+                      style={{
+                        padding: "16px",
+                        border: "2px solid var(--color-delft-blue)",
+                        borderRadius: "var(--radius-sm)",
+                        backgroundColor: "var(--color-beige)",
+                        boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                        textAlign: "left"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", borderBottom: "1px dashed var(--color-delft-blue)", paddingBottom: "10px", marginBottom: "10px" }}>
+                        <strong style={{ fontSize: "1.05rem", color: "var(--color-delft-blue)" }}>
+                          📁 {session.name}
+                        </strong>
+                        <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                          Diarsipkan: {new Date(session.archivedAt).toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", fontSize: "0.85rem" }}>
+                        <div>
+                          <strong>Total Pengunjung:</strong> {session.totalVisitors} perangkat
+                        </div>
+                        <div>
+                          <strong>Total Suara:</strong> {session.totalVotes} suara (kuota: {session.maxVotes})
+                        </div>
+                      </div>
+                      <div style={{ marginTop: "12px", fontSize: "0.85rem", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "10px" }}>
+                        <strong>3 Besar Pemenang Sesi:</strong>
+                        <div style={{ marginTop: "4px", fontWeight: "600", color: "var(--color-fern-green)" }}>
+                          {session.topGroups || "Tidak ada suara"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1119,24 +1394,24 @@ function AdminManagementContent() {
                   boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
                 }}>
                   <img 
-                    src={getQrUrl(`${origin}/?unlock=exit`)} 
+                    src={getQrUrl(`${origin}/?unlock=${EXIT_UNLOCK_TOKEN}`)} 
                     alt="QR Pintu Keluar" 
                     style={{ width: "200px", height: "200px", display: "block" }} 
                   />
                 </div>
                 <div style={{ fontSize: "0.75rem", fontFamily: "monospace", wordBreak: "break-all", background: "var(--color-beige)", padding: "4px 8px", border: "1px dashed var(--color-delft-blue)" }}>
-                  {origin}/?unlock=exit
+                  {origin}/?unlock={EXIT_UNLOCK_TOKEN}
                 </div>
                 <div style={{ display: "flex", gap: "12px", width: "100%" }}>
                   <button 
-                    onClick={() => printSingleQR("Pintu Keluar (Exit Gate)", "Pindai untuk membuka kunci tombol voting", `${origin}/?unlock=exit`)}
+                    onClick={() => printSingleQR("Pintu Keluar (Exit Gate)", "Pindai untuk membuka kunci tombol voting", `${origin}/?unlock=${EXIT_UNLOCK_TOKEN}`)}
                     className="btn btn-primary" 
                     style={{ flex: 1, gap: "8px", justifyContent: "center", height: "42px" }}
                   >
                     <Printer size={16} /> Print
                   </button>
                   <a 
-                    href={getQrUrl(`${origin}/?unlock=exit`)} 
+                    href={getQrUrl(`${origin}/?unlock=${EXIT_UNLOCK_TOKEN}`)} 
                     download="qr_pintu_keluar.png"
                     target="_blank"
                     rel="noopener noreferrer"

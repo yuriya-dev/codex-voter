@@ -93,4 +93,53 @@ router.delete("/:id", adminAuth, async (req, res) => {
   }
 });
 
+// 9. Admin - Update Group by ID
+router.put("/:id", adminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { name, booth_number, category, description, fullDescription, members, photoColor } = req.body;
+  if (!name || !booth_number || !category) {
+    return res.status(400).json({ error: "Nama, Booth, dan Kategori wajib diisi" });
+  }
+
+  try {
+    // Check if exists
+    const { data: existing, error: fetchErr } = await supabase.from('groups').select('*').eq('id', id);
+    if (fetchErr) throw fetchErr;
+
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({ error: "Kelompok tidak ditemukan" });
+    }
+
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    const updatedDbGroup = {
+      name,
+      slug,
+      booth_number,
+      category,
+      description: description || "",
+      full_description: fullDescription || description || "",
+      members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
+      photo_color: photoColor || existing[0].photo_color || "linear-gradient(135deg, #1B4D3E, #4B8B3B)"
+    };
+
+    const { data: updatedGroup, error: updateErr } = await supabase
+      .from('groups')
+      .update(updatedDbGroup)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateErr) throw updateErr;
+
+    const mapped = mapGroup(updatedGroup);
+
+    await addAuditLog("Admin Action", `Mengedit kelompok: ${name} (${booth_number})`, "success");
+    res.json(mapped);
+  } catch (error) {
+    console.error("PUT /api/groups/:id error:", error);
+    res.status(500).json({ error: "Failed to update group" });
+  }
+});
+
 module.exports = router;

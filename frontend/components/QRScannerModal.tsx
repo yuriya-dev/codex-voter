@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import { X, Camera, Scan, CheckCircle, Loader2 } from "lucide-react";
 import { Group } from "@/lib/data";
+import { EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import jsQR from "jsqr";
 
 export default function QRScannerModal() {
@@ -20,7 +21,7 @@ export default function QRScannerModal() {
     if (simulatedScanResult || simulatedUnlockResult) return;
 
     // 1. Periksa apakah QR Code berisi bypass unlock exit gate
-    if (scannedText.includes("unlock=exit") || scannedText === "exit" || scannedText === "unlock-exit") {
+    if (scannedText.includes(`unlock=${EXIT_UNLOCK_TOKEN}`) || scannedText === EXIT_UNLOCK_TOKEN) {
       setSimulatedUnlockResult(true);
       unlockVoting();
       setTimeout(() => {
@@ -56,7 +57,7 @@ export default function QRScannerModal() {
   };
 
   const handleSimulateUnlock = () => {
-    handleQrCodeScanned("unlock=exit");
+    handleQrCodeScanned(`unlock=${EXIT_UNLOCK_TOKEN}`);
   };
 
   // Menghentikan stream kamera jika ada yang aktif

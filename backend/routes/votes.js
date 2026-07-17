@@ -104,7 +104,40 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: `Anda sudah mencapai batas maksimum ${maxVotes} pilihan kelompok!` });
     }
 
-    // 2. Enforce unique visitors count per IP to prevent spam (max 5 unique visitors per IP)
+    // 1.5 Enforce device fingerprint vote limit to prevent multiple registrations on the same device
+    const userAgent = req.headers["user-agent"] || "Unknown UA";
+    try {
+      const { data: currentVisitor, error: cvErr } = await supabase
+        .from('visitors')
+        .select('device_fingerprint')
+        .eq('identifier', visitorIdentifier)
+        .single();
+        
+      if (!cvErr && currentVisitor && currentVisitor.device_fingerprint) {
+        const { data: siblingVisitors } = await supabase
+          .from('visitors')
+          .select('identifier')
+          .eq('device_fingerprint', currentVisitor.device_fingerprint);
+          
+        if (siblingVisitors && siblingVisitors.length > 0) {
+          const siblingIdentifiers = siblingVisitors.map(v => v.identifier);
+          const { data: siblingVotes } = await supabase
+            .from('votes')
+            .select('*')
+            .in('visitor_identifier', siblingIdentifiers);
+            
+          // A single device fingerprint is allowed to cast at most maxVotes total votes in aggregate
+          if (siblingVotes && siblingVotes.length >= maxVotes && !siblingVotes.some(v => v.visitor_identifier === visitorIdentifier)) {
+            await addAuditLog("Vote Denied", `Device ${currentVisitor.device_fingerprint} mencoba memilih menggunakan identitas baru: ${visitorIdentifier} (kuota device habis)`, "error");
+            return res.status(403).json({ error: "Perangkat ini sudah digunakan untuk memberikan suara!" });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memvalidasi fingerprint perangkat:", err);
+    }
+
+    // 2. Enforce unique visitors count per IP to prevent spam (max 300 unique visitors per IP)
     const { data: ipVotes, error: ipvErr } = await supabase
       .from('votes')
       .select('*')
@@ -112,8 +145,8 @@ router.post("/", async (req, res) => {
     if (ipvErr) throw ipvErr;
 
     const uniqueVisitorsFromIp = new Set(ipVotes.map(v => v.visitor_identifier));
-    if (uniqueVisitorsFromIp.size >= 5 && !uniqueVisitorsFromIp.has(visitorIdentifier)) {
-      await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress} (batas 5 pengunjung unik terlampaui)`, "error");
+    if (uniqueVisitorsFromIp.size >= 300 && !uniqueVisitorsFromIp.has(visitorIdentifier)) {
+      await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress} (batas 300 pengunjung unik terlampaui)`, "error");
       return res.status(403).json({ error: "Perangkat/IP ini sudah melebihi batas kuota pemilih unik pameran!" });
     }
 
@@ -158,7 +191,7 @@ router.post("/", async (req, res) => {
 
     await addAuditLog(
       "Vote Submitted", 
-      `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress} (Suara ke-${visitorVotes.length + 1}/${maxVotes})`, 
+      `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress} (Suara ke-${visitorVotes.length + 1}/${maxVotes}) (UA: ${userAgent.substring(0, 120)})`, 
       "success"
     );
 

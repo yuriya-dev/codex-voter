@@ -13,3 +13,6 @@ export const getBackendUrl = (): string => {
   }
   return "http://localhost:5050";
 };
+
+export const EXIT_UNLOCK_TOKEN = "jt-exit-gate-auth-9f82d7c5";
+

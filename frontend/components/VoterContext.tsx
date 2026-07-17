@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getBackendUrl } from "@/lib/config";
+import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 
 const BACKEND_URL = getBackendUrl();
 
@@ -121,7 +121,32 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       const savedUnlocked = localStorage.getItem("voter_is_unlocked");
 
       if (savedShortlist) setShortlist(JSON.parse(savedShortlist));
-      if (savedVisitor) setVisitor(JSON.parse(savedVisitor));
+      if (savedVisitor) {
+        const parsedVisitor = JSON.parse(savedVisitor);
+        setVisitor(parsedVisitor);
+        
+        // Cek validasi ke backend secara asinkron untuk mendeteksi reset sesi
+        fetch(`${BACKEND_URL}/api/auth/visitor/${parsedVisitor.identifier}`)
+          .then((res) => {
+            if (res.status === 404) {
+              console.log("Visitor no longer valid (session reset). Clearing storage...");
+              localStorage.removeItem("voter_visitor");
+              localStorage.removeItem("voter_active_vote");
+              localStorage.removeItem("voter_active_votes");
+              localStorage.removeItem("voter_shortlist");
+              localStorage.removeItem("voter_is_unlocked");
+              setVisitor(null);
+              setActiveVote(null);
+              setActiveVotes([]);
+              setIsVoteUnlocked(false);
+              // Arahkan ke halaman verifikasi untuk mendaftar kembali
+              window.location.href = "/verifikasi";
+            }
+          })
+          .catch((err) => {
+            console.error("Gagal memvalidasi status pengunjung:", err);
+          });
+      }
       if (savedUnlocked === "true") setIsVoteUnlocked(true);
 
       if (savedVotes) {
@@ -137,7 +162,7 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
 
       // Check URL query parameters for exit gate unlock QR link
       const params = new URLSearchParams(window.location.search);
-      if (params.get("unlock") === "exit") {
+      if (params.get("unlock") === EXIT_UNLOCK_TOKEN) {
         setIsVoteUnlocked(true);
         localStorage.setItem("voter_is_unlocked", "true");
         alert("🔒 Akses Voting Berhasil Dibuka! Anda sekarang dapat mengirimkan suara final.");
@@ -164,10 +189,19 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   // Register Visitor using Name & Category via Backend API
   const verifyOTP = async (name: string, category: string): Promise<boolean> => {
     try {
+      let fingerprint = "";
+      if (typeof window !== "undefined") {
+        fingerprint = localStorage.getItem("voter_device_fingerprint") || "";
+        if (!fingerprint) {
+          fingerprint = "dev_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
+          localStorage.setItem("voter_device_fingerprint", fingerprint);
+        }
+      }
+
       const res = await fetch(`${BACKEND_URL}/api/auth/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, category })
+        body: JSON.stringify({ name, category, deviceFingerprint: fingerprint })
       });
 
       if (res.ok) {
