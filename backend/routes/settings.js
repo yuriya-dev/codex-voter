@@ -116,19 +116,37 @@ router.post("/archive", adminAuth, async (req, res) => {
       });
     }
 
-    // 2. Dapatkan 3 besar kelompok sebagai ringkasan pemenang sesi
-    const { data: groupsData, error: gErr } = await supabase
+    // 2. Dapatkan seluruh data kelompok dan data suara untuk menghitung perolehan suara riil
+    const { data: dbVotes, error: dbVotesErr } = await supabase
+      .from('votes')
+      .select('group_id');
+    if (dbVotesErr) throw dbVotesErr;
+
+    const { data: dbGroups, error: gErr } = await supabase
       .from('groups')
-      .select('name, booth_number, votes')
-      .order('votes', { ascending: false });
-    
+      .select('id, name, booth_number, category, votes');
     if (gErr) throw gErr;
-    
-    const summary = groupsData && groupsData.length > 0
-      ? groupsData.slice(0, 3).map(g => `${g.booth_number}: ${g.name} (${g.votes} suara)`).join(" | ")
+
+    const actualGroups = dbGroups.map(g => {
+      const extraVotes = dbVotes.filter(v => v.group_id === g.id).length;
+      return {
+        id: g.id,
+        name: g.name,
+        booth_number: g.booth_number,
+        category: g.category,
+        votes: g.votes + extraVotes
+      };
+    });
+
+    // Urutkan berdasarkan suara terbanyak
+    actualGroups.sort((a, b) => b.votes - a.votes);
+
+    // 3 Besar pemenang sesi sebagai ringkasan singkat
+    const summary = actualGroups && actualGroups.length > 0
+      ? actualGroups.slice(0, 3).map(g => `${g.booth_number}: ${g.name} (${g.votes} suara)`).join(" | ")
       : "Tidak ada data suara";
 
-    // 3. Buat item riwayat sesi baru
+    // 3. Buat item riwayat sesi baru (menyimpan seluruh suara kelompok)
     const historyItem = {
       id: `session-${Date.now()}`,
       name: sessionName.trim(),
@@ -136,7 +154,8 @@ router.post("/archive", adminAuth, async (req, res) => {
       totalVisitors: totalVisitors || 0,
       totalVotes: totalVotes || 0,
       maxVotes: parseInt(maxVotes) || 3,
-      topGroups: summary
+      topGroups: summary,
+      groups: actualGroups // Menyimpan seluruh kelompok dan suaranya untuk dilihat & diekspor oleh admin
     };
 
     let history = [];

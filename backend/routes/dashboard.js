@@ -27,9 +27,22 @@ router.get("/stats", async (req, res) => {
 
     const totalVotes = groupsList.reduce((sum, g) => sum + g.votes, 0) + dbVotes.length;
 
+    // Calculate highest votes per category
+    const categoryWinners = {};
+    groupStats.forEach(g => {
+      const cat = g.category || "Umum";
+      if (!categoryWinners[cat] || g.votes > categoryWinners[cat].votes) {
+        categoryWinners[cat] = g;
+      }
+    });
+
     res.json({
       totalVotes,
-      groupStats
+      groupStats,
+      highestVotesByCategory: Object.entries(categoryWinners).map(([category, group]) => ({
+        category,
+        group
+      }))
     });
   } catch (error) {
     console.error("GET /api/dashboard/stats error:", error);

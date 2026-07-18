@@ -240,6 +240,36 @@ function AdminManagementContent() {
   const [timerMinutes, setTimerMinutes] = useState(60);
   const [adminTimeLeft, setAdminTimeLeft] = useState<string>("");
   const [sessionHistory, setSessionHistory] = useState<any[]>([]);
+  const [expandedSessions, setExpandedSessions] = useState<{[key: string]: boolean}>({});
+
+  const toggleSessionExpand = (sessionId: string) => {
+    setExpandedSessions(prev => ({
+      ...prev,
+      [sessionId]: !prev[sessionId]
+    }));
+  };
+
+  const handleExportSessionCSV = (session: any) => {
+    const headers = ["ID Kelompok", "Booth", "Nama Kelompok", "Kategori", "Jumlah Vote"];
+    const groupsData = session.groups || [];
+    
+    const rows = groupsData.length > 0 
+      ? groupsData.map((g: any) => [g.id || "", g.booth_number || "", g.name || "", g.category || "", g.votes || 0])
+      : [["", "", "Hanya ringkasan tersedia", "", session.topGroups || ""]];
+      
+    const csvContent = 
+      "data:text/csv;charset=utf-8," + 
+      [headers.join(","), ...rows.map((e: any) => e.map((val: any) => `"${val}"`).join(","))].join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `laporan_sesi_${session.name.replace(/\s+/g, "_")}_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const [newSessionName, setNewSessionName] = useState("");
   const [archiving, setArchiving] = useState(false);
 
@@ -1336,6 +1366,97 @@ function AdminManagementContent() {
                         <div style={{ marginTop: "4px", fontWeight: "600", color: "var(--color-fern-green)" }}>
                           {session.topGroups || "Tidak ada suara"}
                         </div>
+                      </div>
+
+                      {/* Detail Suara Kelompok & Ekspor CSV */}
+                      <div style={{ 
+                        marginTop: "16px", 
+                        paddingTop: "12px", 
+                        borderTop: "1px dashed var(--color-delft-blue)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px"
+                      }}>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <button 
+                            type="button"
+                            onClick={() => toggleSessionExpand(session.id)}
+                            className="btn"
+                            style={{ 
+                              fontSize: "0.75rem", 
+                              padding: "6px 12px", 
+                              height: "auto", 
+                              backgroundColor: expandedSessions[session.id] ? "var(--color-pistachio)" : "var(--color-beige)",
+                              color: "var(--color-delft-blue)",
+                              border: "2px solid var(--color-delft-blue)",
+                              boxShadow: "2px 2px 0 var(--color-delft-blue)",
+                              cursor: "pointer",
+                              fontWeight: "bold"
+                            }}
+                          >
+                            {expandedSessions[session.id] ? "📁 Sembunyikan Rincian Suara" : "📂 Lihat Seluruh Suara Kelompok"}
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleExportSessionCSV(session)}
+                            className="btn"
+                            style={{ 
+                              fontSize: "0.75rem", 
+                              padding: "6px 12px", 
+                              height: "auto", 
+                              display: "inline-flex", 
+                              alignItems: "center", 
+                              gap: "4px",
+                              backgroundColor: "var(--color-fern-green)",
+                              color: "white",
+                              border: "2px solid var(--color-delft-blue)",
+                              boxShadow: "2px 2px 0 var(--color-delft-blue)",
+                              cursor: "pointer",
+                              fontWeight: "bold"
+                            }}
+                          >
+                            <Download size={12} /> Ekspor Sesi (CSV)
+                          </button>
+                        </div>
+
+                        {expandedSessions[session.id] && (
+                          <div style={{ 
+                            marginTop: "8px", 
+                            backgroundColor: "white", 
+                            border: "2px solid var(--color-delft-blue)", 
+                            borderRadius: "var(--radius-sm)", 
+                            padding: "12px",
+                            maxHeight: "300px",
+                            overflowY: "auto"
+                          }}>
+                            {(!session.groups || session.groups.length === 0) ? (
+                              <p style={{ fontSize: "0.8rem", opacity: 0.7, margin: 0, fontStyle: "italic" }}>
+                                Detail data kelompok untuk sesi ini tidak tersedia (sesi lama).
+                              </p>
+                            ) : (
+                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", textAlign: "left" }}>
+                                <thead>
+                                  <tr style={{ borderBottom: "2px solid var(--color-delft-blue)" }}>
+                                    <th style={{ padding: "6px 4px", fontWeight: "700" }}>Booth</th>
+                                    <th style={{ padding: "6px 4px", fontWeight: "700" }}>Kelompok</th>
+                                    <th style={{ padding: "6px 4px", fontWeight: "700" }}>Kategori</th>
+                                    <th style={{ padding: "6px 4px", fontWeight: "700", textAlign: "right" }}>Suara</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {session.groups.map((group: any, gIdx: number) => (
+                                    <tr key={group.id || gIdx} style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                                      <td style={{ padding: "6px 4px", fontWeight: "600", color: "var(--color-fern-green)" }}>{group.booth_number}</td>
+                                      <td style={{ padding: "6px 4px", fontWeight: "500" }}>{group.name}</td>
+                                      <td style={{ padding: "6px 4px", opacity: 0.8 }}>{group.category}</td>
+                                      <td style={{ padding: "6px 4px", textAlign: "right", fontWeight: "700" }}>{group.votes}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

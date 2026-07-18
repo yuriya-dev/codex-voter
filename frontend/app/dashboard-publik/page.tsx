@@ -151,6 +151,15 @@ export default function DashboardPublikPage() {
   // The rest (rank 4+)
   const restStats = sortedStats.slice(3);
 
+  // Hitung pemenang per kategori (perolehan terbanyak)
+  const categoryWinners: { [key: string]: GroupStat } = {};
+  stats.forEach(g => {
+    const cat = g.category || "Umum";
+    if (!categoryWinners[cat] || g.votes > categoryWinners[cat].votes) {
+      categoryWinners[cat] = g;
+    }
+  });
+
   return (
     <div 
       className="publik-dashboard-body" 
@@ -730,6 +739,114 @@ export default function DashboardPublikPage() {
                 )}
               </section>
             </>
+          )}
+
+          {/* PEMENANG PER KATEGORI (Perolehan Terbanyak) */}
+          {Object.keys(categoryWinners).length > 0 && (
+            <section style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "20px" }}>
+              <h3 style={{ 
+                fontSize: "1.1rem", 
+                fontFamily: "var(--font-heading)", 
+                textTransform: "uppercase", 
+                letterSpacing: "0.05em", 
+                borderBottom: "2px solid var(--color-delft-blue)", 
+                paddingBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "var(--color-delft-blue)"
+              }}>
+                <Trophy size={18} style={{ color: "var(--color-fern-green)" }} />
+                Perolehan Terbanyak Per Kategori
+              </h3>
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
+                gap: "20px" 
+              }}>
+                {Object.entries(categoryWinners).map(([category, group]) => (
+                  <div 
+                    key={category}
+                    style={{
+                      border: "2px solid var(--color-delft-blue)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "20px",
+                      backgroundColor: "white",
+                      boxShadow: "4px 4px 0px var(--color-delft-blue)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {/* Badge Kategori */}
+                    <div style={{ 
+                      position: "absolute", 
+                      top: 0, 
+                      right: 0, 
+                      backgroundColor: "var(--color-pistachio)", 
+                      color: "var(--color-delft-blue)",
+                      borderLeft: "2px solid var(--color-delft-blue)",
+                      borderBottom: "2px solid var(--color-delft-blue)",
+                      padding: "4px 12px",
+                      fontSize: "0.7rem",
+                      fontWeight: "800",
+                      textTransform: "uppercase",
+                      borderRadius: "0 0 0 var(--radius-sm)"
+                    }}>
+                      {category}
+                    </div>
+
+                    <div style={{ marginTop: "12px" }}>
+                      <span style={{ 
+                        fontSize: "0.75rem", 
+                        fontWeight: "700", 
+                        color: "var(--color-fern-green)",
+                        textTransform: "uppercase"
+                      }}>
+                        {group.booth_number}
+                      </span>
+                      <h4 style={{ 
+                        fontSize: "1.05rem", 
+                        fontFamily: "var(--font-heading)", 
+                        color: "var(--color-delft-blue)",
+                        marginTop: "4px",
+                        marginBottom: "12px",
+                        lineHeight: "1.2"
+                      }}>
+                        {group.name}
+                      </h4>
+                    </div>
+
+                    <div style={{ 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "center",
+                      borderTop: "1px dashed rgba(29, 42, 98, 0.2)",
+                      paddingTop: "12px"
+                    }}>
+                      <span style={{ 
+                        fontSize: "0.75rem", 
+                        fontWeight: "700", 
+                        color: "rgba(29, 42, 98, 0.6)",
+                        textTransform: "uppercase" 
+                      }}>
+                        Total Perolehan
+                      </span>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                        <span style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--color-fern-green)" }}>
+                          {group.votes}
+                        </span>
+                        <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-delft-blue)", textTransform: "uppercase" }}>
+                          Suara
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {/* DAFTAR PERINGKAT LAINNYA */}

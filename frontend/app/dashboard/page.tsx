@@ -5,7 +5,7 @@ import { useVoter } from "@/components/VoterContext";
 import Header from "@/components/Header";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import Link from "next/link";
-import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings } from "lucide-react";
+import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings, Trophy } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
 
 const BACKEND_URL = getBackendUrl();
@@ -130,6 +130,15 @@ export default function DashboardPage() {
     document.body.removeChild(link);
   };
 
+  // Hitung pemenang per kategori (perolehan terbanyak)
+  const categoryWinners: { [key: string]: typeof groupsList[0] } = {};
+  groupsList.forEach((group) => {
+    const cat = group.category || "Umum";
+    if (!categoryWinners[cat] || group.stats.votes > categoryWinners[cat].stats.votes) {
+      categoryWinners[cat] = group;
+    }
+  });
+
   return (
     <>
       <Header />
@@ -213,6 +222,110 @@ export default function DashboardPage() {
             <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "8px" }}>Rata-rata suara per menit</p>
           </div>
         </section>
+
+        {/* Perolehan Terbanyak Per Kategori */}
+        {Object.keys(categoryWinners).length > 0 && (
+          <section style={{ marginBottom: "40px" }}>
+            <h3 style={{ 
+              fontSize: "1.1rem", 
+              fontFamily: "var(--font-heading)", 
+              textTransform: "uppercase", 
+              marginBottom: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "var(--color-delft-blue)"
+            }}>
+              <Trophy size={20} style={{ color: "var(--color-fern-green)" }} />
+              Perolehan Terbanyak Per Kategori
+            </h3>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
+              gap: "20px" 
+            }}>
+              {Object.entries(categoryWinners).map(([category, group]) => (
+                <div 
+                  key={category}
+                  className="card"
+                  style={{
+                    padding: "20px",
+                    backgroundColor: "white",
+                    border: "2px solid var(--color-delft-blue)",
+                    boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                >
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 0, 
+                    right: 0, 
+                    backgroundColor: "var(--color-pistachio)", 
+                    color: "var(--color-delft-blue)",
+                    borderLeft: "2px solid var(--color-delft-blue)",
+                    borderBottom: "2px solid var(--color-delft-blue)",
+                    padding: "4px 12px",
+                    fontSize: "0.7rem",
+                    fontWeight: "800",
+                    textTransform: "uppercase"
+                  }}>
+                    {category}
+                  </div>
+
+                  <div style={{ marginTop: "12px" }}>
+                    <span style={{ 
+                      fontSize: "0.75rem", 
+                      fontWeight: "700", 
+                      color: "var(--color-fern-green)",
+                      textTransform: "uppercase"
+                    }}>
+                      {group.booth_number}
+                    </span>
+                    <h4 style={{ 
+                      fontSize: "1rem", 
+                      fontFamily: "var(--font-heading)", 
+                      color: "var(--color-delft-blue)",
+                      marginTop: "4px",
+                      marginBottom: "12px",
+                      lineHeight: "1.2"
+                    }}>
+                      {group.name}
+                    </h4>
+                  </div>
+
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    borderTop: "1px dashed rgba(29, 42, 98, 0.2)",
+                    paddingTop: "12px"
+                  }}>
+                    <span style={{ 
+                      fontSize: "0.75rem", 
+                      fontWeight: "700", 
+                      color: "rgba(29, 42, 98, 0.6)",
+                      textTransform: "uppercase" 
+                    }}>
+                      Perolehan
+                    </span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                      <span style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--color-fern-green)" }}>
+                        {group.stats.votes}
+                      </span>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--color-delft-blue)", textTransform: "uppercase" }}>
+                        Suara
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Grid Visual & Audit Logs */}
         <div className="split-layout">
