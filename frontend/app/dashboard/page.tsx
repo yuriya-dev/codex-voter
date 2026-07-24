@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Header from "@/components/Header";
+import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import Link from "next/link";
 import { BarChart3, Download, RefreshCw, AlertTriangle, ShieldCheck, Clock, Settings, Trophy } from "lucide-react";
@@ -56,7 +57,7 @@ const INITIAL_AUDIT_LOGS: AuditLog[] = [
   }
 ];
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { groupsList } = useVoter();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
@@ -140,11 +141,8 @@ export default function DashboardPage() {
   });
 
   return (
-    <>
-      <Header />
-      
-      <main className="container" style={{ paddingBottom: "120px" }}>
-        {!adminToken ? (
+    <AdminLayout>
+      {!adminToken ? (
           <AdminLoginForm onLoginSuccess={(token) => setAdminToken(token)} />
         ) : (
           <>
@@ -442,9 +440,14 @@ export default function DashboardPage() {
         </div>
       </>
     )}
-      </main>
+    </AdminLayout>
+  );
+}
 
-
-    </>
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="container" style={{ padding: "40px", textAlign: "center" }}>Memuat dashboard...</div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

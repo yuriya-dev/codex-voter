@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useVoter } from "@/components/VoterContext";
 import Link from "next/link";
 import Header from "@/components/Header";
+import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History } from "lucide-react";
 import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
@@ -681,11 +682,8 @@ function AdminManagementContent() {
   };
 
   return (
-    <>
-      <Header />
-      
-      <main className="container" style={{ paddingBottom: "120px" }}>
-        {!adminToken ? (
+    <AdminLayout>
+      {!adminToken ? (
           <AdminLoginForm onLoginSuccess={(token) => setAdminToken(token)} />
         ) : (
           <>
@@ -1668,8 +1666,7 @@ function AdminManagementContent() {
         )}
       </>
     )}
-      </main>
-    </>
+    </AdminLayout>
   );
 }
 

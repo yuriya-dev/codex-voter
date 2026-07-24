@@ -90,7 +90,7 @@ export default function Header() {
   // 1. Jika di rute Admin dan Admin SUDAH LOGIN
   if (isAdminPath && adminToken) {
     return (
-      <header className="site-header">
+      <header className="site-header admin-header">
         <div className="nav-container">
           <Link href="/admin" className="logo">
             <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
