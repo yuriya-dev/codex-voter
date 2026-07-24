@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVoter } from "@/components/VoterContext";
-import { Heart, Trophy, KeyRound, Vote } from "lucide-react";
+import { Heart, Trophy, KeyRound } from "lucide-react";
 
 export default function Header() {
   const { shortlist, setIsDrawerOpen, visitor } = useVoter();
@@ -36,8 +36,8 @@ export default function Header() {
         <header className="site-header">
           <div className="nav-container">
             <Link href="/" className="logo">
-              <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-              CODEX<span>Admin</span>
+              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+              <span>Admin</span>
             </Link>
             <nav className="nav-links">
               <Link href="/" className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
@@ -53,8 +53,8 @@ export default function Header() {
       <header className="site-header">
         <div className="nav-container">
           <Link href="/" className="logo">
-            <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-            CODEX<span>Voter</span>
+            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+            <span>Voter</span>
           </Link>
 
           <nav className="nav-links">
@@ -93,8 +93,8 @@ export default function Header() {
       <header className="site-header admin-header">
         <div className="nav-container">
           <Link href="/admin" className="logo">
-            <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-            CODEX<span>Admin</span>
+            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+            <span>Admin</span>
           </Link>
 
           <nav className="nav-links" style={{ alignItems: "center", gap: "24px" }}>
@@ -165,8 +165,8 @@ export default function Header() {
       <header className="site-header">
         <div className="nav-container">
           <Link href="/" className="logo">
-            <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-            CODEX<span>Admin</span>
+            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+            <span>Admin</span>
           </Link>
           <nav className="nav-links">
             <Link href="/" className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
@@ -183,8 +183,8 @@ export default function Header() {
     <header className="site-header">
       <div className="nav-container">
         <Link href="/" className="logo">
-          <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-          CODEX<span>Voter</span>
+          <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+          <span>Voter</span>
         </Link>
 
         <nav className="nav-links">

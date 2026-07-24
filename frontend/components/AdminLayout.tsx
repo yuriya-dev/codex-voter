@@ -84,8 +84,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-brand">
           <Link href="/admin" className="logo">
-            <Vote size={22} className="leaf-icon" style={{ transform: "rotate(-15deg)", color: "var(--color-fern-green)" }} />
-            CODEX<span>Admin</span>
+            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+            <span>Admin</span>
           </Link>
         </div>
 
