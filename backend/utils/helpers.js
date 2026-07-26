@@ -13,6 +13,7 @@ function mapGroup(dbGroup) {
     fullDescription: dbGroup.full_description,
     members: dbGroup.members || [],
     photoColor: dbGroup.photo_color,
+    image: convertGoogleDriveLink(dbGroup.image || ""),
     votes: dbGroup.votes || 0
   };
 }
@@ -84,11 +85,28 @@ function adminAuth(req, res, next) {
   next();
 }
 
+function convertGoogleDriveLink(url) {
+  if (!url || typeof url !== "string" || !url.includes("drive.google.com")) return url;
+  
+  const fileDMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileDMatch && fileDMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${fileDMatch[1]}`;
+  }
+  
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idMatch && idMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+  }
+  
+  return url;
+}
+
 module.exports = {
   mapGroup,
   mapVisitor,
   mapVote,
   addAuditLog,
   getClientIp,
-  adminAuth
+  adminAuth,
+  convertGoogleDriveLink
 };

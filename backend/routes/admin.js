@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { addAuditLog, adminAuth } = require("../utils/helpers");
+const { addAuditLog, adminAuth, convertGoogleDriveLink } = require("../utils/helpers");
 
 // 6. Admin - Upload/Import Groups via CSV/JSON
 router.post("/upload-groups", adminAuth, async (req, res) => {
@@ -20,7 +20,8 @@ router.post("/upload-groups", adminAuth, async (req, res) => {
       const full_description = g.fullDescription || description;
       const members = Array.isArray(g.members) ? g.members : (g.members ? g.members.split(";").map(m => m.trim()) : []);
       const slug = g.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-      const photo_color = g.photoColor || `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`;
+      const image = convertGoogleDriveLink(g.image || "");
+      const photo_color = g.photoColor || (image ? "" : `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`);
       const votesVal = parseInt(g.votes) || 0;
 
       return {
@@ -33,6 +34,7 @@ router.post("/upload-groups", adminAuth, async (req, res) => {
         full_description,
         members,
         photo_color,
+        image,
         votes: votesVal
       };
     });
@@ -62,6 +64,43 @@ router.post("/upload-groups", adminAuth, async (req, res) => {
   } catch (error) {
     console.error("POST /api/admin/upload-groups error:", error);
     res.status(500).json({ error: "Failed to import groups" });
+  }
+});
+
+// 10. Admin - Upload image file
+router.post("/upload-image", adminAuth, async (req, res) => {
+  const { fileData, fileName } = req.body;
+  if (!fileData || !fileName) {
+    return res.status(400).json({ error: "Data file dan nama file wajib diisi" });
+  }
+
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    
+    // Ensure uploads directory exists
+    const uploadsDir = path.join(__dirname, "..", "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // Clean base64 prefix if exists (e.g. data:image/png;base64,)
+    const base64Data = fileData.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
+
+    // Create unique file name
+    const ext = path.extname(fileName) || ".png";
+    const uniqueName = `img-${Date.now()}-${Math.floor(Math.random() * 1000)}${ext}`;
+    const filePath = path.join(uploadsDir, uniqueName);
+
+    // Save file
+    fs.writeFileSync(filePath, buffer);
+
+    // Return the URL
+    res.json({ imageUrl: `/uploads/${uniqueName}` });
+  } catch (error) {
+    console.error("POST /api/admin/upload-image error:", error);
+    res.status(500).json({ error: "Gagal mengunggah gambar" });
   }
 });
 

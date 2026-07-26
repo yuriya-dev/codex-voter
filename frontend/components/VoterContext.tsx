@@ -16,6 +16,7 @@ export interface Group {
   fullDescription: string;
   members: string[];
   photoColor: string;
+  image?: string;
   stats: {
     votes: number;
   };
@@ -80,7 +81,18 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch(`${BACKEND_URL}/api/groups`);
       if (res.ok) {
-        const data = await res.json();
+        let data = await res.json();
+        
+        // Normalisasi URL gambar agar siap pakai di frontend
+        if (Array.isArray(data)) {
+          data = data.map((g: any) => {
+            if (g.image && !g.image.startsWith("http") && !g.image.startsWith("data:")) {
+              g.image = `${BACKEND_URL}${g.image}`;
+            }
+            return g;
+          });
+        }
+
         setGroupsList(data);
 
         // Bersihkan ID kelompok yang tidak valid dari shortlist (misal setelah reset data admin)

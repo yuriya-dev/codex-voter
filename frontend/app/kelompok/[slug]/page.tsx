@@ -119,25 +119,38 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
 
         {/* Banner Utama Asimetris */}
         <div className="detail-hero-card">
-          <div className="detail-banner">
-            <div 
-              style={{ 
-                width: "100%", 
-                height: "100%", 
-                background: group.photoColor,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontFamily: "var(--font-heading)",
-                fontWeight: "700",
-                fontSize: "6rem",
-                textShadow: "4px 4px 0 var(--color-delft-blue)"
-              }}
-            >
-              {group.booth_number.replace("Booth ", "")}
-            </div>
+          <div className="detail-banner" style={{ overflow: "hidden", position: "relative" }}>
+            {group.image ? (
+              <img 
+                src={group.image} 
+                alt={group.name} 
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: "cover",
+                  display: "block"
+                }} 
+              />
+            ) : (
+              <div 
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  background: group.photoColor,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontFamily: "var(--font-heading)",
+                  fontWeight: "700",
+                  fontSize: "6rem",
+                  textShadow: "4px 4px 0 var(--color-delft-blue)"
+                }}
+              >
+                {group.booth_number.replace("Booth ", "")}
+              </div>
+            )}
             
             {/* Booth Badge Melayang Heksagonal/Asimetris */}
             <div 

@@ -220,10 +220,11 @@ function AdminManagementContent() {
   // Manual Form State
   const [name, setName] = useState("");
   const [boothNumber, setBoothNumber] = useState("");
-  const [category, setCategory] = useState("IoT & Hardware");
+  const [category, setCategory] = useState("Pertanian & Agribisnis (Smart Farming)");
   const [description, setDescription] = useState("");
   const [fullDescription, setFullDescription] = useState("");
   const [members, setMembers] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   
   // CSV Import State
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -232,6 +233,7 @@ function AdminManagementContent() {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: "", type: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   // Settings State
   const [maxVotes, setMaxVotes] = useState(3);
@@ -285,21 +287,32 @@ function AdminManagementContent() {
     setDescription(group.description || "");
     setFullDescription(group.fullDescription || group.description || "");
     setMembers(group.members ? group.members.join("; ") : "");
+    setImageUrl(group.image || "");
   };
 
   const cancelEditGroup = () => {
     setEditingGroupId(null);
     setName("");
     setBoothNumber("");
-    setCategory("IoT & Hardware");
+    setCategory("Pertanian & Agribisnis (Smart Farming)");
     setDescription("");
     setFullDescription("");
     setMembers("");
+    setImageUrl("");
   };
 
   const handleUpdateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingGroupId || !name || !boothNumber || !category || !adminToken) return;
+
+    // Auto convert Google Drive links to direct image source
+    let finalImageUrl = imageUrl;
+    if (imageUrl.includes("drive.google.com")) {
+      const driveMatch = imageUrl.match(/\/file\/d\/(.+?)\/(view|edit|preview)/);
+      if (driveMatch && driveMatch[1]) {
+        finalImageUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      }
+    }
 
     setLoading(true);
     try {
@@ -315,7 +328,8 @@ function AdminManagementContent() {
           category,
           description,
           fullDescription: fullDescription || description,
-          members
+          members,
+          image: finalImageUrl
         })
       });
 
@@ -513,7 +527,7 @@ function AdminManagementContent() {
     const lines = text.split(/\r?\n/);
     if (lines.length === 0) return [];
     
-    // Headers: name,booth_number,category,description,members,photoColor
+    // Headers: name,booth_number,category,description,members,image
     const headers = lines[0].split(",").map(h => h.trim().replace(/^["']|["']$/g, "").toLowerCase());
     
     const parsed: any[] = [];
@@ -568,6 +582,49 @@ function AdminManagementContent() {
     }
   };
 
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setStatusMessage({ text: "Ukuran file terlalu besar. Maksimum 5MB.", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/admin/upload-image`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            fileData: base64,
+            fileName: file.name
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setImageUrl(data.imageUrl);
+          setStatusMessage({ text: `Berhasil mengunggah gambar ${file.name}!`, type: "success" });
+        } else {
+          const err = await res.json();
+          setStatusMessage({ text: err.error || "Gagal mengunggah gambar.", type: "error" });
+        }
+      } catch (err) {
+        setStatusMessage({ text: "Koneksi backend gagal untuk unggah gambar.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCSVUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (csvPreview.length === 0) return;
@@ -610,6 +667,15 @@ function AdminManagementContent() {
     e.preventDefault();
     if (!name || !boothNumber || !category) return;
 
+    // Auto convert Google Drive links to direct image source
+    let finalImageUrl = imageUrl;
+    if (imageUrl.includes("drive.google.com")) {
+      const driveMatch = imageUrl.match(/\/file\/d\/(.+?)\/(view|edit|preview)/);
+      if (driveMatch && driveMatch[1]) {
+        finalImageUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      }
+    }
+
     setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/groups`, {
@@ -624,7 +690,8 @@ function AdminManagementContent() {
           category,
           description,
           fullDescription: fullDescription || description,
-          members
+          members,
+          image: finalImageUrl
         })
       });
 
@@ -641,6 +708,7 @@ function AdminManagementContent() {
         setDescription("");
         setFullDescription("");
         setMembers("");
+        setImageUrl("");
         refreshGroupsList();
       } else {
         setStatusMessage({ text: "Gagal menambahkan kelompok ke server.", type: "error" });
@@ -811,7 +879,7 @@ function AdminManagementContent() {
               <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "20px" }}>
                 Unggah berkas `.csv` berisi daftar kelompok secara massal. Pastikan baris pertama memiliki nama kolom berikut: <br />
                 <code style={{ fontSize: "0.75rem", background: "var(--color-beige)", padding: "2px 6px", borderRadius: "4px" }}>
-                  name, booth_number, category, description, members, photoColor
+                  name, booth_number, category, description, members, image
                 </code>
               </p>
 
@@ -918,9 +986,13 @@ function AdminManagementContent() {
                       onChange={(e) => setCategory(e.target.value)}
                       style={{ height: "48px", backgroundColor: "white" }}
                     >
-                      <option value="IoT & Hardware">IoT & Hardware</option>
-                      <option value="Software & AI">Software & AI</option>
-                      <option value="Software & Web">Software & Web</option>
+                      <option value="Pertanian & Agribisnis (Smart Farming)">Pertanian & Agribisnis (Smart Farming)</option>
+                      <option value="Kesehatan & Perawatan Lansia">Kesehatan & Perawatan Lansia</option>
+                      <option value="Keamanan & Pengawasan (Smart Security)">Keamanan & Pengawasan (Smart Security)</option>
+                      <option value="Smart Home, Otomasi & Robotika">Smart Home, Otomasi & Robotika</option>
+                      <option value="Lingkungan, Konservasi & Mitigasi Bencana">Lingkungan, Konservasi & Mitigasi Bencana</option>
+                      <option value="Aksesibilitas & Asistif">Aksesibilitas & Asistif</option>
+                      <option value="Keuangan (Fintech)">Keuangan (Fintech)</option>
                       <option value="Umum">Umum</option>
                     </select>
                   </div>
@@ -936,6 +1008,75 @@ function AdminManagementContent() {
                     value={members} 
                     onChange={(e) => setMembers(e.target.value)} 
                   />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="imageUrl">Gambar Kelompok (Tautan URL / Upload File)</label>
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    <input 
+                      type="text" 
+                      id="imageUrl" 
+                      className="form-control" 
+                      placeholder="Masukkan URL Gambar (atau tautan Google Drive)" 
+                      value={imageUrl} 
+                      onChange={(e) => setImageUrl(e.target.value)} 
+                      style={{ flex: 1 }}
+                    />
+                    <input 
+                      type="file" 
+                      id="imageFile" 
+                      accept="image/*" 
+                      onChange={handleImageFileUpload}
+                      style={{ display: "none" }}
+                      ref={imageFileInputRef}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => imageFileInputRef.current?.click()}
+                      className="btn btn-secondary"
+                      style={{ height: "48px", whiteSpace: "nowrap", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      Unggah File
+                    </button>
+                  </div>
+                  
+                  {/* Google Drive Link Converter Helper / Warning */}
+                  {imageUrl.includes("drive.google.com") && (
+                    <div style={{ fontSize: "0.75rem", color: "var(--color-fern-green)", marginTop: "6px", backgroundColor: "rgba(175, 208, 110, 0.1)", padding: "10px", borderRadius: "4px", border: "1px dashed var(--color-fern-green)", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div>💡 <strong>Tautan Google Drive terdeteksi.</strong> Kami akan mengonversinya secara otomatis agar gambar dapat ditampilkan langsung.</div>
+                      <div style={{ color: "#e63946", fontWeight: "600" }}>⚠️ PENTING: Pastikan hak akses file di Google Drive sudah diatur ke "Siapa saja yang memiliki link dapat melihat" (Anyone with the link can view).</div>
+                    </div>
+                  )}
+
+                  {/* Image Preview */}
+                  {imageUrl && (
+                    <div style={{ marginTop: "12px", position: "relative", width: "100%", height: "150px", border: "2px solid var(--color-delft-blue)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                      <img 
+                        src={(() => {
+                          if (imageUrl.includes("drive.google.com")) {
+                            const fileDMatch = imageUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                            if (fileDMatch && fileDMatch[1]) {
+                              return `https://lh3.googleusercontent.com/d/${fileDMatch[1]}`;
+                            }
+                            const idMatch = imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                            if (idMatch && idMatch[1]) {
+                              return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                            }
+                          }
+                          return imageUrl.startsWith("http") || imageUrl.startsWith("data:") ? imageUrl : `${BACKEND_URL}${imageUrl}`;
+                        })()} 
+                        alt="Pratinjau Unggahan" 
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl("")}
+                        style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(239, 68, 68, 0.9)", color: "white", border: "2px solid var(--color-delft-blue)", borderRadius: "var(--radius-sm)", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "bold", boxShadow: "2px 2px 0 0 var(--color-delft-blue)" }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>

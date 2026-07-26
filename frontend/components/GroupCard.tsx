@@ -29,24 +29,31 @@ export default function GroupCard({ group }: GroupCardProps) {
       
       {/* Photo Wrapper with Sepia/Grayscale overlay */}
       <div className="card-image-wrapper">
-        <div 
-          style={{ 
-            width: "100%", 
-            height: "100%", 
-            background: group.photoColor,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontFamily: "var(--font-heading)",
-            fontWeight: "700",
-            fontSize: "2.5rem",
-            textShadow: "2px 2px 0 var(--color-delft-blue)"
-          }}
-        >
-          {group.booth_number.replace("Booth ", "")}
-        </div>
+        {group.image ? (
+          <img 
+            src={group.image} 
+            alt={group.name} 
+          />
+        ) : (
+          <div 
+            style={{ 
+              width: "100%", 
+              height: "100%", 
+              background: group.photoColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontFamily: "var(--font-heading)",
+              fontWeight: "700",
+              fontSize: "2.5rem",
+              textShadow: "2px 2px 0 var(--color-delft-blue)"
+            }}
+          >
+            {group.booth_number.replace("Booth ", "")}
+          </div>
+        )}
         <span className="card-booth">{group.booth_number}</span>
       </div>
 

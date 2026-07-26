@@ -18,9 +18,14 @@ app.use((req, res, next) => {
   next();
 });
 
+const path = require("path");
+
 // Configure CORS dynamically to reflect request origin
 app.use(cors({ origin: true }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+
+// Serve uploaded images statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes Registration
 app.use("/api/groups", groupsRouter);

@@ -8,6 +8,7 @@ export interface Group {
   fullDescription: string;
   members: string[];
   photoColor: string;
+  image?: string;
   stats: {
     votes: number;
   };

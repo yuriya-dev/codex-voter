@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
-const { mapGroup, addAuditLog, adminAuth } = require("../utils/helpers");
+const { mapGroup, addAuditLog, adminAuth, convertGoogleDriveLink } = require("../utils/helpers");
 
 // 1. GET all groups with vote counts
 router.get("/", async (req, res) => {
@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
 
 // 7. Admin - Add Single Group Manually
 router.post("/", adminAuth, async (req, res) => {
-  const { name, booth_number, category, description, fullDescription, members, photoColor } = req.body;
+  const { name, booth_number, category, description, fullDescription, members, photoColor, image } = req.body;
   if (!name || !booth_number || !category) {
     return res.status(400).json({ error: "Nama, Booth, dan Kategori wajib diisi" });
   }
@@ -48,7 +48,8 @@ router.post("/", adminAuth, async (req, res) => {
       description: description || "",
       full_description: fullDescription || description || "",
       members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
-      photo_color: photoColor || "linear-gradient(135deg, #1B4D3E, #4B8B3B)",
+      image: convertGoogleDriveLink(image || ""),
+      photo_color: photoColor || (image ? "" : `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`),
       votes: 0
     };
 
@@ -96,7 +97,7 @@ router.delete("/:id", adminAuth, async (req, res) => {
 // 9. Admin - Update Group by ID
 router.put("/:id", adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { name, booth_number, category, description, fullDescription, members, photoColor } = req.body;
+  const { name, booth_number, category, description, fullDescription, members, photoColor, image } = req.body;
   if (!name || !booth_number || !category) {
     return res.status(400).json({ error: "Nama, Booth, dan Kategori wajib diisi" });
   }
@@ -120,7 +121,8 @@ router.put("/:id", adminAuth, async (req, res) => {
       description: description || "",
       full_description: fullDescription || description || "",
       members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
-      photo_color: photoColor || existing[0].photo_color || "linear-gradient(135deg, #1B4D3E, #4B8B3B)"
+      image: image !== undefined ? convertGoogleDriveLink(image) : existing[0].image || "",
+      photo_color: photoColor || (image ? "" : existing[0].photo_color || `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`)
     };
 
     const { data: updatedGroup, error: updateErr } = await supabase

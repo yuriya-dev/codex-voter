@@ -109,24 +109,39 @@ export default function ShortlistDrawer() {
                   }}
                 >
                   {/* Photo Thumbnail */}
-                  <div 
-                    style={{ 
-                      width: "60px", 
-                      height: "60px", 
-                      borderRadius: "var(--radius-sm)", 
-                      background: group.photoColor, 
-                      flexShrink: 0,
-                      border: "1px solid var(--color-delft-blue)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                      fontSize: "0.7rem",
-                      fontWeight: "700"
-                    }}
-                  >
-                    {group.booth_number.replace("Booth ", "")}
-                  </div>
+                  {group.image ? (
+                    <img 
+                      src={group.image} 
+                      alt={group.name} 
+                      style={{ 
+                        width: "60px", 
+                        height: "60px", 
+                        borderRadius: "var(--radius-sm)", 
+                        objectFit: "cover",
+                        flexShrink: 0,
+                        border: "1px solid var(--color-delft-blue)"
+                      }} 
+                    />
+                  ) : (
+                    <div 
+                      style={{ 
+                        width: "60px", 
+                        height: "60px", 
+                        borderRadius: "var(--radius-sm)", 
+                        background: group.photoColor, 
+                        flexShrink: 0,
+                        border: "1px solid var(--color-delft-blue)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontSize: "0.7rem",
+                        fontWeight: "700"
+                      }}
+                    >
+                      {group.booth_number.replace("Booth ", "")}
+                    </div>
+                  )}
                   
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
