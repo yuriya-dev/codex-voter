@@ -6,7 +6,7 @@ import GroupCard from "@/components/GroupCard";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-const CATEGORIES = ["Semua", "IoT & Hardware", "Software & AI", "Software & Web"];
+const CATEGORIES = ["Semua", "Pertanian & Agribisnis (Smart Farming)", "Kesehatan & Perawatan Lansia", "Keamanan & Pengawasan (Smart Security)", "Smart Home, Otomasi & Robotika", "Lingkungan, Konservasi & Mitigasi Bencana", "Aksesibilitas & Asistif", "Keuangan (Fintech)"];
 
 export default function KelompokPage() {
   const { groupsList } = useVoter();

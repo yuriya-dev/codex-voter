@@ -54,7 +54,6 @@ export default function Header() {
         <div className="nav-container">
           <Link href="/" className="logo">
             <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-            <span>Voter</span>
           </Link>
 
           <nav className="nav-links">
@@ -184,7 +183,6 @@ export default function Header() {
       <div className="nav-container">
         <Link href="/" className="logo">
           <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-          <span>Voter</span>
         </Link>
 
         <nav className="nav-links">
