@@ -8,6 +8,7 @@ import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History } from "lucide-react";
 import { getBackendUrl, getGroupImageUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
+import { compressImageClient } from "@/lib/imageCompressor";
 import { useSearchParams } from "next/navigation";
 
 const BACKEND_URL = getBackendUrl();
@@ -582,47 +583,44 @@ function AdminManagementContent() {
     }
   };
 
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setStatusMessage({ text: "Ukuran file terlalu besar. Maksimum 5MB.", type: "error" });
-      return;
-    }
-
     setLoading(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      try {
-        const res = await fetch(`${BACKEND_URL}/api/admin/upload-image`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${adminToken}`
-          },
-          body: JSON.stringify({
-            fileData: base64,
-            fileName: file.name
-          })
-        });
+    setStatusMessage({ text: "Sedang mengompresi gambar...", type: "info" });
 
-        if (res.ok) {
-          const data = await res.json();
-          setImageUrl(data.imageUrl);
-          setStatusMessage({ text: `Berhasil mengunggah gambar ${file.name}!`, type: "success" });
-        } else {
-          const err = await res.json();
-          setStatusMessage({ text: err.error || "Gagal mengunggah gambar.", type: "error" });
-        }
-      } catch (err) {
-        setStatusMessage({ text: "Koneksi backend gagal untuk unggah gambar.", type: "error" });
-      } finally {
-        setLoading(false);
+    try {
+      // Compress the image client-side to keep it HD but extremely lightweight
+      const { base64, fileName } = await compressImageClient(file);
+      
+      setStatusMessage({ text: "Mengunggah gambar terkompresi...", type: "info" });
+      const res = await fetch(`${BACKEND_URL}/api/admin/upload-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          fileData: base64,
+          fileName: fileName
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setImageUrl(data.imageUrl);
+        setStatusMessage({ text: `Berhasil mengunggah gambar ${file.name}!`, type: "success" });
+      } else {
+        const err = await res.json();
+        setStatusMessage({ text: err.error || "Gagal mengunggah gambar.", type: "error" });
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error(err);
+      setStatusMessage({ text: err?.message || "Gagal memproses atau mengunggah gambar.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCSVUpload = async (e: React.FormEvent) => {

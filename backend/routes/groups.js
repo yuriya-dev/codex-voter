@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabase");
 const { mapGroup, addAuditLog, adminAuth, convertGoogleDriveLink } = require("../utils/helpers");
+const { processAndSaveImage } = require("../utils/imageProcessor");
 
 // 1. GET all groups with vote counts
 router.get("/", async (req, res) => {
@@ -39,6 +40,9 @@ router.post("/", adminAuth, async (req, res) => {
     const id = `g-${Date.now()}`;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     
+    // Compress and optimize image
+    const processedImage = image ? await processAndSaveImage(image, `${slug}.jpg`) : "";
+
     const dbGroup = {
       id,
       name,
@@ -48,8 +52,8 @@ router.post("/", adminAuth, async (req, res) => {
       description: description || "",
       full_description: fullDescription || description || "",
       members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
-      image: convertGoogleDriveLink(image || ""),
-      photo_color: photoColor || (image ? "" : `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`),
+      image: processedImage,
+      photo_color: photoColor || (processedImage ? "" : `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`),
       votes: 0
     };
 
@@ -113,6 +117,12 @@ router.put("/:id", adminAuth, async (req, res) => {
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+    // Compress and optimize image if provided
+    let processedImage = existing[0].image || "";
+    if (image !== undefined) {
+      processedImage = image ? await processAndSaveImage(image, `${slug}.jpg`) : "";
+    }
+
     const updatedDbGroup = {
       name,
       slug,
@@ -121,8 +131,8 @@ router.put("/:id", adminAuth, async (req, res) => {
       description: description || "",
       full_description: fullDescription || description || "",
       members: Array.isArray(members) ? members : (members ? members.split(";").map(m => m.trim()) : []),
-      image: image !== undefined ? convertGoogleDriveLink(image) : existing[0].image || "",
-      photo_color: photoColor || (image ? "" : existing[0].photo_color || `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`)
+      image: processedImage,
+      photo_color: photoColor || (processedImage ? "" : existing[0].photo_color || `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`)
     };
 
     const { data: updatedGroup, error: updateErr } = await supabase
