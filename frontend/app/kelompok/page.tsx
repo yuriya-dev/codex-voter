@@ -1,17 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useVoter } from "@/components/VoterContext";
 import GroupCard from "@/components/GroupCard";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 
-const CATEGORIES = ["Semua", "Pertanian & Agribisnis (Smart Farming)", "Kesehatan & Perawatan Lansia", "Keamanan & Pengawasan (Smart Security)", "Smart Home, Otomasi & Robotika", "Lingkungan, Konservasi & Mitigasi Bencana", "Aksesibilitas & Asistif", "Keuangan (Fintech)"];
+const CATEGORIES = [
+  { value: "Semua", label: "Semua" },
+  { value: "Pertanian & Agribisnis (Smart Farming)", label: "Smart Farming" },
+  { value: "Kesehatan & Perawatan Lansia", label: "Kesehatan & Lansia" },
+  { value: "Keamanan & Pengawasan (Smart Security)", label: "Smart Security" },
+  { value: "Smart Home, Otomasi & Robotika", label: "Smart Home & Robotika" },
+  { value: "Lingkungan, Konservasi & Mitigasi Bencana", label: "Lingkungan & Bencana" },
+  { value: "Aksesibilitas & Asistif", label: "Aksesibilitas" },
+  { value: "Keuangan (Fintech)", label: "Fintech" }
+];
 
 export default function KelompokPage() {
   const { groupsList } = useVoter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Semua");
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 2);
+      setShowRightArrow(scrollWidth - scrollLeft - clientWidth > 2);
+    }
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      checkScroll();
+      const resizeObserver = new ResizeObserver(() => checkScroll());
+      resizeObserver.observe(el);
+      
+      el.addEventListener("scroll", checkScroll);
+      return () => {
+        resizeObserver.disconnect();
+        el.removeEventListener("scroll", checkScroll);
+      };
+    }
+  }, [groupsList]);
+
+  useEffect(() => {
+    // Re-check scroll buttons when active category or search query changes
+    const timer = setTimeout(checkScroll, 100);
+    return () => clearTimeout(timer);
+  }, [activeCategory, searchQuery]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { clientWidth } = scrollRef.current;
+      const scrollAmount = clientWidth * 0.75;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth"
+      });
+    }
+  };
 
   // Filter groups
   const filteredGroups = groupsList.filter((group) => {
@@ -72,29 +125,64 @@ export default function KelompokPage() {
           </div>
 
           {/* Filter Pills Category */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-            <SlidersHorizontal size={16} style={{ color: "var(--color-delft-blue)", marginRight: "8px" }} />
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: "6px 14px",
-                  fontSize: "0.8rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  borderRadius: "var(--radius-sm)",
-                  border: "2px solid var(--color-delft-blue)",
-                  backgroundColor: activeCategory === cat ? "var(--color-fern-green)" : "white",
-                  color: activeCategory === cat ? "white" : "var(--color-delft-blue)",
-                  cursor: "pointer",
-                  boxShadow: activeCategory === cat ? "2px 2px 0 0 var(--color-delft-blue)" : "1px 1px 0 0 var(--color-delft-blue)",
-                  transition: "var(--transition-fast)"
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
+            <SlidersHorizontal size={16} style={{ color: "var(--color-delft-blue)", flexShrink: 0 }} />
+            
+            <div className="filter-scroll-wrapper">
+              {/* Tombol Scroll Kiri */}
+              {showLeftArrow && (
+                <button
+                  onClick={() => handleScroll("left")}
+                  className="filter-scroll-btn filter-scroll-btn-left"
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              )}
+
+              {/* Efek Fade Kiri */}
+              {showLeftArrow && <div className="filter-scroll-fade filter-scroll-fade-left" />}
+
+              {/* Container Horizontal Scroll */}
+              <div ref={scrollRef} className="filter-scroll-container">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setActiveCategory(cat.value)}
+                    style={{
+                      flexShrink: 0,
+                      padding: "6px 14px",
+                      fontSize: "0.8rem",
+                      fontWeight: "700",
+                      textTransform: "uppercase",
+                      borderRadius: "var(--radius-sm)",
+                      border: "2px solid var(--color-delft-blue)",
+                      backgroundColor: activeCategory === cat.value ? "var(--color-fern-green)" : "white",
+                      color: activeCategory === cat.value ? "white" : "var(--color-delft-blue)",
+                      cursor: "pointer",
+                      boxShadow: activeCategory === cat.value ? "2px 2px 0 0 var(--color-delft-blue)" : "1px 1px 0 0 var(--color-delft-blue)",
+                      transition: "var(--transition-fast)"
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Efek Fade Kanan */}
+              {showRightArrow && <div className="filter-scroll-fade filter-scroll-fade-right" />}
+
+              {/* Tombol Scroll Kanan */}
+              {showRightArrow && (
+                <button
+                  onClick={() => handleScroll("right")}
+                  className="filter-scroll-btn filter-scroll-btn-right"
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

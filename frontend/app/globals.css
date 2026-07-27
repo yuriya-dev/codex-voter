@@ -1417,6 +1417,87 @@ a:hover {
   z-index: 1;
 }
 
+/* --- Filter Horizontal Scrollbar & Navigation --- */
+.filter-scroll-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  width: 100%;
+}
+
+.filter-scroll-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding: 4px 8px 6px 4px; /* extra space at bottom/sides to avoid cutting shadows */
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.filter-scroll-container::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.filter-scroll-btn {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-delft-blue);
+  background-color: var(--color-white);
+  color: var(--color-delft-blue);
+  cursor: pointer;
+  box-shadow: 2px 2px 0px 0px var(--color-delft-blue);
+  transition: var(--transition-fast);
+}
+
+.filter-scroll-btn:hover {
+  background-color: var(--color-pistachio);
+}
+
+.filter-scroll-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px var(--color-delft-blue);
+}
+
+.filter-scroll-btn-left {
+  left: 0;
+}
+
+.filter-scroll-btn-right {
+  right: 0;
+}
+
+.filter-scroll-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.2s ease;
+}
+
+.filter-scroll-fade-left {
+  left: 30px;
+  background: linear-gradient(to right, var(--color-beige), rgba(245, 243, 216, 0));
+}
+
+.filter-scroll-fade-right {
+  right: 30px;
+  background: linear-gradient(to left, var(--color-beige), rgba(245, 243, 216, 0));
+}
+
+
 
 
 
