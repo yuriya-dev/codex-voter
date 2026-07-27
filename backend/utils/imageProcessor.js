@@ -22,6 +22,11 @@ async function downloadImage(url) {
           targetUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
         }
       }
+    } else if (url.includes("googleusercontent.com")) {
+      const lh3Match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (lh3Match && lh3Match[1]) {
+        targetUrl = `https://drive.google.com/uc?export=download&id=${lh3Match[1]}`;
+      }
     }
 
     console.log(`[ImageProcessor] Downloading image from: ${targetUrl}`);
