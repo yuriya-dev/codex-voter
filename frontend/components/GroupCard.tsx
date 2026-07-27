@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useVoter } from "@/components/VoterContext";
 import { Heart, ArrowUpRight } from "lucide-react";
@@ -13,6 +14,7 @@ interface GroupCardProps {
 export default function GroupCard({ group }: GroupCardProps) {
   const { isShortlisted, addToShortlist, removeFromShortlist } = useVoter();
   const active = isShortlisted(group.id);
+  const [imageError, setImageError] = useState(false);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -30,17 +32,18 @@ export default function GroupCard({ group }: GroupCardProps) {
       
       {/* Photo Wrapper with Sepia/Grayscale overlay */}
       <div className="card-image-wrapper">
-        {group.image ? (
+        {group.image && !imageError ? (
           <img 
             src={getGroupImageUrl(group.image)} 
             alt={group.name} 
+            onError={() => setImageError(true)}
           />
         ) : (
           <div 
             style={{ 
               width: "100%", 
               height: "100%", 
-              background: group.photoColor,
+              background: group.photoColor || "linear-gradient(135deg, var(--color-delft-blue), var(--color-pistachio))",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",

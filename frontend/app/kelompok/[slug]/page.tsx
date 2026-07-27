@@ -16,6 +16,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
   const group = groupsList.find((g) => g.slug === slug);
   const [active, setActive] = useState(false);
   const [scannedFromQR, setScannedFromQR] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (group) {
@@ -121,10 +122,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
         {/* Banner Utama Asimetris */}
         <div className="detail-hero-card">
           <div className="detail-banner" style={{ overflow: "hidden", position: "relative" }}>
-            {group.image ? (
+            {group.image && !imageError ? (
               <img 
                 src={getGroupImageUrl(group.image)} 
                 alt={group.name} 
+                onError={() => setImageError(true)}
                 style={{ 
                   width: "100%", 
                   height: "100%", 
@@ -137,7 +139,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
                 style={{ 
                   width: "100%", 
                   height: "100%", 
-                  background: group.photoColor,
+                  background: group.photoColor || "linear-gradient(135deg, var(--color-delft-blue), var(--color-pistachio))",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",

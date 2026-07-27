@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useVoter } from "@/components/VoterContext";
 import { useRouter } from "next/navigation";
 import { X, Trash2, ArrowRight, Heart } from "lucide-react";
@@ -11,6 +12,7 @@ export default function ShortlistDrawer() {
   const router = useRouter();
 
   const shortlistedGroups = groupsList.filter((g) => shortlist.includes(g.id));
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const handleStartVote = () => {
     setIsDrawerOpen(false);
@@ -110,10 +112,11 @@ export default function ShortlistDrawer() {
                   }}
                 >
                   {/* Photo Thumbnail */}
-                  {group.image ? (
+                  {group.image && !failedImages[group.id] ? (
                     <img 
                       src={getGroupImageUrl(group.image)} 
                       alt={group.name} 
+                      onError={() => setFailedImages(prev => ({ ...prev, [group.id]: true }))}
                       style={{ 
                         width: "60px", 
                         height: "60px", 
@@ -129,7 +132,7 @@ export default function ShortlistDrawer() {
                         width: "60px", 
                         height: "60px", 
                         borderRadius: "var(--radius-sm)", 
-                        background: group.photoColor, 
+                        background: group.photoColor || "linear-gradient(135deg, var(--color-delft-blue), var(--color-pistachio))", 
                         flexShrink: 0,
                         border: "1px solid var(--color-delft-blue)",
                         display: "flex",
