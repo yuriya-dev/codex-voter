@@ -9,7 +9,7 @@ router.get("/stats", async (req, res) => {
     const { data: dbGroups, error: groupsErr } = await supabase.from('groups').select('*');
     if (groupsErr) throw groupsErr;
 
-    const { data: dbVotes, error: votesErr } = await supabase.from('votes').select('group_id');
+    const { data: dbVotes, error: votesErr } = await supabase.from('votes').select('group_id, voted_at, created_at');
     if (votesErr) throw votesErr;
 
     const groupsList = dbGroups.map(mapGroup);
@@ -36,13 +36,40 @@ router.get("/stats", async (req, res) => {
       }
     });
 
+    // Calculate booth participation dynamically
+    const totalBooths = dbGroups.length;
+    const boothsWithVotes = dbGroups.filter(g => {
+      const liveVotesCount = dbVotes.filter(v => v.group_id === g.id).length;
+      return (g.votes + liveVotesCount) > 0;
+    }).length;
+    const participationRate = totalBooths > 0 ? Math.round((boothsWithVotes / totalBooths) * 100) : 0;
+
+    // Calculate live voting speed (average votes per minute)
+    let votingSpeed = 0;
+    if (dbVotes.length > 1) {
+      const timestamps = dbVotes.map(v => new Date(v.voted_at || v.created_at).getTime());
+      const minTime = Math.min(...timestamps);
+      const maxTime = Math.max(...timestamps);
+      const diffMinutes = (maxTime - minTime) / 60000;
+      const duration = Math.max(1, diffMinutes);
+      votingSpeed = parseFloat((dbVotes.length / duration).toFixed(1));
+    } else if (dbVotes.length === 1) {
+      votingSpeed = 1.0;
+    }
+
     res.json({
       totalVotes,
       groupStats,
       highestVotesByCategory: Object.entries(categoryWinners).map(([category, group]) => ({
         category,
         group
-      }))
+      })),
+      participation: {
+        rate: participationRate,
+        votedBooths: boothsWithVotes,
+        totalBooths: totalBooths
+      },
+      votingSpeed
     });
   } catch (error) {
     console.error("GET /api/dashboard/stats error:", error);

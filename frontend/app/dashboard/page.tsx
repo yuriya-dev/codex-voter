@@ -63,6 +63,12 @@ function DashboardPageContent() {
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [adminToken, setAdminToken] = useState<string | null>(null);
 
+  // Dynamic statistics states
+  const [participationRate, setParticipationRate] = useState(0);
+  const [votedBooths, setVotedBooths] = useState(0);
+  const [totalBooths, setTotalBooths] = useState(0);
+  const [votingSpeed, setVotingSpeed] = useState(0);
+
   // Cek token saat halaman dibuka
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -76,11 +82,44 @@ function DashboardPageContent() {
     setAdminToken(null);
   };
 
-  // Calculate stats
+  // Fetch real-time stats from backend
   useEffect(() => {
-    const total = groupsList.reduce((sum, g) => sum + g.stats.votes, 0);
-    setTotalVoteCount(total);
-  }, [groupsList]);
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/dashboard/stats`);
+        if (res.ok) {
+          const data = await res.json();
+          setTotalVoteCount(data.totalVotes);
+          if (data.participation) {
+            setParticipationRate(data.participation.rate);
+            setVotedBooths(data.participation.votedBooths);
+            setTotalBooths(data.participation.totalBooths);
+          }
+          setVotingSpeed(data.votingSpeed || 0);
+        }
+      } catch (err) {
+        console.error("Gagal memuat statistik dashboard:", err);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 4000); // refresh every 4 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate local fallback stats when backend isn't loaded yet
+  useEffect(() => {
+    if (totalBooths === 0 && groupsList.length > 0) {
+      const total = groupsList.reduce((sum, g) => sum + g.stats.votes, 0);
+      setTotalVoteCount(total);
+      
+      const count = groupsList.length;
+      const voted = groupsList.filter(g => g.stats.votes > 0).length;
+      setTotalBooths(count);
+      setVotedBooths(voted);
+      setParticipationRate(count > 0 ? Math.round((voted / count) * 100) : 0);
+    }
+  }, [groupsList, totalBooths]);
 
   // Fetch real audit logs periodically from backend
   useEffect(() => {
@@ -204,9 +243,9 @@ function DashboardPageContent() {
               <span style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
                 Partisipasi Booth
               </span>
-              <div className="value" style={{ color: "var(--color-delft-blue)" }}>100%</div>
+              <div className="value" style={{ color: "var(--color-delft-blue)" }}>{participationRate}%</div>
             </div>
-            <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "8px" }}>5 dari 5 booth mendapatkan suara</p>
+            <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "8px" }}>{votedBooths} dari {totalBooths} booth mendapatkan suara</p>
           </div>
 
           {/* Stat 3 */}
@@ -215,7 +254,7 @@ function DashboardPageContent() {
               <span style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "rgba(29, 42, 98, 0.6)" }}>
                 Kecepatan Voting
               </span>
-              <div className="value" style={{ color: "var(--color-carolina-blue)" }}>~4.2</div>
+              <div className="value" style={{ color: "var(--color-carolina-blue)" }}>~{votingSpeed}</div>
             </div>
             <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "8px" }}>Rata-rata suara per menit</p>
           </div>
