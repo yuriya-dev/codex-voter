@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History } from "lucide-react";
-import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
+import { getBackendUrl, getGroupImageUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { useSearchParams } from "next/navigation";
 
 const BACKEND_URL = getBackendUrl();
@@ -1052,19 +1052,7 @@ function AdminManagementContent() {
                   {imageUrl && (
                     <div style={{ marginTop: "12px", position: "relative", width: "100%", height: "150px", border: "2px solid var(--color-delft-blue)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
                       <img 
-                        src={(() => {
-                          if (imageUrl.includes("drive.google.com")) {
-                            const fileDMatch = imageUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-                            if (fileDMatch && fileDMatch[1]) {
-                              return `https://lh3.googleusercontent.com/d/${fileDMatch[1]}`;
-                            }
-                            const idMatch = imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-                            if (idMatch && idMatch[1]) {
-                              return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-                            }
-                          }
-                          return imageUrl.startsWith("http") || imageUrl.startsWith("data:") ? imageUrl : `${BACKEND_URL}${imageUrl}`;
-                        })()} 
+                        src={getGroupImageUrl(imageUrl)} 
                         alt="Pratinjau Unggahan" 
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { ArrowLeft, Heart, CheckCircle2, User, Landmark, HelpCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getGroupImageUrl } from "@/lib/config";
 
 export default function GroupDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -122,7 +123,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
           <div className="detail-banner" style={{ overflow: "hidden", position: "relative" }}>
             {group.image ? (
               <img 
-                src={group.image} 
+                src={getGroupImageUrl(group.image)} 
                 alt={group.name} 
                 style={{ 
                   width: "100%", 

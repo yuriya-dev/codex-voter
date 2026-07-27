@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useVoter } from "@/components/VoterContext";
 import { Heart, ArrowUpRight } from "lucide-react";
 import { Group } from "@/lib/data";
+import { getGroupImageUrl } from "@/lib/config";
 
 interface GroupCardProps {
   group: Group;
@@ -31,7 +32,7 @@ export default function GroupCard({ group }: GroupCardProps) {
       <div className="card-image-wrapper">
         {group.image ? (
           <img 
-            src={group.image} 
+            src={getGroupImageUrl(group.image)} 
             alt={group.name} 
           />
         ) : (

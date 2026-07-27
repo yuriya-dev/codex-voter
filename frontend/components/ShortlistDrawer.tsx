@@ -4,6 +4,7 @@ import { useVoter } from "@/components/VoterContext";
 import { useRouter } from "next/navigation";
 import { X, Trash2, ArrowRight, Heart } from "lucide-react";
 import Link from "next/link";
+import { getGroupImageUrl } from "@/lib/config";
 
 export default function ShortlistDrawer() {
   const { shortlist, removeFromShortlist, isDrawerOpen, setIsDrawerOpen, groupsList, visitor } = useVoter();
@@ -111,7 +112,7 @@ export default function ShortlistDrawer() {
                   {/* Photo Thumbnail */}
                   {group.image ? (
                     <img 
-                      src={group.image} 
+                      src={getGroupImageUrl(group.image)} 
                       alt={group.name} 
                       style={{ 
                         width: "60px", 
