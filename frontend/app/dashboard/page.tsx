@@ -60,6 +60,8 @@ const INITIAL_AUDIT_LOGS: AuditLog[] = [
 function DashboardPageContent() {
   const { groupsList } = useVoter();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [detailedVotes, setDetailedVotes] = useState<any[]>([]);
+  const [isExportingDetail, setIsExportingDetail] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [adminToken, setAdminToken] = useState<string | null>(null);
 
@@ -121,53 +123,129 @@ function DashboardPageContent() {
     }
   }, [groupsList, totalBooths]);
 
-  // Fetch real audit logs periodically from backend
+  // Fetch real audit logs and detailed votes periodically from backend
   useEffect(() => {
     if (!adminToken) return;
 
-    const fetchLogs = async () => {
+    const fetchLogsAndVotes = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/dashboard/logs`, {
-          headers: {
-            "Authorization": `Bearer ${adminToken}`
-          }
-        });
-        if (res.ok) {
-          const logs = await res.json();
-          setAuditLogs(logs);
-        } else if (res.status === 401) {
-          // Token expired or invalid
+        const headers = { "Authorization": `Bearer ${adminToken}` };
+        
+        // Fetch logs
+        const logsPromise = fetch(`${BACKEND_URL}/api/dashboard/logs`, { headers });
+        // Fetch detailed votes
+        const votesPromise = fetch(`${BACKEND_URL}/api/dashboard/votes-detail`, { headers });
+
+        const [logsRes, votesRes] = await Promise.all([logsPromise, votesPromise]);
+
+        if (logsRes.status === 401 || votesRes.status === 401) {
           handleLogout();
+          return;
+        }
+
+        if (logsRes.ok) {
+          const logs = await logsRes.json();
+          setAuditLogs(logs);
+        }
+
+        if (votesRes.ok) {
+          const votes = await votesRes.json();
+          setDetailedVotes(votes);
         }
       } catch (err) {
-        console.error("Gagal memuat audit logs dari backend:", err);
+        console.error("Gagal memuat data dashboard dari backend:", err);
       }
     };
 
-    fetchLogs();
+    fetchLogsAndVotes();
     const interval = setInterval(() => {
-      fetchLogs();
-    }, 4000); // refresh logs every 4 seconds
+      fetchLogsAndVotes();
+    }, 4000); // refresh logs and detailed votes every 4 seconds
 
     return () => clearInterval(interval);
   }, [adminToken]);
 
   const handleExportCSV = () => {
-    // Generate CSV content
+    // Generate CSV content using Blob for safety & proper UTF-8 handling
     const headers = ["Booth", "Nama Proyek", "Kategori", "Jumlah Vote"];
     const rows = groupsList.map((g) => [g.booth_number, g.name, g.category, g.stats.votes]);
-    const csvContent = 
-      "data:text/csv;charset=utf-8," + 
-      [headers.join(","), ...rows.map(e => e.map(val => `"${val}"`).join(","))].join("\n");
+    
+    const csvString = [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     
     // Trigger download
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `laporan_voting_capstone_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportDetailCSV = async () => {
+    if (!adminToken) return;
+    try {
+      setIsExportingDetail(true);
+      const res = await fetch(`${BACKEND_URL}/api/dashboard/votes-detail`, {
+        headers: {
+          "Authorization": `Bearer ${adminToken}`
+        }
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          handleLogout();
+          alert("Sesi admin berakhir. Silakan login kembali.");
+          return;
+        }
+        throw new Error("Gagal mengambil data detail vote");
+      }
+      const data = await res.json();
+      
+      const headers = [
+        "Waktu Vote",
+        "Kode Vote",
+        "ID Voter / NIM",
+        "Nama Voter",
+        "Kategori Voter",
+        "ID Kelompok",
+        "Booth Pilihan",
+        "Nama Kelompok",
+        "Kategori Proyek",
+        "IP Address"
+      ];
+      
+      const rows = data.map((v: any) => [
+        v.votedAt ? new Date(v.votedAt).toLocaleString("id-ID") : "N/A",
+        v.voteCode || "N/A",
+        v.voter?.identifier || "N/A",
+        v.voter?.name || "N/A",
+        v.voter?.category || "N/A",
+        v.group?.id || "N/A",
+        v.group?.boothNumber || "N/A",
+        v.group?.name || "N/A",
+        v.group?.category || "N/A",
+        v.ip || "N/A"
+      ]);
+      
+      const csvString = [headers.join(","), ...rows.map((e: any) => e.map((val: any) => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+      const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `laporan_detail_vote_transparan_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengunduh laporan detail vote.");
+    } finally {
+      setIsExportingDetail(false);
+    }
   };
 
   // Hitung pemenang per kategori (perolehan terbanyak)
@@ -213,7 +291,24 @@ function DashboardPageContent() {
                 }}
               >
                 <Download size={16} />
-                Ekspor Laporan (CSV)
+                Ekspor Ringkasan (CSV)
+              </button>
+
+              <button 
+                onClick={handleExportDetailCSV} 
+                disabled={isExportingDetail}
+                className="btn btn-primary" 
+                style={{ 
+                  gap: "8px", 
+                  fontSize: "0.85rem",
+                  borderWidth: "2px",
+                  boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                  backgroundColor: "var(--color-fern-green)",
+                  color: "white"
+                }}
+              >
+                <Download size={16} />
+                {isExportingDetail ? "Mengunduh..." : "Ekspor Detail Vote - Transparan (CSV)"}
               </button>
             </div>
 
@@ -475,8 +570,106 @@ function DashboardPageContent() {
               ))}
             </div>
           </div>
-
         </div>
+
+        {/* Detail Suara Masuk (Live Transparency) */}
+        <section className="card" style={{ padding: "28px", marginTop: "40px", backgroundColor: "white", border: "2px solid var(--color-delft-blue)", boxShadow: "var(--shadow-organic)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+            <div>
+              <h3 style={{ fontSize: "1.15rem", fontFamily: "var(--font-heading)", marginBottom: "4px", color: "var(--color-delft-blue)" }}>
+                Detail Suara Masuk (Live Transparency)
+              </h3>
+              <p style={{ fontSize: "0.8rem", opacity: 0.7, color: "var(--color-delft-blue)" }}>
+                Daftar lengkap suara yang masuk secara real-time beserta nama dan kategori pemilih.
+              </p>
+            </div>
+            
+            <button 
+              onClick={handleExportDetailCSV} 
+              disabled={isExportingDetail}
+              className="btn btn-primary" 
+              style={{ 
+                gap: "8px", 
+                fontSize: "0.85rem",
+                borderWidth: "2px",
+                boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                padding: "8px 16px",
+                backgroundColor: "var(--color-fern-green)",
+                color: "white"
+              }}
+            >
+              <Download size={14} />
+              {isExportingDetail ? "Mengunduh..." : "Ekspor Detail (CSV)"}
+            </button>
+          </div>
+
+          <div style={{ overflowX: "auto", border: "2px solid var(--color-delft-blue)", borderRadius: "var(--radius-sm)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", textAlign: "left" }}>
+              <thead>
+                <tr style={{ backgroundColor: "var(--color-beige)", borderBottom: "2px solid var(--color-delft-blue)" }}>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>Waktu</th>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>Kode Vote</th>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>Nama Pemilih</th>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>Kategori</th>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>Pilihan Kelompok (Booth)</th>
+                  <th style={{ padding: "12px 16px", fontWeight: "700", color: "var(--color-delft-blue)" }}>IP Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedVotes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "24px", textAlign: "center", opacity: 0.6 }}>
+                      Belum ada suara masuk untuk sesi ini.
+                    </td>
+                  </tr>
+                ) : (
+                  detailedVotes.slice(0, 10).map((v) => (
+                    <tr 
+                      key={v.id} 
+                      style={{ 
+                        borderBottom: "1px solid rgba(29, 42, 98, 0.15)",
+                        backgroundColor: "white",
+                        transition: "background-color 0.2s"
+                      }}
+                    >
+                      <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
+                        {v.votedAt ? new Date(v.votedAt).toLocaleTimeString("id-ID") : "N/A"}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontFamily: "monospace", fontWeight: "700", color: "var(--color-fern-green)" }}>
+                        {v.voteCode}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontWeight: "600" }}>{v.voter.name}</td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontSize: "0.75rem",
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          backgroundColor: v.voter.category === "mahasiswa" ? "rgba(34, 197, 94, 0.1)" : v.voter.category === "dosen" ? "rgba(59, 130, 246, 0.1)" : "rgba(107, 114, 128, 0.1)",
+                          color: v.voter.category === "mahasiswa" ? "#16a34a" : v.voter.category === "dosen" ? "#2563eb" : "#4b5563",
+                          border: `1px solid ${v.voter.category === "mahasiswa" ? "rgba(34, 197, 94, 0.3)" : v.voter.category === "dosen" ? "rgba(59, 130, 246, 0.3)" : "rgba(107, 114, 128, 0.3)"}`
+                        }}>
+                          {v.voter.category}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <strong style={{ color: "var(--color-delft-blue)" }}>{v.group.boothNumber}</strong> - {v.group.name}
+                      </td>
+                      <td style={{ padding: "12px 16px", opacity: 0.7, fontFamily: "monospace" }}>{v.ip}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {detailedVotes.length > 10 && (
+            <div style={{ marginTop: "12px", textAlign: "center", fontSize: "0.8rem", opacity: 0.7, color: "var(--color-delft-blue)" }}>
+              Menampilkan 10 dari {detailedVotes.length} total suara masuk. Silakan ekspor ke CSV untuk melihat data lengkap.
+            </div>
+          )}
+        </section>
+
       </>
     )}
     </AdminLayout>

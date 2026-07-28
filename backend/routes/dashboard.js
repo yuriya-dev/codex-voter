@@ -94,4 +94,62 @@ router.get("/logs", adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/votes-detail
+router.get("/votes-detail", adminAuth, async (req, res) => {
+  try {
+    // Fetch all live votes from DB and join with visitors and groups
+    const { data: votes, error } = await supabase
+      .from('votes')
+      .select(`
+        id,
+        vote_code,
+        voted_at,
+        ip,
+        visitor_identifier,
+        visitors (
+          name,
+          category
+        ),
+        group_id,
+        groups (
+          name,
+          booth_number,
+          category
+        )
+      `)
+      .order('voted_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Map output to a clean flat format
+    const detailedVotes = (votes || []).map(v => {
+      const visitorObj = Array.isArray(v.visitors) ? v.visitors[0] : v.visitors;
+      const groupObj = Array.isArray(v.groups) ? v.groups[0] : v.groups;
+      
+      return {
+        id: v.id,
+        voteCode: v.vote_code,
+        votedAt: v.voted_at,
+        ip: v.ip,
+        voter: {
+          identifier: v.visitor_identifier,
+          name: visitorObj ? visitorObj.name : "N/A",
+          category: visitorObj ? visitorObj.category : "Umum"
+        },
+        group: {
+          id: v.group_id,
+          name: groupObj ? groupObj.name : "Kelompok Terhapus",
+          boothNumber: groupObj ? groupObj.booth_number : "N/A",
+          category: groupObj ? groupObj.category : "N/A"
+        }
+      };
+    });
+
+    res.json(detailedVotes);
+  } catch (error) {
+    console.error("GET /api/dashboard/votes-detail error:", error);
+    res.status(500).json({ error: "Failed to fetch detailed votes list" });
+  }
+});
+
 module.exports = router;
