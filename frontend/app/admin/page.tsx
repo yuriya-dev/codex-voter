@@ -39,65 +39,251 @@ function AdminManagementContent() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     
+    // Determine the type of QR
+    const isWebsite = title.toLowerCase().includes("website");
+    const isExitGate = title.toLowerCase().includes("pintu") || title.toLowerCase().includes("exit");
+    
+    let badgeText = "KARYA MAHASISWA";
+    let ctaText = "TAMBAHKAN KE FAVORIT";
+    let themeColor = "#437118"; // Fern Green
+    let textThemeColor = "#ffffff";
+    let cardTitle = subtitle;
+    let cardSubtitle = "";
+    let badgeClass = "group-badge";
+    let categoryHtml = "";
+    
+    if (isWebsite) {
+      badgeText = "SISTEM VOTING";
+      ctaText = "SCAN UNTUK VOTE";
+      themeColor = "#1d2a62"; // Delft Blue
+      textThemeColor = "#ffffff";
+      cardTitle = "WEBSITE UTAMA";
+      cardSubtitle = "Pindai untuk masuk ke sistem voting digital, daftarkan diri Anda, dan jelajahi karya.";
+      badgeClass = "website-badge";
+    } else if (isExitGate) {
+      badgeText = "VERIFIKASI FISIK";
+      ctaText = "SCAN UNTUK MEMBUKA VOTE";
+      themeColor = "#87aece"; // Carolina Blue
+      textThemeColor = "#1d2a62";
+      cardTitle = "PINTU KELUAR";
+      cardSubtitle = "Pindai QR ini di gerbang keluar untuk membuka kunci tombol voting di handphone Anda.";
+      badgeClass = "exit-badge";
+    } else {
+      // It's a group
+      cardTitle = subtitle; // Group Name
+      cardSubtitle = "Project Showcase";
+      badgeText = `BOOTH ${title}`;
+      badgeClass = "group-badge";
+      
+      const groupItem = groupsList.find(g => g.booth_number === title || g.name === subtitle);
+      if (groupItem && groupItem.category) {
+        categoryHtml = `<div class="category">${groupItem.category}</div>`;
+      }
+    }
+    
     printWindow.document.write(`
       <html>
         <head>
-          <title>Print QR - ${title}</title>
+          <title>Print QR - ${cardTitle}</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+            
             body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              font-family: 'Inter', sans-serif;
               display: flex;
               flex-direction: column;
               align-items: center;
               justify-content: center;
-              height: 100vh;
+              min-height: 100vh;
               margin: 0;
               text-align: center;
-              color: #1d2a62;
               background-color: #ffffff;
+              color: #1d2a62;
             }
             .card {
-              border: 3px solid #1d2a62;
-              border-radius: 8px;
-              padding: 40px;
-              max-width: 400px;
+              border: 2px solid #1d2a62;
+              border-radius: 12px;
+              padding: 40px 35px;
+              width: 440px;
               box-shadow: 6px 6px 0px 0px #1d2a62;
               background-color: #ffffff;
-              display: inline-block;
+              background-image: radial-gradient(rgba(29, 42, 98, 0.06) 1.5px, transparent 1.5px);
+              background-size: 20px 20px;
+              position: relative;
+              box-sizing: border-box;
             }
-            h1 {
-              font-size: 24px;
-              margin-bottom: 5px;
-              text-transform: uppercase;
-              letter-spacing: 1px;
+            
+            /* Tech corners */
+            .tech-corner {
+              position: absolute;
+              width: 16px;
+              height: 16px;
+              border-color: #1d2a62;
+              border-style: solid;
+              pointer-events: none;
             }
-            p {
-              font-size: 14px;
-              opacity: 0.8;
-              margin-top: 0;
-              margin-bottom: 25px;
+            .tl { top: 12px; left: 12px; border-width: 3px 0 0 3px; }
+            .tr { top: 12px; right: 12px; border-width: 3px 3px 0 0; }
+            .bl { bottom: 12px; left: 12px; border-width: 0 0 3px 3px; }
+            .br { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; }
+            
+            .logo-container {
+              margin-bottom: 24px;
+              display: flex;
+              justify-content: center;
             }
-            img {
-              width: 250px;
-              height: 250px;
-              border: 2px solid #1d2a62;
-              padding: 10px;
+            .logo-container img {
+              height: 38px;
+              object-fit: contain;
+            }
+            
+            .badge {
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 11px;
+              letter-spacing: 2px;
+              padding: 6px 14px;
               border-radius: 4px;
+              display: inline-block;
+              margin-bottom: 16px;
+              border: 2px solid #1d2a62;
+              text-transform: uppercase;
+              box-shadow: 2px 2px 0px #1d2a62;
             }
-            .footer-text {
+            .website-badge {
+              background-color: #87aece;
+              color: #1d2a62;
+            }
+            .exit-badge {
+              background-color: #f5f3d8;
+              color: #1d2a62;
+            }
+            .group-badge {
+              background-color: #afd06e;
+              color: #1d2a62;
+            }
+            
+            h1 {
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 22px;
+              font-weight: 700;
+              margin: 0 0 8px 0;
+              color: #1d2a62;
+              text-transform: uppercase;
+              letter-spacing: -0.5px;
+              line-height: 1.2;
+            }
+            .category {
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 11px;
+              color: #437118;
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-top: 0px;
+              margin-bottom: 20px;
+              letter-spacing: 0.5px;
+              opacity: 0.9;
+            }
+            .desc {
+              font-size: 13px;
+              line-height: 1.5;
+              color: rgba(29, 42, 98, 0.85);
+              margin: 0 0 24px 0;
+              padding: 0 10px;
+            }
+            
+            .qr-container {
+              width: 240px;
+              height: 240px;
+              margin: 0 auto 24px auto;
+              border: 1px solid rgba(29, 42, 98, 0.2);
+              background: #ffffff;
+              padding: 12px;
+              position: relative;
+              box-sizing: border-box;
+            }
+            .qr-container img {
+              width: 100%;
+              height: 100%;
+              display: block;
+            }
+            
+            .scanner-bracket {
+              position: absolute;
+              width: 12px;
+              height: 12px;
+              border-color: #1d2a62;
+              border-style: solid;
+            }
+            .scanner-bracket.tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+            .scanner-bracket.tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+            .scanner-bracket.bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+            .scanner-bracket.br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+            
+            .cta-badge {
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 14px;
+              padding: 10px 24px;
+              border-radius: 4px;
+              display: inline-block;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
+              border: 2px solid #1d2a62;
+              box-shadow: 4px 4px 0px #1d2a62;
+              background-color: ${themeColor};
+              color: ${textThemeColor};
+              margin-top: 5px;
+            }
+            
+            .tech-metadata {
+              font-family: 'Space Grotesk', monospace;
+              font-size: 9px;
+              color: #87aece;
+              letter-spacing: 2px;
+              text-transform: uppercase;
               margin-top: 25px;
-              font-size: 12px;
-              font-weight: bold;
-              opacity: 0.6;
+              display: flex;
+              justify-content: center;
+              gap: 8px;
+              opacity: 0.8;
             }
           </style>
         </head>
         <body>
           <div class="card">
-            <h1>${title}</h1>
-            <p>${subtitle}</p>
-            <img src="${getQrUrl(url)}" alt="QR Code" />
-            <div class="footer-text">SCAN UNTUK MENGAKSES</div>
+            <!-- Tech corners -->
+            <div class="tech-corner tl"></div>
+            <div class="tech-corner tr"></div>
+            <div class="tech-corner bl"></div>
+            <div class="tech-corner br"></div>
+            
+            <div class="logo-container">
+              <img src="${origin}/logo.svg" alt="CODEX Logo" />
+            </div>
+            
+            <div class="badge ${badgeClass}">${badgeText}</div>
+            <h1>${cardTitle}</h1>
+            ${categoryHtml}
+            <p class="desc">${cardSubtitle}</p>
+            
+            <div class="qr-container">
+              <div class="scanner-bracket tl"></div>
+              <div class="scanner-bracket tr"></div>
+              <div class="scanner-bracket bl"></div>
+              <div class="scanner-bracket br"></div>
+              <img src="${getQrUrl(url)}" alt="QR Code" />
+            </div>
+            
+            <div class="cta-badge">${ctaText}</div>
+            
+            <div class="tech-metadata">
+              <span>SYS: CODEX_V26</span>
+              <span>•</span>
+              <span>SECURE PORTAL</span>
+              <span>•</span>
+              <span>ID: ${Math.random().toString(36).substring(2, 8).toUpperCase()}</span>
+            </div>
           </div>
           <script>
             window.onload = function() {
@@ -115,15 +301,47 @@ function AdminManagementContent() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     
-    let qrCardsHtml = groupsList.map(group => {
+    let qrPagesHtml = groupsList.map(group => {
       const groupUrl = `${origin}/kelompok/${group.slug}?from=qr`;
-      return `
+      const cardHtml = `
         <div class="card">
-          <div class="booth-number">${group.booth_number}</div>
+          <!-- Tech corners -->
+          <div class="tech-corner tl"></div>
+          <div class="tech-corner tr"></div>
+          <div class="tech-corner bl"></div>
+          <div class="tech-corner br"></div>
+          
+          <div class="logo-container">
+            <img src="${origin}/logo.svg" alt="CODEX Logo" />
+          </div>
+          
+          <div class="badge group-badge">BOOTH ${group.booth_number}</div>
           <h2>${group.name}</h2>
-          <p class="category">${group.category}</p>
-          <img src="${getQrUrl(groupUrl)}" alt="QR Code" />
-          <div class="footer-text">SCAN BOOTH UNTUK SHORTLIST</div>
+          <div class="category">${group.category}</div>
+          
+          <div class="qr-container">
+            <div class="scanner-bracket tl"></div>
+            <div class="scanner-bracket tr"></div>
+            <div class="scanner-bracket bl"></div>
+            <div class="scanner-bracket br"></div>
+            <img src="${getQrUrl(groupUrl)}" alt="QR Code" />
+          </div>
+          
+          <div class="cta-badge">TAMBAHKAN KE FAVORIT</div>
+          
+          <div class="tech-metadata">
+            <span>BOOTH ${group.booth_number}</span>
+            <span>•</span>
+            <span>SHOWCASE</span>
+          </div>
+        </div>
+      `;
+      
+      return `
+        <div class="group-container">
+          ${cardHtml}
+          <div class="cut-line"></div>
+          ${cardHtml}
         </div>
       `;
     }).join("");
@@ -133,79 +351,205 @@ function AdminManagementContent() {
         <head>
           <title>Print Semua QR Kelompok</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+            
             body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              margin: 20px;
-              background-color: #fff;
+              font-family: 'Inter', sans-serif;
+              margin: 0;
+              padding: 0;
+              background-color: #ffffff;
               color: #1d2a62;
             }
-            .grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 30px;
+            .group-container {
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: space-evenly;
+              width: 100vw;
+              height: 100vh;
+              page-break-after: always;
+              page-break-inside: avoid;
+              box-sizing: border-box;
+              padding: 0 30px;
             }
             .card {
-              border: 3px solid #1d2a62;
-              border-radius: 8px;
-              padding: 25px;
-              text-align: center;
-              background-color: #ffffff;
+              border: 2px solid #1d2a62;
+              border-radius: 12px;
+              padding: 35px 30px;
+              width: 480px;
+              height: 620px;
               box-shadow: 4px 4px 0px 0px #1d2a62;
-              page-break-inside: avoid;
+              background-color: #ffffff;
+              box-sizing: border-box;
               position: relative;
+              background-image: radial-gradient(rgba(29, 42, 98, 0.05) 1.5px, transparent 1.5px);
+              background-size: 18px 18px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: space-between;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
-            .booth-number {
+            
+            /* Tech corners */
+            .tech-corner {
+              position: absolute;
+              width: 14px;
+              height: 14px;
+              border-color: #1d2a62;
+              border-style: solid;
+              pointer-events: none;
+            }
+            .tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; }
+            .tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; }
+            .bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; }
+            .br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; }
+            
+            .logo-container {
+              display: flex;
+              justify-content: center;
+            }
+            .logo-container img {
+              height: 32px;
+              object-fit: contain;
+            }
+            
+            .badge {
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 11px;
+              letter-spacing: 2px;
+              padding: 6px 14px;
+              border-radius: 4px;
+              display: inline-block;
+              border: 2px solid #1d2a62;
+              text-transform: uppercase;
+              box-shadow: 2px 2px 0px #1d2a62;
               background-color: #afd06e;
               color: #1d2a62;
-              border: 2px solid #1d2a62;
-              display: inline-block;
-              padding: 4px 12px;
-              font-weight: bold;
-              font-size: 14px;
-              border-radius: 4px;
-              margin-bottom: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
+            
             h2 {
-              font-size: 16px;
-              margin: 5px 0;
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 20px;
+              margin: 0;
               text-transform: uppercase;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+              color: #1d2a62;
+              width: 100%;
+              line-height: 1.25;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             }
             .category {
-              font-size: 12px;
-              opacity: 0.7;
-              margin: 0 0 15px 0;
-            }
-            img {
-              width: 180px;
-              height: 180px;
-              border: 2px solid #1d2a62;
-              padding: 8px;
-              border-radius: 4px;
-            }
-            .footer-text {
-              margin-top: 15px;
+              font-family: 'Space Grotesk', sans-serif;
               font-size: 11px;
-              font-weight: bold;
-              opacity: 0.6;
+              color: #437118;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              opacity: 0.9;
+              width: 100%;
+              line-height: 1.3;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             }
+            
+            .qr-container {
+              width: 250px;
+              height: 250px;
+              border: 1px solid rgba(29, 42, 98, 0.2);
+              background: #ffffff;
+              padding: 12px;
+              position: relative;
+              box-sizing: border-box;
+            }
+            .qr-container img {
+              width: 100%;
+              height: 100%;
+              display: block;
+            }
+            
+            .scanner-bracket {
+              position: absolute;
+              width: 12px;
+              height: 12px;
+              border-color: #1d2a62;
+              border-style: solid;
+            }
+            .scanner-bracket.tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+            .scanner-bracket.tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+            .scanner-bracket.bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+            .scanner-bracket.br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+            
+            .cta-badge {
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 13px;
+              padding: 8px 20px;
+              border-radius: 4px;
+              display: inline-block;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              border: 2px solid #1d2a62;
+              box-shadow: 3px 3px 0px #1d2a62;
+              background-color: #437118;
+              color: #ffffff;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            .tech-metadata {
+              font-family: 'Space Grotesk', monospace;
+              font-size: 8px;
+              color: #87aece;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
+              display: flex;
+              justify-content: center;
+              gap: 6px;
+              opacity: 0.7;
+            }
+            
+            .cut-line {
+              height: 85%;
+              border-left: 1px dashed rgba(29, 42, 98, 0.3);
+              margin: 0 15px;
+              position: relative;
+            }
+            .cut-line::after {
+              content: "✂";
+              position: absolute;
+              top: 10%;
+              left: -7px;
+              font-size: 12px;
+              color: rgba(29, 42, 98, 0.4);
+            }
+            
             @media print {
+              @page {
+                size: landscape;
+                margin: 0;
+              }
               body {
                 margin: 0;
               }
               .card {
                 box-shadow: none;
               }
+              .group-container {
+                width: 100vw;
+                height: 100vh;
+                page-break-after: always;
+                page-break-inside: avoid;
+              }
             }
           </style>
         </head>
         <body>
-          <h1 style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">Daftar QR Code Kelompok Capstone</h1>
-          <div class="grid">
-            ${qrCardsHtml}
-          </div>
+          ${qrPagesHtml}
           <script>
             window.onload = function() {
               window.print();
