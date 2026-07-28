@@ -15,6 +15,7 @@ export default function GroupCard({ group }: GroupCardProps) {
   const { isShortlisted, addToShortlist, removeFromShortlist } = useVoter();
   const active = isShortlisted(group.id);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,11 +34,36 @@ export default function GroupCard({ group }: GroupCardProps) {
       {/* Photo Wrapper with Sepia/Grayscale overlay */}
       <div className="card-image-wrapper">
         {group.image && !imageError ? (
-          <img 
-            src={getGroupImageUrl(group.image)} 
-            alt={group.name} 
-            onError={() => setImageError(true)}
-          />
+          <>
+            {!imageLoaded && (
+              <div 
+                className="phantom-skeleton" 
+                style={{ 
+                  position: "absolute", 
+                  top: 0, 
+                  left: 0, 
+                  width: "100%", 
+                  height: "100%" 
+                }} 
+              />
+            )}
+            <img 
+              src={getGroupImageUrl(group.image)} 
+              alt={group.name} 
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              style={{
+                opacity: imageLoaded ? 1 : 0,
+                transition: "opacity 0.3s ease",
+                position: imageLoaded ? "static" : "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover"
+              }}
+            />
+          </>
         ) : (
           <div 
             style={{ 

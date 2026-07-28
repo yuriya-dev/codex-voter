@@ -13,6 +13,7 @@ export default function ShortlistDrawer() {
 
   const shortlistedGroups = groupsList.filter((g) => shortlist.includes(g.id));
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   const handleStartVote = () => {
     setIsDrawerOpen(false);
@@ -113,19 +114,40 @@ export default function ShortlistDrawer() {
                 >
                   {/* Photo Thumbnail */}
                   {group.image && !failedImages[group.id] ? (
-                    <img 
-                      src={getGroupImageUrl(group.image)} 
-                      alt={group.name} 
-                      onError={() => setFailedImages(prev => ({ ...prev, [group.id]: true }))}
-                      style={{ 
-                        width: "60px", 
-                        height: "60px", 
-                        borderRadius: "var(--radius-sm)", 
-                        objectFit: "cover",
-                        flexShrink: 0,
-                        border: "1px solid var(--color-delft-blue)"
-                      }} 
-                    />
+                    <div style={{ width: "60px", height: "60px", position: "relative", flexShrink: 0 }}>
+                      {!loadedImages[group.id] && (
+                        <div 
+                          className="phantom-skeleton" 
+                          style={{ 
+                            position: "absolute", 
+                            top: 0, 
+                            left: 0, 
+                            width: "60px", 
+                            height: "60px", 
+                            borderRadius: "var(--radius-sm)", 
+                            border: "1px solid var(--color-delft-blue)" 
+                          }} 
+                        />
+                      )}
+                      <img 
+                        src={getGroupImageUrl(group.image)} 
+                        alt={group.name} 
+                        onLoad={() => setLoadedImages(prev => ({ ...prev, [group.id]: true }))}
+                        onError={() => setFailedImages(prev => ({ ...prev, [group.id]: true }))}
+                        style={{ 
+                          width: "60px", 
+                          height: "60px", 
+                          borderRadius: "var(--radius-sm)", 
+                          objectFit: "cover",
+                          border: "1px solid var(--color-delft-blue)",
+                          opacity: loadedImages[group.id] ? 1 : 0,
+                          transition: "opacity 0.2s ease",
+                          position: loadedImages[group.id] ? "static" : "absolute",
+                          top: 0,
+                          left: 0
+                        }} 
+                      />
+                    </div>
                   ) : (
                     <div 
                       style={{ 

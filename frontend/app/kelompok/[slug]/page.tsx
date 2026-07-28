@@ -17,6 +17,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
   const [active, setActive] = useState(false);
   const [scannedFromQR, setScannedFromQR] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     if (group) {
@@ -123,17 +124,36 @@ export default function GroupDetailPage({ params }: { params: Promise<{ slug: st
         <div className="detail-hero-card">
           <div className="detail-banner" style={{ overflow: "hidden", position: "relative" }}>
             {group.image && !imageError ? (
-              <img 
-                src={getGroupImageUrl(group.image)} 
-                alt={group.name} 
-                onError={() => setImageError(true)}
-                style={{ 
-                  width: "100%", 
-                  height: "100%", 
-                  objectFit: "cover",
-                  display: "block"
-                }} 
-              />
+              <>
+                {!imageLoaded && (
+                  <div 
+                    className="phantom-skeleton" 
+                    style={{ 
+                      position: "absolute", 
+                      top: 0, 
+                      left: 0, 
+                      width: "100%", 
+                      height: "100%" 
+                    }} 
+                  />
+                )}
+                <img 
+                  src={getGroupImageUrl(group.image)} 
+                  alt={group.name} 
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  style={{ 
+                    width: "100%", 
+                    height: "100%", 
+                    objectFit: "cover",
+                    opacity: imageLoaded ? 1 : 0,
+                    transition: "opacity 0.3s ease",
+                    position: imageLoaded ? "static" : "absolute",
+                    top: 0,
+                    left: 0
+                  }} 
+                />
+              </>
             ) : (
               <div 
                 style={{ 
