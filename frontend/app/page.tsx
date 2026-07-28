@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import BrutalistCard from "@/components/BrutalistCard";
 
 export default function Home() {
-  const { setQrScannerOpen } = useVoter();
+  const { setQrScannerOpen, maxVotesLimit } = useVoter();
 
   return (
     <>
@@ -63,7 +63,7 @@ export default function Home() {
                 Prinsip Voting
               </span>
               <p style={{ fontSize: "0.9rem", fontStyle: "italic", marginTop: "8px", color: "var(--color-delft-blue)" }}>
-                &ldquo;Satu Pengunjung, Satu Suara. Suara Anda sepenuhnya terenkripsi dan diverifikasi menggunakan perangkat fisik guna menjamin transparansi mutlak.&rdquo;
+                &ldquo;Satu Pengunjung, Multi-Pilihan. Setiap pengunjung berhak memberikan suara hingga <strong>{maxVotesLimit} proyek terfavorit </strong> yang berbeda guna mendukung inovasi terbaik.&rdquo;
               </p>
             </div>
           </div>
