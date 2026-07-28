@@ -8,7 +8,13 @@ export default function BrutalistCard() {
   const { setQrScannerOpen, maxVotesLimit } = useVoter();
 
   return (
-    <div className="brutalist-card">
+    <div 
+      className="brutalist-card" 
+      style={{ 
+        overflow: "visible", 
+        marginTop: "40px"
+      }}
+    >
       <div className="brutalist-card-pattern-grid" />
       <div className="brutalist-card-overlay-dots" />
       <div className="brutalist-bold-pattern">
@@ -16,47 +22,79 @@ export default function BrutalistCard() {
           <path strokeDasharray="15 10" strokeWidth={10} stroke="var(--color-delft-blue)" fill="none" d="M0,0 L100,0 L100,100 L0,100 Z" />
         </svg>
       </div>
-      <div className="brutalist-card-title-area">
+      <div className="brutalist-card-title-area" style={{ position: "relative", zIndex: 5 }}>
         <span>CODEX Voter</span>
         <span className="brutalist-card-tag">Live Booths</span>
       </div>
-      <div className="brutalist-card-body">
-        <div className="brutalist-card-description">
-          Gunakan handphone Anda untuk memindai QR Code di papan fisik setiap booth pameran, simpan kelompok ke daftar favorit, lalu kirim suara Anda saat selesai berkeliling.
+      <div className="brutalist-card-body" style={{ padding: 0, position: "relative", zIndex: 10 }}>
+        {/* Mascot Container */}
+        <div style={{ 
+          width: "100%", 
+          height: "240px", 
+          backgroundColor: "var(--color-beige)", 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center",
+          borderBottom: "0.35em solid var(--color-delft-blue)",
+          position: "relative",
+          overflow: "visible"
+        }}>
+          <img 
+            src="/hero.webp" 
+            alt="Tech Jungle Mascot" 
+            style={{ 
+              height: "520px", 
+              width: "auto", 
+              objectFit: "contain",
+              position: "absolute",
+              bottom: "-150px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 5,
+              filter: "drop-shadow(6px 6px 0px var(--color-delft-blue))",
+              pointerEvents: "none"
+            }}
+          />
         </div>
-        <div className="brutalist-feature-grid">
-          <div className="brutalist-feature-item">
-            <div className="brutalist-feature-icon">
-              <QrCode size={14} strokeWidth={2.5} />
-            </div>
-            <span className="brutalist-feature-text">Scan QR Booth</span>
-          </div>
-          <div className="brutalist-feature-item">
-            <div className="brutalist-feature-icon">
-              <Heart size={14} strokeWidth={2.5} />
-            </div>
-            <span className="brutalist-feature-text">Simpan Favorit</span>
-          </div>
-          <div className="brutalist-feature-item">
-            <div className="brutalist-feature-icon">
-              <ShieldCheck size={14} strokeWidth={2.5} />
-            </div>
-            <span className="brutalist-feature-text">Verifikasi Aman</span>
-          </div>
-          <div className="brutalist-feature-item">
-            <div className="brutalist-feature-icon">
-              <Leaf size={14} strokeWidth={2.5} />
-            </div>
-            <span className="brutalist-feature-text">Web & IoT Hijau</span>
-          </div>
-        </div>
-        <div className="brutalist-card-actions">
-          <div className="brutalist-price">
-            <span className="brutalist-price-currency">{maxVotesLimit}</span> Suara
-            <span className="brutalist-price-period">per pengunjung</span>
-          </div>
-          <button className="brutalist-card-button" onClick={() => setQrScannerOpen(true)}>
-            Mulai Scan
+
+        {/* Action Row */}
+        <div style={{ 
+          padding: "20px", 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: "12px",
+          position: "relative",
+          zIndex: 10,
+          backgroundColor: "var(--bg, #ffffff)",
+          borderBottomLeftRadius: "0.35em",
+          borderBottomRightRadius: "0.35em"
+        }}>
+          <p style={{ 
+            fontSize: "0.85rem", 
+            opacity: 0.95, 
+            margin: 0, 
+            fontWeight: "700", 
+            lineHeight: "1.4",
+            color: "var(--color-delft-blue)"
+          }}>
+            Pindai QR Code kelompok proyek di area pameran untuk menyimpannya ke favorit Anda, lalu kirim suara pilihan Anda sebelum keluar.
+          </p>
+          <button 
+            className="brutalist-card-button" 
+            onClick={() => setQrScannerOpen(true)}
+            style={{ 
+              width: "100%", 
+              display: "flex", 
+              justifyContent: "center", 
+              gap: "8px", 
+              fontSize: "1rem", 
+              fontFamily: "var(--font-heading)",
+              textTransform: "uppercase",
+              position: "relative",
+              zIndex: 12
+            }}
+          >
+            Mulai Scan QR
           </button>
         </div>
       </div>

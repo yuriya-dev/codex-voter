@@ -52,6 +52,7 @@ function AdminManagementContent() {
     let badgeClass = "group-badge";
     let categoryHtml = "";
     
+    let mascotFile = "like.webp";
     if (isWebsite) {
       badgeText = "SISTEM VOTING";
       ctaText = "SCAN UNTUK VOTE";
@@ -60,6 +61,7 @@ function AdminManagementContent() {
       cardTitle = "WEBSITE UTAMA";
       cardSubtitle = "Pindai untuk masuk ke sistem voting digital, daftarkan diri Anda, dan jelajahi karya.";
       badgeClass = "website-badge";
+      mascotFile = "hero.webp";
     } else if (isExitGate) {
       badgeText = "VERIFIKASI FISIK";
       ctaText = "SCAN UNTUK MEMBUKA VOTE";
@@ -68,6 +70,7 @@ function AdminManagementContent() {
       cardTitle = "PINTU KELUAR";
       cardSubtitle = "Pindai QR ini di gerbang keluar untuk membuka kunci tombol voting di handphone Anda.";
       badgeClass = "exit-badge";
+      mascotFile = "exit.webp";
     } else {
       // It's a group
       cardTitle = subtitle; // Group Name
@@ -80,6 +83,8 @@ function AdminManagementContent() {
         categoryHtml = `<div class="category">${groupItem.category}</div>`;
       }
     }
+
+    const mascotUrl = `${origin}/${mascotFile}`;
     
     printWindow.document.write(`
       <html>
@@ -101,9 +106,9 @@ function AdminManagementContent() {
               color: #1d2a62;
             }
             .card {
-              border: 2px solid #1d2a62;
+              border: 2.5px solid #1d2a62;
               border-radius: 12px;
-              padding: 40px 35px;
+              padding: 30px 35px;
               width: 440px;
               box-shadow: 6px 6px 0px 0px #1d2a62;
               background-color: #ffffff;
@@ -111,6 +116,49 @@ function AdminManagementContent() {
               background-size: 20px 20px;
               position: relative;
               box-sizing: border-box;
+              margin: 50px auto;
+            }
+            
+            /* Mascot Bottom Right Floating Illustration */
+            .mascot-bottom-right {
+              position: absolute;
+              bottom: -60px; /* Floats over the bottom border! */
+              right: -60px;  /* Floats over the right border! */
+              height: 240px;
+              z-index: 50;   /* On top of card borders and shadows! */
+              display: flex;
+              align-items: flex-end;
+              justify-content: flex-end;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              pointer-events: none;
+            }
+            .mascot-bottom-right img {
+              height: 100%;
+              width: auto;
+              object-fit: contain;
+              display: block;
+            }
+
+            /* Mascot Top Left Floating Illustration */
+            .mascot-top-left {
+              position: absolute;
+              top: -60px;   /* Floats over the top border! */
+              left: -60px;  /* Floats over the left border! */
+              height: 160px;
+              z-index: 50;   /* On top of card borders and shadows! */
+              display: flex;
+              align-items: flex-start;
+              justify-content: flex-start;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              pointer-events: none;
+            }
+            .mascot-top-left img {
+              height: 100%;
+              width: auto;
+              object-fit: contain;
+              display: block;
             }
             
             /* Tech corners */
@@ -128,12 +176,12 @@ function AdminManagementContent() {
             .br { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; }
             
             .logo-container {
-              margin-bottom: 24px;
+              margin-bottom: 16px;
               display: flex;
               justify-content: center;
             }
             .logo-container img {
-              height: 38px;
+              height: 34px;
               object-fit: contain;
             }
             
@@ -145,22 +193,30 @@ function AdminManagementContent() {
               padding: 6px 14px;
               border-radius: 4px;
               display: inline-block;
-              margin-bottom: 16px;
+              margin-bottom: 12px;
               border: 2px solid #1d2a62;
               text-transform: uppercase;
               box-shadow: 2px 2px 0px #1d2a62;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             .website-badge {
-              background-color: #87aece;
-              color: #1d2a62;
+              background-color: #87aece !important;
+              color: #1d2a62 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             .exit-badge {
-              background-color: #f5f3d8;
-              color: #1d2a62;
+              background-color: #f5f3d8 !important;
+              color: #1d2a62 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             .group-badge {
-              background-color: #afd06e;
-              color: #1d2a62;
+              background-color: #afd06e !important;
+              color: #1d2a62 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             
             h1 {
@@ -180,7 +236,7 @@ function AdminManagementContent() {
               font-weight: 700;
               text-transform: uppercase;
               margin-top: 0px;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
               letter-spacing: 0.5px;
               opacity: 0.9;
             }
@@ -188,14 +244,14 @@ function AdminManagementContent() {
               font-size: 13px;
               line-height: 1.5;
               color: rgba(29, 42, 98, 0.85);
-              margin: 0 0 24px 0;
+              margin: 0 0 16px 0;
               padding: 0 10px;
             }
             
             .qr-container {
-              width: 240px;
-              height: 240px;
-              margin: 0 auto 24px auto;
+              width: 220px;
+              height: 220px;
+              margin: 0 auto 20px auto;
               border: 1px solid rgba(29, 42, 98, 0.2);
               background: #ffffff;
               padding: 12px;
@@ -231,9 +287,11 @@ function AdminManagementContent() {
               text-transform: uppercase;
               border: 2px solid #1d2a62;
               box-shadow: 4px 4px 0px #1d2a62;
-              background-color: ${themeColor};
-              color: ${textThemeColor};
+              background-color: ${themeColor} !important;
+              color: ${textThemeColor} !important;
               margin-top: 5px;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             
             .tech-metadata {
@@ -265,6 +323,7 @@ function AdminManagementContent() {
             <div class="badge ${badgeClass}">${badgeText}</div>
             <h1>${cardTitle}</h1>
             ${categoryHtml}
+            
             <p class="desc">${cardSubtitle}</p>
             
             <div class="qr-container">
@@ -284,6 +343,18 @@ function AdminManagementContent() {
               <span>•</span>
               <span>ID: ${Math.random().toString(36).substring(2, 8).toUpperCase()}</span>
             </div>
+            
+            ${isExitGate ? `
+            <!-- Mascot Top Left (Floating) -->
+            <div class="mascot-top-left">
+              <img src="${mascotUrl}" alt="Mascot" />
+            </div>
+            ` : `
+            <!-- Mascot Bottom Right (Floating) -->
+            <div class="mascot-bottom-right">
+              <img src="${mascotUrl}" alt="Mascot" />
+            </div>
+            `}
           </div>
           <script>
             window.onload = function() {
@@ -318,7 +389,7 @@ function AdminManagementContent() {
           <div class="badge group-badge">BOOTH ${group.booth_number}</div>
           <h2>${group.name}</h2>
           <div class="category">${group.category}</div>
-          
+
           <div class="qr-container">
             <div class="scanner-bracket tl"></div>
             <div class="scanner-bracket tr"></div>
@@ -333,6 +404,11 @@ function AdminManagementContent() {
             <span>BOOTH ${group.booth_number}</span>
             <span>•</span>
             <span>SHOWCASE</span>
+          </div>
+          
+          <!-- Mascot Bottom Right -->
+          <div class="mascot-bottom-right">
+            <img src="${origin}/like.webp" alt="Mascot" />
           </div>
         </div>
       `;
@@ -375,9 +451,9 @@ function AdminManagementContent() {
             .card {
               border: 2px solid #1d2a62;
               border-radius: 12px;
-              padding: 35px 30px;
+              padding: 20px 30px;
               width: 480px;
-              height: 620px;
+              height: 600px;
               box-shadow: 4px 4px 0px 0px #1d2a62;
               background-color: #ffffff;
               box-sizing: border-box;
@@ -390,6 +466,27 @@ function AdminManagementContent() {
               justify-content: space-between;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+            }
+            
+            /* Mascot Bottom Right Illustration */
+            .mascot-bottom-right {
+              position: absolute;
+              bottom: 12px;
+              right: 12px;
+              height: 120px;
+              z-index: 10;
+              display: flex;
+              align-items: flex-end;
+              justify-content: flex-end;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+              pointer-events: none;
+            }
+            .mascot-bottom-right img {
+              height: 100%;
+              width: auto;
+              object-fit: contain;
+              display: block;
             }
             
             /* Tech corners */
@@ -426,10 +523,10 @@ function AdminManagementContent() {
               border: 2px solid #1d2a62;
               text-transform: uppercase;
               box-shadow: 2px 2px 0px #1d2a62;
-              background-color: #afd06e;
-              color: #1d2a62;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              background-color: #afd06e !important;
+              color: #1d2a62 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             
             h2 {
@@ -458,8 +555,8 @@ function AdminManagementContent() {
             }
             
             .qr-container {
-              width: 250px;
-              height: 250px;
+              width: 200px;
+              height: 200px;
               border: 1px solid rgba(29, 42, 98, 0.2);
               background: #ffffff;
               padding: 12px;
@@ -495,10 +592,10 @@ function AdminManagementContent() {
               text-transform: uppercase;
               border: 2px solid #1d2a62;
               box-shadow: 3px 3px 0px #1d2a62;
-              background-color: #437118;
-              color: #ffffff;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              background-color: #437118 !important;
+              color: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             
             .tech-metadata {

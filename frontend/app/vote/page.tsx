@@ -224,6 +224,36 @@ export default function VotePage() {
               )}
             </div>
 
+            {/* Mascot Success Greeting Frame */}
+            <div style={{ 
+              width: "100%", 
+              height: "150px", 
+              backgroundColor: "var(--color-beige)", 
+              border: "3px solid var(--color-delft-blue)",
+              borderRadius: "var(--radius-sm)",
+              boxShadow: "4px 4px 0px var(--color-delft-blue)",
+              position: "relative",
+              overflow: "visible",
+              marginBottom: "40px",
+              marginTop: "40px",
+              display: "flex",
+              justifyContent: "center"
+            }}>
+              <img 
+                src="/voted.webp" 
+                alt="Voting Success Mascot" 
+                style={{ 
+                  height: "230px", 
+                  width: "auto", 
+                  objectFit: "contain",
+                  position: "absolute",
+                  bottom: "-25px",
+                  zIndex: 10,
+                  clipPath: "inset(0px 0px 25px 0px)"
+                }} 
+              />
+            </div>
+
             <h1 style={{ fontSize: "2rem", fontFamily: "var(--font-heading)", marginBottom: "8px", textTransform: "uppercase" }}>
               {votingStatus === "ended" ? "Sesi Voting Telah Ditutup" : "Seluruh Hak Suara Tercatat!"}
             </h1>
