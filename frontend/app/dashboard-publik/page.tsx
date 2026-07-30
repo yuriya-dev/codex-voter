@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Award, Trophy, LayoutDashboard, Maximize2, Minimize2, Clock } from "lucide-react";
 import { getBackendUrl } from "@/lib/config";
@@ -27,6 +27,104 @@ export default function DashboardPublikPage() {
   });
   const [timeLeft, setTimeLeft] = useState<string>("");
 
+  // States for 10-second countdown and sounds
+  const [countdownSecs, setCountdownSecs] = useState<number | null>(null);
+  const [countdownActive, setCountdownActive] = useState<boolean>(false);
+  const [forceShowLeaderboard, setForceShowLeaderboard] = useState<boolean>(false);
+  const [hasLoadedInitialSettings, setHasLoadedInitialSettings] = useState<boolean>(false);
+  const [hasCountedDown, setHasCountedDown] = useState<boolean>(false);
+  const [prevLeaderboardVisible, setPrevLeaderboardVisible] = useState<boolean>(false);
+  const isFirstTransition = useRef(true);
+
+  const isLeaderboardVisibleNow = settings.leaderboard_visible === "true" || forceShowLeaderboard;
+
+  // State and effect for confetti particle animation
+  const [confetti, setConfetti] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (isLeaderboardVisibleNow) {
+      const particles = Array.from({ length: 60 }, (_, idx) => idx);
+      setConfetti(particles);
+    } else {
+      setConfetti([]);
+    }
+  }, [isLeaderboardVisibleNow]);
+
+  // Sound synthesizer using Web Audio API
+  const playTickSound = (secondsLeft: number) => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      if (secondsLeft === 0) {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1000, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+      } else {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      }
+    } catch (err) {
+      console.error("Gagal memutar suara countdown:", err);
+    }
+  };
+
+  const playFestiveSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+
+      const playNote = (freq: number, start: number, duration: number, volume: number = 0.12) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "triangle"; // brassy/warm retro feel
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        
+        gain.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+
+      // Triumphant major arpeggio & chord fanfare
+      playNote(392.00, 0.0, 0.25);
+      playNote(523.25, 0.15, 0.25);
+      playNote(659.25, 0.3, 0.25);
+      playNote(783.99, 0.45, 0.35);
+      
+      // Final rich C-major chord
+      playNote(523.25, 0.7, 1.5, 0.08);
+      playNote(659.25, 0.7, 1.5, 0.08);
+      playNote(783.99, 0.7, 1.5, 0.08);
+      playNote(1046.50, 0.7, 1.5, 0.08);
+      playNote(261.63, 0.7, 1.5, 0.06); // Warm sub bass (C4)
+
+    } catch (err) {
+      console.error("Gagal memutar suara kemeriahan:", err);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       // 1. Fetch stats
@@ -42,9 +140,12 @@ export default function DashboardPublikPage() {
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
         setSettings(settingsData);
+        setHasLoadedInitialSettings(true);
       }
     } catch (err) {
       console.error("Gagal mengambil data statistik publik:", err);
+      // Ensure initial setup runs even if fetch fails to avoid locking the UI transitions
+      setHasLoadedInitialSettings(true);
     }
   };
 
@@ -90,19 +191,72 @@ export default function DashboardPublikPage() {
     };
   }, []);
 
+  // Polling settings fallback to guarantee instant updates without manual refresh
+  useEffect(() => {
+    const pollSettings = async () => {
+      try {
+        const settingsRes = await fetch(`${BACKEND_URL}/api/settings`);
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          
+          // Check if settings have actually changed
+          setSettings(prev => {
+            if (
+              prev.leaderboard_visible !== settingsData.leaderboard_visible ||
+              prev.voting_status !== settingsData.voting_status ||
+              prev.voting_end_time !== settingsData.voting_end_time
+            ) {
+              // Fetch fresh stats to ensure leaderboard data is up-to-date
+              fetchStats();
+              return settingsData;
+            }
+            return prev;
+          });
+          setHasLoadedInitialSettings(true);
+        }
+      } catch (err) {
+        console.error("Gagal polling settings:", err);
+      }
+    };
+
+    const interval = setInterval(pollSettings, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Timer countdown hook
   useEffect(() => {
     if (settings.voting_status !== "started" || !settings.voting_end_time) {
       setTimeLeft("");
+      setCountdownActive(false);
+      setCountdownSecs(null);
       return;
     }
 
     const calculateTimeLeft = () => {
       const difference = +new Date(settings.voting_end_time) - +new Date();
-      if (difference <= 0) {
-        setTimeLeft("00:00:00");
+      
+      // If the timer is in its last 10 seconds (or has run out)
+      if (difference <= 10000) {
+        if (difference <= 0) {
+          setTimeLeft("00:00:00");
+          setCountdownActive(false);
+          setCountdownSecs(null);
+          setForceShowLeaderboard(true);
+          return;
+        }
+
+        // Inside the last 10 seconds, show the big countdown
+        const secs = Math.ceil(difference / 1000);
+        setTimeLeft(`00:00:${String(secs).padStart(2, "0")}`);
+        
+        setCountdownSecs(secs);
+        setCountdownActive(true);
         return;
       }
+
+      // Normal countdown behavior
+      setCountdownActive(false);
+      setCountdownSecs(null);
 
       const hours = Math.floor(difference / (1000 * 60 * 60));
       const minutes = Math.floor((difference / 1000 / 60) % 60);
@@ -113,9 +267,32 @@ export default function DashboardPublikPage() {
     };
 
     calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
+    const timer = setInterval(calculateTimeLeft, 250); // Check 4 times a second for high responsiveness
     return () => clearInterval(timer);
   }, [settings.voting_status, settings.voting_end_time]);
+
+  // Play tick sound when countdownSecs changes
+  useEffect(() => {
+    if (countdownActive && countdownSecs !== null && countdownSecs >= 0) {
+      playTickSound(countdownSecs);
+    }
+  }, [countdownActive, countdownSecs]);
+
+  // Leaderboard reveal transition (play festive sound)
+  useEffect(() => {
+    if (!hasLoadedInitialSettings) return;
+
+    if (isFirstTransition.current) {
+      isFirstTransition.current = false;
+      setPrevLeaderboardVisible(isLeaderboardVisibleNow);
+      return;
+    }
+
+    if (isLeaderboardVisibleNow && !prevLeaderboardVisible) {
+      playFestiveSound();
+    }
+    setPrevLeaderboardVisible(isLeaderboardVisibleNow);
+  }, [isLeaderboardVisibleNow, prevLeaderboardVisible, hasLoadedInitialSettings]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -174,6 +351,28 @@ export default function DashboardPublikPage() {
         transition: "var(--transition-smooth)"
       }}
     >
+      {/* Confetti Particle Effect */}
+      {isLeaderboardVisibleNow && confetti.length > 0 && (
+        <div className="confetti-container">
+          {confetti.map((idx) => (
+            <div
+              key={idx}
+              className="leaf-particle"
+              style={{
+                left: `${(idx * 1.6) % 100}vw`,
+                animationDelay: `${(idx * 0.15) % 4}s`,
+                animationDuration: `${3 + (idx % 3)}s`,
+                transform: `rotate(${(idx * 15) % 360}deg) scale(${0.6 + ((idx % 5) * 0.15)})`,
+                backgroundColor: idx % 3 === 0 
+                  ? "var(--color-fern-green)" 
+                  : idx % 3 === 1 
+                  ? "var(--color-pistachio)" 
+                  : "var(--color-carolina-blue)"
+              }}
+            />
+          ))}
+        </div>
+      )}
       
       {/* Background Grid Motif */}
       <div 
@@ -277,7 +476,132 @@ export default function DashboardPublikPage() {
       </header>
 
       {/* Konten Utama */}
-      {settings.voting_status === "not_started" ? (
+      {countdownActive && countdownSecs !== null ? (
+        <div 
+          style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            justifyContent: "center",
+            alignItems: "center",
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%", 
+            zIndex: 10 
+          }}
+        >
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes scale-pulse {
+              0% { transform: scale(0.9); opacity: 0.7; }
+              50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 20px var(--color-pistachio); }
+              100% { transform: scale(0.95); opacity: 0.8; }
+            }
+            @keyframes border-flash {
+              0% { border-color: var(--color-delft-blue); box-shadow: 0px 0px 10px rgba(29, 42, 98, 0.2); }
+              50% { border-color: var(--color-fern-green); box-shadow: 0px 0px 25px rgba(67, 113, 24, 0.4); }
+              100% { border-color: var(--color-delft-blue); box-shadow: 0px 0px 10px rgba(29, 42, 98, 0.2); }
+            }
+            @keyframes grid-move {
+              0% { background-position: 0 0; }
+              100% { background-position: 24px 24px; }
+            }
+          `}} />
+
+          <div 
+            className="card" 
+            style={{ 
+              maxWidth: "600px", 
+              width: "100%",
+              padding: "60px 40px", 
+              textAlign: "center",
+              border: "3.5px solid var(--color-delft-blue)",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "white",
+              boxShadow: "10px 10px 0px var(--color-delft-blue)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "28px",
+              animation: "border-flash 1.5s infinite ease-in-out",
+              position: "relative",
+              overflow: "hidden"
+            }}
+          >
+            <div style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundImage: "linear-gradient(rgba(29, 42, 98, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 42, 98, 0.03) 1px, transparent 1px)",
+              backgroundSize: "16px 16px",
+              pointerEvents: "none",
+              animation: "grid-move 4s linear infinite"
+            }} />
+
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "56px",
+              height: "56px",
+              borderRadius: "var(--radius-sm)",
+              border: "2.5px solid var(--color-delft-blue)",
+              background: "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
+            }}>
+              <Clock size={28} className="spin-icon" style={{ animation: "spin 4s linear infinite" }} />
+            </div>
+
+            <div style={{ zIndex: 2 }}>
+              <span style={{ 
+                fontSize: "0.85rem", 
+                fontWeight: "800", 
+                color: "var(--color-fern-green)", 
+                letterSpacing: "4px",
+                textTransform: "uppercase",
+                display: "block",
+                marginBottom: "8px"
+              }}>
+                🏁 WAKTU VOTING SELESAI
+              </span>
+              <h2 style={{ 
+                fontFamily: "var(--font-heading)", 
+                textTransform: "uppercase",
+                fontSize: "1.8rem",
+                lineHeight: 1.2,
+                color: "var(--color-delft-blue)"
+              }}>
+                LEADERBOARD AKAN DIBUKA DALAM
+              </h2>
+            </div>
+
+            <div style={{
+              fontSize: "8rem",
+              fontWeight: "900",
+              color: "var(--color-delft-blue)",
+              fontFamily: "monospace",
+              margin: "10px 0",
+              lineHeight: 1.1,
+              textShadow: "5px 5px 0px var(--color-pistachio)",
+              animation: "scale-pulse 1s infinite ease-in-out",
+              zIndex: 2
+            }}>
+              {countdownSecs}
+            </div>
+
+            <p style={{ 
+              fontSize: "0.95rem", 
+              opacity: 0.85, 
+              fontWeight: "600",
+              color: "var(--color-delft-blue)",
+              maxWidth: "400px",
+              lineHeight: 1.5,
+              zIndex: 2
+            }}>
+              Siapkan diri Anda untuk melihat hasil akhir perolehan suara Capstone Project!
+            </p>
+          </div>
+        </div>
+      ) : settings.voting_status === "not_started" ? (
         <div 
           style={{ 
             flex: 1, 
@@ -328,7 +652,7 @@ export default function DashboardPublikPage() {
             </p>
           </div>
         </div>
-      ) : settings.leaderboard_visible === "false" ? (
+      ) : settings.leaderboard_visible === "false" && !forceShowLeaderboard ? (
         <div 
           style={{ 
             flex: 1, 
@@ -407,6 +731,64 @@ export default function DashboardPublikPage() {
             zIndex: 10 
           }}
         >
+          <style dangerouslySetInnerHTML={{__html: `
+            @media (max-width: 1200px) {
+              .leaderboard-mascot {
+                display: none !important;
+              }
+            }
+          `}} />
+
+          {/* Mascot Ilustrasi Kiri */}
+          <div 
+            className="leaderboard-mascot mascot-left"
+            style={{
+              position: "fixed",
+              bottom: "-10px",
+              left: "20px",
+              height: "220px",
+              width: "auto",
+              zIndex: 5,
+              pointerEvents: "none"
+            }}
+          >
+            <img 
+              src="/like.webp" 
+              alt="Mascot Like" 
+              style={{
+                height: "100%",
+                width: "auto",
+                objectFit: "contain",
+                transform: "scaleX(-1)",
+                filter: "drop-shadow(4px 4px 0px var(--color-delft-blue))"
+              }}
+            />
+          </div>
+
+          {/* Mascot Ilustrasi Kanan */}
+          <div 
+            className="leaderboard-mascot mascot-right"
+            style={{
+              position: "fixed",
+              bottom: "-10px",
+              right: "20px",
+              height: "220px",
+              width: "auto",
+              zIndex: 5,
+              pointerEvents: "none"
+            }}
+          >
+            <img 
+              src="/voted.webp" 
+              alt="Mascot Success" 
+              style={{
+                height: "100%",
+                width: "auto",
+                objectFit: "contain",
+                filter: "drop-shadow(-4px 4px 0px var(--color-delft-blue))"
+              }}
+            />
+          </div>
           
           {/* PODIUM TIGA BESAR */}
           {/* PODIUM TIGA BESAR */}

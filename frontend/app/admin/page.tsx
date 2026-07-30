@@ -6,7 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
-import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History } from "lucide-react";
+import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History, Clock } from "lucide-react";
 import { getBackendUrl, getGroupImageUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { compressImageClient } from "@/lib/imageCompressor";
 import { useSearchParams } from "next/navigation";
@@ -1763,29 +1763,78 @@ function AdminManagementContent() {
                       >
                         <Play size={18} fill="currentColor" /> Mulai Voting
                       </button>
+                      <button 
+                        onClick={() => {
+                          const endTime = new Date(Date.now() + 10 * 1000).toISOString();
+                          handleSaveSettings({ voting_status: "started", voting_end_time: endTime });
+                        }}
+                        className="btn"
+                        style={{ 
+                          height: "48px", 
+                          flex: 1, 
+                          backgroundColor: "var(--color-pistachio)",
+                          color: "var(--color-delft-blue)",
+                          border: "2px solid var(--color-delft-blue)",
+                          boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px"
+                        }}
+                      >
+                        <Clock size={18} /> Picu Hitung Mundur (10s)
+                      </button>
                     </div>
                   ) : (
-                    <button 
-                      onClick={() => handleSaveSettings({ voting_status: "ended" })}
-                      className="btn"
-                      style={{ 
-                        flex: 1, 
-                        minWidth: "150px", 
-                        height: "48px", 
-                        backgroundColor: "#ff6b6b", 
-                        color: "white",
-                        border: "2px solid var(--color-delft-blue)",
-                        boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px"
-                      }}
-                    >
-                      <Square size={18} fill="currentColor" /> Hentikan Voting
-                    </button>
+                    <div style={{ display: "flex", gap: "12px", flex: 1.5, flexWrap: "wrap" }}>
+                      <button 
+                        onClick={() => handleSaveSettings({ voting_status: "ended" })}
+                        className="btn"
+                        style={{ 
+                          flex: 1, 
+                          minWidth: "150px", 
+                          height: "48px", 
+                          backgroundColor: "#ff6b6b", 
+                          color: "white",
+                          border: "2px solid var(--color-delft-blue)",
+                          boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px"
+                        }}
+                      >
+                        <Square size={18} fill="currentColor" /> Hentikan Voting
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const endTime = new Date(Date.now() + 10 * 1000).toISOString();
+                          handleSaveSettings({ voting_status: "started", voting_end_time: endTime });
+                        }}
+                        className="btn"
+                        style={{ 
+                          flex: 1, 
+                          minWidth: "180px", 
+                          height: "48px", 
+                          backgroundColor: "var(--color-pistachio)", 
+                          color: "var(--color-delft-blue)",
+                          border: "2px solid var(--color-delft-blue)",
+                          boxShadow: "3px 3px 0 0 var(--color-delft-blue)",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px"
+                        }}
+                      >
+                        <Clock size={18} /> Picu Hitung Mundur (10s)
+                      </button>
+                    </div>
                   )}
 
                   <button 
