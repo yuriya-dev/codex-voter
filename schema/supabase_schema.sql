@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS visitors (
     verified_at TIMESTAMPTZ DEFAULT now(),
     device_fingerprint TEXT,
     ip TEXT,
+    is_flagged BOOLEAN DEFAULT FALSE,
+    flag_reason TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -33,6 +35,8 @@ CREATE TABLE IF NOT EXISTS votes (
     vote_code TEXT NOT NULL,
     voted_at TIMESTAMPTZ DEFAULT now(),
     ip TEXT, -- Limits are enforced in backend code
+    is_flagged BOOLEAN DEFAULT FALSE,
+    flag_reason TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -93,3 +97,11 @@ members = EXCLUDED.members,
 photo_color = EXCLUDED.photo_color,
 image = EXCLUDED.image,
 votes = EXCLUDED.votes;
+
+-- ==========================================================
+-- MIGRATION FOR GOOGLE AUTH SECURITY (RUN IN SUPABASE SQL EDITOR)
+-- ==========================================================
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS flag_reason TEXT;
+-- ALTER TABLE votes ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE votes ADD COLUMN IF NOT EXISTS flag_reason TEXT;

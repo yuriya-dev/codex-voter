@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getBackendUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
+import { supabase } from "@/lib/supabase";
 
 const BACKEND_URL = getBackendUrl();
 
@@ -59,6 +60,9 @@ interface VoterContextType {
   isVoteUnlocked: boolean;
   unlockVoting: () => void;
   refreshSettings: () => Promise<void>;
+  googleUser: any;
+  loginWithGoogle: () => Promise<void>;
+  logoutGoogle: () => Promise<void>;
 }
 
 const VoterContext = createContext<VoterContextType | undefined>(undefined);
@@ -75,6 +79,35 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [groupsList, setGroupsList] = useState<Group[]>([]);
   const [isVoteUnlocked, setIsVoteUnlocked] = useState(false);
+  const [googleUser, setGoogleUser] = useState<any>(null);
+
+  // Google OAuth Login
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/verifikasi`,
+      },
+    });
+    if (error) {
+      console.error("Gagal login dengan Google:", error.message);
+      alert("Gagal login dengan Google: " + error.message);
+    }
+  };
+
+  // Google OAuth Logout
+  const logoutGoogle = async () => {
+    await supabase.auth.signOut();
+    setGoogleUser(null);
+    setVisitor(null);
+    setActiveVote(null);
+    setActiveVotes([]);
+    localStorage.removeItem("voter_visitor");
+    localStorage.removeItem("voter_active_vote");
+    localStorage.removeItem("voter_active_votes");
+    localStorage.removeItem("voter_shortlist");
+    localStorage.removeItem("voter_is_unlocked");
+  };
 
   // Fetch groups list from Backend API
   const refreshGroupsList = async () => {
@@ -143,6 +176,22 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshGroupsList();
     refreshSettings();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setGoogleUser(session.user);
+      } else {
+        setGoogleUser(null);
+      }
+    });
+
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setGoogleUser(session.user);
+      }
+    });
     
     if (typeof window !== "undefined") {
       const savedShortlist = localStorage.getItem("voter_shortlist");
@@ -208,6 +257,10 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         alert("🔒 Akses Voting Berhasil Dibuka! Anda sekarang dapat mengirimkan suara final.");
       }
     }
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Helpers
@@ -239,9 +292,21 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Ambil Google Auth token jika tersedia
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert("Otentikasi Google diperlukan. Silakan login dengan Google terlebih dahulu.");
+        return false;
+      }
+
       const res = await fetch(`${BACKEND_URL}/api/auth/verify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ name, category, deviceFingerprint: fingerprint })
       });
 
@@ -289,9 +354,21 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     if (!visitor) return null;
     
     try {
+      // Ambil Google Auth token jika tersedia
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert("Sesi Google Auth tidak ditemukan. Silakan login kembali.");
+        return null;
+      }
+
       const res = await fetch(`${BACKEND_URL}/api/votes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ 
           visitorIdentifier: visitor.identifier, 
           groupId 
@@ -356,7 +433,10 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         refreshGroupsList,
         isVoteUnlocked,
         unlockVoting,
-        refreshSettings
+        refreshSettings,
+        googleUser,
+        loginWithGoogle,
+        logoutGoogle
       }}
     >
       {children}
