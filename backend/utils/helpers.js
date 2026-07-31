@@ -24,6 +24,7 @@ function mapVisitor(dbVisitor) {
     identifier: dbVisitor.identifier,
     name: dbVisitor.name,
     category: dbVisitor.category,
+    email: dbVisitor.email,
     verifiedAt: dbVisitor.verified_at,
     deviceFingerprint: dbVisitor.device_fingerprint,
     ip: dbVisitor.ip

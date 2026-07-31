@@ -92,6 +92,7 @@ router.post("/verify", async (req, res) => {
         identifier: identifierHash,
         name: name.trim(),
         category,
+        email: user.email,
         verified_at: new Date().toISOString(),
         device_fingerprint: deviceFingerprint || ("fingerprint_" + Math.random().toString(36).substr(2, 9)),
         ip: ipAddress,
@@ -106,11 +107,12 @@ router.post("/verify", async (req, res) => {
         .single();
         
       if (insertErr) {
-        // Fallback if schema migration has not been run
-        if (insertErr.message && (insertErr.message.includes("is_flagged") || insertErr.message.includes("flag_reason"))) {
+        // Fallback if schema migration has not been run (missing columns is_flagged, flag_reason, or email)
+        if (insertErr.message && (insertErr.message.includes("is_flagged") || insertErr.message.includes("flag_reason") || insertErr.message.includes("email"))) {
           const fallbackVisitor = { ...newVisitor };
           delete fallbackVisitor.is_flagged;
           delete fallbackVisitor.flag_reason;
+          delete fallbackVisitor.email;
           
           const { data: fbVisitor, error: fbErr } = await supabase
             .from('visitors')
@@ -128,22 +130,35 @@ router.post("/verify", async (req, res) => {
       }
     } else {
       visitor = mapVisitor(existingVisitors[0]);
-      // Update IP, name, category, or device_fingerprint if empty or changed
+      // Update IP, name, category, email, or device_fingerprint if empty or changed
       if (
         existingVisitors[0].ip !== ipAddress || 
         existingVisitors[0].name !== name.trim() || 
         existingVisitors[0].category !== category || 
+        existingVisitors[0].email !== user.email ||
         (deviceFingerprint && existingVisitors[0].device_fingerprint !== deviceFingerprint)
       ) {
-        await supabase
+        const updateData = { 
+          name: name.trim(),
+          category,
+          email: user.email,
+          ip: ipAddress, 
+          device_fingerprint: deviceFingerprint || existingVisitors[0].device_fingerprint 
+        };
+        
+        const { error: updErr } = await supabase
           .from('visitors')
-          .update({ 
-            name: name.trim(),
-            category,
-            ip: ipAddress, 
-            device_fingerprint: deviceFingerprint || existingVisitors[0].device_fingerprint 
-          })
+          .update(updateData)
           .eq('identifier', identifierHash);
+          
+        if (updErr && updErr.message && updErr.message.includes("email")) {
+          // Fallback if email column not present in visitors
+          delete updateData.email;
+          await supabase
+            .from('visitors')
+            .update(updateData)
+            .eq('identifier', identifierHash);
+        }
       }
     }
 

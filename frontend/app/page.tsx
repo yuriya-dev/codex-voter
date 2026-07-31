@@ -63,7 +63,7 @@ export default function Home() {
                 Prinsip Voting
               </span>
               <p style={{ fontSize: "0.9rem", fontStyle: "italic", marginTop: "8px", color: "var(--color-delft-blue)" }}>
-                &ldquo;Satu Pengunjung, Multi-Pilihan. Setiap pengunjung berhak memberikan suara hingga <strong>{maxVotesLimit} proyek terfavorit </strong> yang berbeda guna mendukung inovasi terbaik.&rdquo;
+                &ldquo;Satu Akun Google, Satu Pilihan. Setiap pengunjung wajib masuk menggunakan akun Google pribadi dan hanya berhak memberikan <strong>{maxVotesLimit} suara final</strong> untuk proyek terfavorit.&rdquo;
               </p>
             </div>
           </div>
@@ -197,9 +197,9 @@ export default function Home() {
               >
                 1
               </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Registrasi Nama</h3>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Login Google & Registrasi</h3>
               <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Daftarkan Nama Lengkap dan Kategori Pemilih Anda (Mahasiswa, Siswa, Dosen/Staf, Umum) untuk memulai sesi voting Anda.
+                Masuk menggunakan akun Google pribadi Anda, lalu lengkapi Nama dan Kategori Pemilih untuk memulai sesi voting.
               </p>
             </div>
 

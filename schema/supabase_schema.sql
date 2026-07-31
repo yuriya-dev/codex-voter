@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS visitors (
     identifier TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     category TEXT NOT NULL,
+    email TEXT,
     verified_at TIMESTAMPTZ DEFAULT now(),
     device_fingerprint TEXT,
     ip TEXT,
@@ -103,5 +104,6 @@ votes = EXCLUDED.votes;
 -- ==========================================================
 -- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS flag_reason TEXT;
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS email TEXT;
 -- ALTER TABLE votes ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE votes ADD COLUMN IF NOT EXISTS flag_reason TEXT;

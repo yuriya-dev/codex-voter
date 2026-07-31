@@ -6,6 +6,48 @@ import { supabase } from "@/lib/supabase";
 
 const BACKEND_URL = getBackendUrl();
 
+// Generate a stable hardware/canvas-based fingerprint
+function generateStableFingerprint(): string {
+  if (typeof window === "undefined") return "server_side";
+  
+  try {
+    const screenInfo = `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}`;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    const language = window.navigator.language || "";
+    const userAgent = window.navigator.userAgent || "";
+    
+    let canvasHash = "";
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.fillText("CodexVoter-Secure-FP! 😃", 2, 15);
+        canvasHash = canvas.toDataURL().slice(-150); // take a small slice of rendering data
+      }
+    } catch (e) {
+      canvasHash = "canvas_blocked";
+    }
+    
+    const rawString = `${screenInfo}|${timeZone}|${language}|${userAgent}|${canvasHash}`;
+    
+    // Compute simple string hash
+    let hash = 0;
+    for (let i = 0; i < rawString.length; i++) {
+      const char = rawString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    
+    // Return a stable hash identifier
+    return `hw_${Math.abs(hash).toString(36)}_${window.screen.width}x${window.screen.height}`;
+  } catch (err) {
+    // Fallback if everything else fails
+    return "hw_fallback_" + Math.random().toString(36).substring(2, 9);
+  }
+}
+
 
 export interface Group {
   id: string;
@@ -287,7 +329,7 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         fingerprint = localStorage.getItem("voter_device_fingerprint") || "";
         if (!fingerprint) {
-          fingerprint = "dev_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
+          fingerprint = generateStableFingerprint();
           localStorage.setItem("voter_device_fingerprint", fingerprint);
         }
       }

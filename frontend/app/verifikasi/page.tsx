@@ -150,14 +150,6 @@ export default function VerifikasiPage() {
                     <strong>{googleUser.email}</strong>
                   </div>
                 </div>
-                <button 
-                  type="button" 
-                  onClick={logoutGoogle} 
-                  className="btn btn-secondary" 
-                  style={{ padding: "6px 12px", fontSize: "0.75rem" }}
-                >
-                  Ganti Akun
-                </button>
               </div>
 
               <form onSubmit={handleSubmit}>
@@ -264,13 +256,13 @@ export default function VerifikasiPage() {
             </p>
             <ul style={{ fontSize: "0.85rem", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "12px", opacity: 0.9 }}>
               <li>
-                <strong>Login Google Wajib:</strong> Tiap pemilih wajib masuk menggunakan akun Google yang terverifikasi. Satu akun Google hanya berhak memberikan suara sesuai kuota pameran.
+                <strong>Otentikasi Akun Google Pribadi:</strong> Vote hanya sah jika dilakukan melalui akun Google pribadi Anda (bukan akun bersama/pinjaman).
               </li>
               <li>
-                <strong>Verifikasi Alamat IP:</strong> Setiap perangkat/koneksi IP hanya diizinkan mengirimkan <b>{maxVotesLimit} suara final</b>. Percobaan pendaftaran banyak akun Google baru dari IP yang sama dalam waktu singkat akan diblokir otomatis.
+                <strong>Batas Kuota Vote:</strong> Setiap akun Google hanya dapat memberikan {maxVotesLimit} suara/pilihan kelompok (sesuai ketentuan sistem voting pameran).
               </li>
               <li>
-                <strong>Audit Logs & Deteksi Kecurangan:</strong> Setiap pengiriman suara dicatat di log keamanan admin secara transparan. Akun Google yang baru didaftarkan sesaat sebelum vote akan secara otomatis ditandai (flagged) untuk direview secara manual oleh panitia.
+                <strong>Pencegahan & Sanksi Kecurangan:</strong> Sistem kami memantau pola voting secara real-time (termasuk deteksi IP rate-limiting dan analisis umur akun Google baru). Kecurangan yang terdeteksi melalui sistem audit dapat berakibat pada **pembatalan vote** kelompok yang bersangkutan.
               </li>
             </ul>
           </div>
