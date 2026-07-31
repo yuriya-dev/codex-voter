@@ -35,26 +35,18 @@ router.post("/verify", async (req, res) => {
   const identifierHash = user.id; // Stable UUID from Google/Supabase Auth
 
   try {
-    // Check if this device fingerprint has already voted under ANY identifier
+    // Check if this device fingerprint is already registered to a different user/Google Account
     if (deviceFingerprint) {
       const { data: siblingVisitors, error: sibErr } = await supabase
         .from('visitors')
-        .select('identifier')
+        .select('identifier, name')
         .eq('device_fingerprint', deviceFingerprint);
       
       if (!sibErr && siblingVisitors && siblingVisitors.length > 0) {
-        const siblingIdentifiers = siblingVisitors.map(v => v.identifier);
-        const { data: siblingVotes, error: sibVotesErr } = await supabase
-          .from('votes')
-          .select('*')
-          .in('visitor_identifier', siblingIdentifiers);
-          
-        if (!sibVotesErr && siblingVotes && siblingVotes.length > 0) {
-          const votedByOther = siblingVotes.some(v => v.visitor_identifier !== identifierHash);
-          if (votedByOther) {
-            await addAuditLog("Access Denied", `Device ${deviceFingerprint} mencoba mendaftar dengan nama '${name}' tapi device ini sudah pernah digunakan untuk vote oleh akun lain. IP: ${ipAddress} (UA: ${userAgent})`, "error");
-            return res.status(403).json({ error: "Perangkat ini sudah digunakan oleh akun lain untuk memberikan suara!" });
-          }
+        const otherVisitor = siblingVisitors.find(v => v.identifier !== identifierHash);
+        if (otherVisitor) {
+          await addAuditLog("Registration Denied", `Device ${deviceFingerprint} mencoba login/daftar dengan akun Google baru (Identifier: ${identifierHash}, Nama: ${name}) tapi device ini sudah terdaftar atas nama '${otherVisitor.name}' (Identifier: ${otherVisitor.identifier}).`, "error");
+          return res.status(403).json({ error: `Perangkat ini sudah terdaftar menggunakan akun Google lain (${otherVisitor.name}). Harap gunakan akun Google tersebut.` });
         }
       }
     }
