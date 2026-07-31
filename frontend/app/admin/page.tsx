@@ -6,7 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
-import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History, Clock } from "lucide-react";
+import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History, Clock, Award } from "lucide-react";
 import { getBackendUrl, getGroupImageUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { compressImageClient } from "@/lib/imageCompressor";
 import { useSearchParams } from "next/navigation";
@@ -682,6 +682,7 @@ function AdminManagementContent() {
   const [leaderboardVisible, setLeaderboardVisible] = useState("false");
   const [votingStatus, setVotingStatus] = useState("not_started");
   const [votingEndTime, setVotingEndTime] = useState("");
+  const [showParticles, setShowParticles] = useState("false");
   const [timerMinutes, setTimerMinutes] = useState(60);
   const [adminTimeLeft, setAdminTimeLeft] = useState<string>("");
   const [sessionHistory, setSessionHistory] = useState<any[]>([]);
@@ -845,6 +846,7 @@ function AdminManagementContent() {
           setLeaderboardVisible(sData.leaderboard_visible || "false");
           setVotingStatus(sData.voting_status || "not_started");
           setVotingEndTime(sData.voting_end_time || "");
+          setShowParticles(sData.show_particles || "false");
           try {
             const parsedHistory = JSON.parse(sData.session_history || "[]");
             setSessionHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
@@ -877,6 +879,7 @@ function AdminManagementContent() {
           setLeaderboardVisible(data.leaderboard_visible || "false");
           setVotingStatus(data.voting_status || "not_started");
           setVotingEndTime(data.voting_end_time || "");
+          setShowParticles(data.show_particles || "false");
           try {
             const parsedHistory = JSON.parse(data.session_history || "[]");
             setSessionHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
@@ -925,6 +928,7 @@ function AdminManagementContent() {
     leaderboard_visible?: string;
     voting_status?: string;
     voting_end_time?: string;
+    show_particles?: string;
   }) => {
     setLoading(true);
     try {
@@ -949,6 +953,7 @@ function AdminManagementContent() {
         if (updates.leaderboard_visible !== undefined) setLeaderboardVisible(updates.leaderboard_visible);
         if (updates.voting_status !== undefined) setVotingStatus(updates.voting_status);
         if (updates.voting_end_time !== undefined) setVotingEndTime(updates.voting_end_time);
+        if (updates.show_particles !== undefined) setShowParticles(updates.show_particles);
       } else {
         setStatusMessage({ text: "Gagal menyimpan pengaturan.", type: "error" });
       }
@@ -1883,6 +1888,49 @@ function AdminManagementContent() {
                     }}
                   >
                     <EyeOff size={18} /> Sembunyikan Leaderboard
+                  </button>
+                </div>
+              </div>
+
+              {/* Kontrol Partikel Perayaan */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", borderTop: "1px dashed var(--color-delft-blue)", paddingTop: "16px" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>Picu Partikel Perayaan (Confetti)</span>
+                <p style={{ fontSize: "0.8rem", opacity: 0.8, margin: 0 }}>
+                  Aktifkan efek hujan daun/partikel perayaan pada leaderboard utama. Partikel hanya akan muncul jika timer/sesi voting telah selesai.
+                </p>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  <button 
+                    onClick={() => handleSaveSettings({ show_particles: "true" })}
+                    className="btn btn-primary"
+                    style={{ 
+                      flex: 1, 
+                      minWidth: "160px",
+                      height: "44px", 
+                      backgroundColor: showParticles === "true" ? "var(--color-fern-green)" : "",
+                      justifyContent: "center",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    <Award size={18} /> Aktifkan Partikel
+                  </button>
+                  <button 
+                    onClick={() => handleSaveSettings({ show_particles: "false" })}
+                    className="btn btn-secondary"
+                    style={{ 
+                      flex: 1, 
+                      minWidth: "160px",
+                      height: "44px", 
+                      backgroundColor: showParticles === "false" ? "#ff6b6b" : "",
+                      color: showParticles === "false" ? "white" : "",
+                      justifyContent: "center",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    <EyeOff size={18} /> Nonaktifkan Partikel
                   </button>
                 </div>
               </div>

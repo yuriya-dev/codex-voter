@@ -15,7 +15,8 @@ router.get("/", async (req, res) => {
       leaderboard_visible: "false",
       voting_status: "not_started",
       voting_end_time: "",
-      session_history: "[]"
+      session_history: "[]",
+      show_particles: "false"
     };
 
     if (!error && data) {
@@ -25,6 +26,7 @@ router.get("/", async (req, res) => {
         if (item.key === "voting_status") settings.voting_status = item.value;
         if (item.key === "voting_end_time") settings.voting_end_time = item.value;
         if (item.key === "session_history") settings.session_history = item.value;
+        if (item.key === "show_particles") settings.show_particles = item.value;
       });
     }
 
@@ -42,7 +44,7 @@ router.get("/", async (req, res) => {
 
 // Update settings
 router.post("/", adminAuth, async (req, res) => {
-  const { max_votes, leaderboard_visible, voting_status, voting_end_time, session_history } = req.body;
+  const { max_votes, leaderboard_visible, voting_status, voting_end_time, session_history, show_particles } = req.body;
   const updates = [];
 
   if (max_votes !== undefined) {
@@ -66,6 +68,10 @@ router.post("/", adminAuth, async (req, res) => {
 
   if (session_history !== undefined) {
     updates.push({ key: "session_history", value: session_history.toString() });
+  }
+
+  if (show_particles !== undefined) {
+    updates.push({ key: "show_particles", value: show_particles.toString() });
   }
 
   try {
@@ -187,6 +193,7 @@ router.post("/archive", adminAuth, async (req, res) => {
     // 7. Reset status sesi voting yang sedang aktif
     await supabase.from('settings').upsert({ key: "voting_status", value: "not_started" });
     await supabase.from('settings').upsert({ key: "voting_end_time", value: "" });
+    await supabase.from('settings').upsert({ key: "show_particles", value: "false" });
 
     await addAuditLog("Session Archived", `Sesi '${sessionName}' diarsipkan. Data pengunjung, IP, dan suara berhasil dibersihkan untuk sesi baru.`, "warning");
 

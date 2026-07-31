@@ -57,7 +57,8 @@ INSERT INTO public.settings (key, value) VALUES
   ('max_votes', '3'),
   ('leaderboard_visible', 'false'),
   ('voting_status', 'not_started'),
-  ('voting_end_time', '')
+  ('voting_end_time', ''),
+  ('show_particles', 'false')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 3. Membuat Tabel Audit Logs (Jika Belum Ada)

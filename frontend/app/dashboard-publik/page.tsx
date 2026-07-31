@@ -23,9 +23,11 @@ export default function DashboardPublikPage() {
   const [settings, setSettings] = useState({
     leaderboard_visible: "true",
     voting_status: "not_started",
-    voting_end_time: ""
+    voting_end_time: "",
+    show_particles: "false"
   });
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isTimerEnded, setIsTimerEnded] = useState<boolean>(false);
 
   // States for 10-second countdown and sounds
   const [countdownSecs, setCountdownSecs] = useState<number | null>(null);
@@ -37,18 +39,20 @@ export default function DashboardPublikPage() {
   const isFirstTransition = useRef(true);
 
   const isLeaderboardVisibleNow = settings.leaderboard_visible === "true" || forceShowLeaderboard;
+  const isVotingTimerFinished = settings.voting_status === "ended" || isTimerEnded;
+  const shouldShowParticles = isLeaderboardVisibleNow && isVotingTimerFinished && settings.show_particles === "true";
 
   // State and effect for confetti particle animation
   const [confetti, setConfetti] = useState<number[]>([]);
 
   useEffect(() => {
-    if (isLeaderboardVisibleNow) {
+    if (shouldShowParticles) {
       const particles = Array.from({ length: 60 }, (_, idx) => idx);
       setConfetti(particles);
     } else {
       setConfetti([]);
     }
-  }, [isLeaderboardVisibleNow]);
+  }, [shouldShowParticles]);
 
   // Sound synthesizer using Web Audio API
   const playTickSound = (secondsLeft: number) => {
@@ -204,7 +208,8 @@ export default function DashboardPublikPage() {
             if (
               prev.leaderboard_visible !== settingsData.leaderboard_visible ||
               prev.voting_status !== settingsData.voting_status ||
-              prev.voting_end_time !== settingsData.voting_end_time
+              prev.voting_end_time !== settingsData.voting_end_time ||
+              prev.show_particles !== settingsData.show_particles
             ) {
               // Fetch fresh stats to ensure leaderboard data is up-to-date
               fetchStats();
@@ -229,6 +234,7 @@ export default function DashboardPublikPage() {
       setTimeLeft("");
       setCountdownActive(false);
       setCountdownSecs(null);
+      setIsTimerEnded(false);
       return;
     }
 
@@ -242,6 +248,7 @@ export default function DashboardPublikPage() {
           setCountdownActive(false);
           setCountdownSecs(null);
           setForceShowLeaderboard(true);
+          setIsTimerEnded(true);
           return;
         }
 
@@ -352,7 +359,7 @@ export default function DashboardPublikPage() {
       }}
     >
       {/* Confetti Particle Effect */}
-      {isLeaderboardVisibleNow && confetti.length > 0 && (
+      {shouldShowParticles && confetti.length > 0 && (
         <div className="confetti-container">
           {confetti.map((idx) => (
             <div
