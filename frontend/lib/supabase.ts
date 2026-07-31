@@ -31,6 +31,15 @@ const dummySupabase = {
       data: { subscription: { unsubscribe: () => {} } },
     }),
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    signInWithOAuth: () => {
+      console.error("❌ ERROR: Supabase is not configured on this environment. Cannot perform signInWithOAuth.");
+      alert("Konfigurasi Supabase (NEXT_PUBLIC_SUPABASE_URL & ANON_KEY) belum diset di Environment Variables Vercel!");
+      return Promise.resolve({ data: { provider: "google", url: "" }, error: new Error("Supabase not configured") });
+    },
+    signOut: () => {
+      console.error("❌ ERROR: Supabase is not configured on this environment. Cannot perform signOut.");
+      return Promise.resolve({ error: null });
+    }
   },
 };
 
