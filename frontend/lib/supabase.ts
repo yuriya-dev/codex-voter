@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Menggunakan nilai fallback langsung jika Vercel Env Variables tidak terinjeksi karena konfigurasi monorepo
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://jntuusqycpkzssqypxyx.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_OVBwB7GFpa4xLWrAKs_zVg_kNVmaUEP";
 
 const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
