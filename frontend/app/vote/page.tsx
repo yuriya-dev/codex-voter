@@ -370,7 +370,7 @@ export default function VotePage() {
             </h2>
             
             <p style={{ fontSize: "0.95rem", opacity: 0.9, lineHeight: "1.6", color: "var(--color-delft-blue)", maxWidth: "460px", margin: "0 auto 28px auto" }}>
-              Untuk memastikan Anda telah meninjau dan mengunjungi booth pameran, silakan memindai QR Code khusus yang disediakan panitia di **Pintu Keluar (Exit Gate)** sebelum mengirimkan suara Anda.
+              Untuk memastikan Anda telah meninjau dan mengunjungi booth pameran, silakan memindai QR Code khusus yang disediakan panitia di <strong>Pintu Keluar (Exit Gate)</strong> sebelum mengirimkan suara Anda.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "320px", margin: "0 auto" }}>

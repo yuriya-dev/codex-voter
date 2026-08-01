@@ -262,7 +262,7 @@ export default function VerifikasiPage() {
                 <strong>Batas Kuota Vote:</strong> Setiap akun Google hanya dapat memberikan {maxVotesLimit} suara/pilihan kelompok (sesuai ketentuan sistem voting pameran).
               </li>
               <li>
-                <strong>Pencegahan & Sanksi Kecurangan:</strong> Sistem kami memantau pola voting secara real-time (termasuk deteksi IP rate-limiting dan analisis umur akun Google baru). Kecurangan yang terdeteksi melalui sistem audit dapat berakibat pada **pembatalan vote** kelompok yang bersangkutan.
+                <strong>Pencegahan & Sanksi Kecurangan:</strong> Sistem kami memantau pola voting secara real-time (termasuk deteksi IP rate-limiting dan analisis umur akun Google baru). Kecurangan yang terdeteksi melalui sistem audit dapat berakibat pada <strong>pembatalan vote</strong> kelompok yang bersangkutan.
               </li>
             </ul>
           </div>
