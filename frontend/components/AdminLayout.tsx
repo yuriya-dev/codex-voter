@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, FolderCog, QrCode, ClipboardCheck, LogOut, Vote, Globe } from "lucide-react";
+import { LayoutDashboard, FolderCog, QrCode, ClipboardCheck, LogOut, Vote, Globe, Palette } from "lucide-react";
 import Header from "@/components/Header";
 
 interface AdminLayoutProps {
@@ -77,6 +77,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const isGroupsActive = pathname === "/admin" && (tabParam === "groups" || !tabParam);
   const isQrActive = pathname === "/admin" && tabParam === "qr";
   const isVotingActive = pathname === "/admin" && tabParam === "voting";
+  const isPosterActive = pathname === "/admin" && tabParam === "poster";
 
   return (
     <div className="admin-layout-wrapper">
@@ -120,6 +121,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           >
             <ClipboardCheck size={18} />
             <span>Voting</span>
+          </Link>
+
+          <Link 
+            href="/admin?tab=poster"
+            className={`admin-sidebar-item ${isPosterActive ? "active" : ""}`}
+          >
+            <Palette size={18} />
+            <span>Generator Poster</span>
           </Link>
         </nav>
 
