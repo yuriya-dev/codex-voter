@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useVoter } from "@/components/VoterContext";
 import { Leaf, ArrowRight, ShieldCheck, Heart, QrCode } from "lucide-react";
@@ -8,6 +9,35 @@ import BrutalistCard from "@/components/BrutalistCard";
 
 export default function Home() {
   const { setQrScannerOpen, maxVotesLimit } = useVoter();
+
+  // Coordinate tracking for responsive flow lines
+  const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const updatePoints = () => {
+    if (!containerRef.current) return;
+    const parentRect = containerRef.current.getBoundingClientRect();
+    const newPoints = cardRefs.current.map((card) => {
+      if (!card) return { x: 0, y: 0 };
+      const rect = card.getBoundingClientRect();
+      // Calculate top center of the card where the pushpin is
+      return {
+        x: rect.left - parentRect.left + rect.width / 2,
+        y: rect.top - parentRect.top
+      };
+    });
+    setPoints(newPoints.filter((p) => p.x !== 0 || p.y !== 0));
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(updatePoints, 350);
+    window.addEventListener("resize", updatePoints);
+    return () => {
+      window.removeEventListener("resize", updatePoints);
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
     <>
@@ -156,7 +186,7 @@ export default function Home() {
         </section>
 
         {/* Alur Voting Section */}
-        <section className="section-gap">
+        <section className="section-gap" style={{ overflow: "visible" }}>
           <h2 
             style={{ 
               fontSize: "2rem", 
@@ -169,138 +199,289 @@ export default function Home() {
             Alur Voting
           </h2>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px" }}>
-            
-            {/* Step 1 */}
-            <div 
-              style={{ 
-                border: "2px solid var(--color-delft-blue)", 
-                padding: "24px", 
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: "var(--color-white)",
-                boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
-              }}
-            >
+          {(() => {
+            const steps = [
+              {
+                num: "1",
+                title: "SCAN WEBSITE UTAMA",
+                desc: "Pindai QR Code di area masuk pameran untuk mengakses website utama CODEX Voter.",
+                mascot: "/sticker7.webp",
+                rotation: "-2.5deg"
+              },
+              {
+                num: "2",
+                title: "SHORTLIST FAVORIT",
+                desc: "Jelajahi pameran, scan QR kelompok di booth, lalu tambahkan proyek terfavorit Anda ke shortlist.",
+                mascot: "/like.webp",
+                rotation: "3deg"
+              },
+              {
+                num: "3",
+                title: "SCAN KELUAR & LOGIN",
+                desc: "Berjalanlah ke pintu keluar, pindai QR Exit, lalu login dengan akun Google & isi nama Anda untuk membuka kunci voting.",
+                mascot: "/exit.webp",
+                rotation: "-2deg"
+              },
+              {
+                num: "4",
+                title: "VOTE & SELESAI",
+                desc: "Gunakan hak suara Anda untuk memilih kelompok terbaik, kirim suara Anda, dan simpan bukti voting sebelum keluar.",
+                mascot: "/okay.webp",
+                rotation: "2.5deg"
+              }
+            ];
+
+            return (
               <div 
+                ref={containerRef}
                 style={{ 
-                  width: "36px", 
-                  height: "36px", 
-                  borderRadius: "50%", 
-                  backgroundColor: "var(--color-beige)", 
-                  border: "2px solid var(--color-delft-blue)",
                   display: "flex",
+                  flexWrap: "wrap",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontWeight: "700",
-                  marginBottom: "16px"
+                  gap: "48px", 
+                  marginTop: "24px",
+                  overflow: "visible",
+                  position: "relative",
+                  width: "100%"
                 }}
               >
-                1
-              </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Login Google & Registrasi</h3>
-              <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Masuk menggunakan akun Google pribadi Anda, lalu lengkapi Nama dan Kategori Pemilih untuk memulai sesi voting.
-              </p>
-            </div>
+                {/* Dynamic SVG Connecting Line tracking the measured pushpin coordinates */}
+                {points.length === 4 && (
+                  <svg 
+                    style={{ 
+                      position: "absolute", 
+                      top: 0, 
+                      left: 0, 
+                      width: "100%", 
+                      height: "100%", 
+                      pointerEvents: "none", 
+                      zIndex: 1 // Placed behind the cards (zIndex 3)
+                    }}
+                  >
+                    {(() => {
+                      let pathD = "";
+                      for (let i = 0; i < 3; i++) {
+                        const startX = points[i].x;
+                        const startY = points[i].y;
+                        const endX = points[i+1].x;
+                        const endY = points[i+1].y;
+                        
+                        const dx = endX - startX;
+                        const dy = endY - startY;
+                        
+                        if (i === 0) {
+                          pathD += `M ${startX} ${startY} `;
+                        }
+                        
+                        if (Math.abs(dy) < 60) {
+                          // Same row: curve downwards (+45) so it is not clipped at the top of the container
+                          pathD += `C ${startX + dx/3} ${startY + 45}, ${startX + 2*dx/3} ${startY + 45}, ${endX} ${endY} `;
+                        } else {
+                          // Different rows (wrapping): curve down and snake sideways
+                          pathD += `C ${startX + dx} ${startY + dy/4}, ${startX} ${startY + 3*dy/4}, ${endX} ${endY} `;
+                        }
+                      }
+                      return (
+                        <path 
+                          d={pathD} 
+                          fill="none" 
+                          stroke="var(--color-delft-blue)" 
+                          strokeWidth="4" 
+                          strokeLinecap="round" 
+                          strokeDasharray="6 6"
+                        />
+                      );
+                    })()}
+                  </svg>
+                )}
 
-            {/* Step 2 */}
-            <div 
-              style={{ 
-                border: "2px solid var(--color-delft-blue)", 
-                padding: "24px", 
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: "var(--color-white)",
-                boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
-              }}
-            >
-              <div 
-                style={{ 
-                  width: "36px", 
-                  height: "36px", 
-                  borderRadius: "50%", 
-                  backgroundColor: "var(--color-carolina-blue)", 
-                  border: "2px solid var(--color-delft-blue)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "700",
-                  marginBottom: "16px"
-                }}
-              >
-                2
-              </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Jelajahi & Shortlist</h3>
-              <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Kunjungi booth capstone fisik, pindai QR Code di booth, dan tambahkan kelompok proyek terbaik ke dalam daftar favorit Anda.
-              </p>
-            </div>
+                {steps.map((item, idx) => {
+                  const shadowOffset = 10;
+                  return (
+                    <div
+                      key={item.num}
+                      ref={(el) => { cardRefs.current[idx] = el; }}
+                      style={{
+                        position: "relative",
+                        width: "280px",
+                        height: "230px",
+                        transform: `rotate(${item.rotation})`,
+                        transformOrigin: "center center",
+                        margin: "20px 0",
+                        flexShrink: 0,
+                        overflow: "visible",
+                        zIndex: 3 // Set zIndex to 3 to render above the SVG line (zIndex 1)
+                      }}
+                    >
+                      {/* Physical Shadow Div */}
+                      <div 
+                        style={{
+                          position: "absolute",
+                          top: `${shadowOffset}px`,
+                          left: `${shadowOffset}px`,
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "var(--color-delft-blue)",
+                          borderRadius: "12px",
+                          zIndex: 1
+                        }}
+                      />
 
-            {/* Step 3 */}
-            <div 
-              style={{ 
-                border: "2px solid var(--color-delft-blue)", 
-                padding: "24px", 
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: "var(--color-white)",
-                boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
-              }}
-            >
-              <div 
-                style={{ 
-                  width: "36px", 
-                  height: "36px", 
-                  borderRadius: "50%", 
-                  backgroundColor: "var(--color-pistachio)", 
-                  border: "2px solid var(--color-delft-blue)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "700",
-                  marginBottom: "16px"
-                }}
-              >
-                3
-              </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Scan QR Pintu Keluar</h3>
-              <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Setelah selesai menjelajahi seluruh area pameran, pindai QR Code di Pintu Keluar (Exit Gate) untuk membuka akses tombol voting.
-              </p>
-            </div>
+                      {/* Card Body */}
+                      <div
+                        className="brutalist-poster-card"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "#ffffff",
+                          border: "3px solid var(--color-delft-blue)",
+                          borderRadius: "12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          position: "relative",
+                          zIndex: 3,
+                          overflow: "visible"
+                        }}
+                      >
+                        {/* Grid Pattern Backgrounds */}
+                        <div className="brutalist-card-pattern-grid" style={{ zIndex: 1, opacity: 0.4 }} />
+                        <div className="brutalist-card-overlay-dots" style={{ zIndex: 1, opacity: 0.2 }} />
 
-            {/* Step 4 */}
-            <div 
-              style={{ 
-                border: "2px solid var(--color-delft-blue)", 
-                padding: "24px", 
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: "var(--color-white)",
-                boxShadow: "3px 3px 0 0 var(--color-delft-blue)"
-              }}
-            >
-              <div 
-                style={{ 
-                  width: "36px", 
-                  height: "36px", 
-                  borderRadius: "50%", 
-                  backgroundColor: "var(--color-fern-green)", 
-                  color: "white",
-                  border: "2px solid var(--color-delft-blue)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "700",
-                  marginBottom: "16px"
-                }}
-              >
-                4
-              </div>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "8px", fontFamily: "var(--font-heading)" }}>Vote & Simpan Bukti</h3>
-              <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                Kirim suara Anda ke kelompok capstone pilihan Anda dan catat kode bukti vote unik (`VOTE-XXXX`) untuk penjaminan keaslian.
-              </p>
-            </div>
+                        {/* Header Title Area */}
+                        <div 
+                          className="brutalist-card-title-area"
+                          style={{ 
+                            backgroundColor: "var(--color-carolina-blue)", 
+                            color: "var(--color-delft-blue)",
+                            borderBottom: "3px solid var(--color-delft-blue)",
+                            padding: "6px 12px",
+                            fontSize: "11px",
+                            fontWeight: "900",
+                            letterSpacing: "0.05em",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            zIndex: 2,
+                            fontFamily: "var(--font-heading)",
+                            borderRadius: "8px 8px 0 0",
+                            textTransform: "uppercase"
+                          }}
+                        >
+                          <span>LANGKAH {item.num}</span>
+                          <span 
+                            className="brutalist-card-tag"
+                            style={{
+                              backgroundColor: "var(--color-pistachio)",
+                              color: "var(--color-delft-blue)",
+                              fontSize: "8.5px",
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              border: "2px solid var(--color-delft-blue)",
+                              fontWeight: "bold"
+                            }}
+                          >
+                            CODEX
+                          </span>
+                        </div>
 
-          </div>
+                        {/* Mascot/Photo Container */}
+                        <div style={{
+                          width: "100%",
+                          height: "90px",
+                          backgroundColor: "var(--color-beige)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderBottom: "3px solid var(--color-delft-blue)",
+                          position: "relative",
+                          overflow: "visible", // Allow mascot to pop out
+                          zIndex: 2
+                        }}>
+                          <img
+                            src={item.mascot}
+                            alt={item.title}
+                            style={{
+                              height: "125px",
+                              width: "auto",
+                              objectFit: "contain",
+                              position: "absolute",
+                              bottom: "-15px",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              filter: "none",
+                              pointerEvents: "none",
+                              zIndex: 5
+                            }}
+                          />
+                        </div>
+
+                        {/* Action/Description Row */}
+                        <div style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          position: "relative",
+                          zIndex: 2,
+                          backgroundColor: "#ffffff",
+                          flex: 1,
+                          justifyContent: "center",
+                          borderRadius: "0 0 8px 8px"
+                        }}>
+                          <h4 style={{
+                            fontSize: "12px",
+                            fontWeight: "900",
+                            fontFamily: "var(--font-heading)",
+                            color: "var(--color-delft-blue)",
+                            margin: 0,
+                            letterSpacing: "0.03em"
+                          }}>
+                            {item.title}
+                          </h4>
+                          <p style={{
+                            fontSize: "9.5px",
+                            lineHeight: "1.35",
+                            fontWeight: "600",
+                            color: "var(--color-delft-blue)",
+                            margin: 0,
+                            opacity: 0.95
+                          }}>
+                            {item.desc}
+                          </p>
+                        </div>
+
+                      </div>
+
+                      {/* PushPin (sibling to Card Body, outside of it so it is not clipped) */}
+                      <svg 
+                        width="36" 
+                        height="36" 
+                        viewBox="0 0 120 120" 
+                        style={{ 
+                          position: "absolute", 
+                          top: "-18px", 
+                          left: "50%", 
+                          transform: "translateX(-50%) rotate(-8deg)", 
+                          zIndex: 10
+                        }}
+                      >
+                        <line x1="60" y1="75" x2="60" y2="105" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round" />
+                        <ellipse cx="60" cy="105" rx="3" ry="1.5" fill="rgba(0,0,0,0.4)" />
+                        <ellipse cx="66" cy="41" rx="22" ry="12" fill="rgba(0,0,0,0.15)" />
+                        <rect x="52" y="41" width="28" height="22" rx="4" fill="rgba(0,0,0,0.15)" />
+                        <polygon points="48,63 84,63 76,78 56,78" fill="rgba(0,0,0,0.15)" />
+                        <ellipse cx="60" cy="35" rx="22" ry="12" fill="#ef4444" />
+                        <rect x="46" y="35" width="28" height="22" rx="4" fill="#ef4444" filter="brightness(0.9)" />
+                        <polygon points="42,57 78,57 70,72 50,72" fill="#ef4444" filter="brightness(0.8)" />
+                        <ellipse cx="54" cy="32" rx="10" ry="4" fill="rgba(255,255,255,0.4)" />
+                      </svg>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </section>
 
       </main>
