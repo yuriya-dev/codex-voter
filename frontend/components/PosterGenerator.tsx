@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Download, Printer, Palette, Layout, Edit3, ShieldAlert, Check } from "lucide-react";
+import { Download, Printer, Palette, Layout, Edit3, ShieldAlert } from "lucide-react";
 
 interface PosterGeneratorProps {
   origin: string;
@@ -70,7 +70,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
   const posterRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Themes
+  // Themes Configuration
   const themes: Record<ThemeType, ThemeStyles> = {
     brand: {
       bg: "#f5f3d8", // Muted Beige
@@ -152,7 +152,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
 
   const currentTheme = themes[theme];
 
-  // Grid/Paper Background Inline Styles
+  // Grid/Paper Background Styles
   const gridBackgroundStyle = {
     backgroundImage: `
       linear-gradient(${currentTheme.gridColor} 1.5px, transparent 1.5px),
@@ -162,7 +162,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
     backgroundColor: theme === "midnight" ? "#0b0f19" : theme === "ocean" ? "#f0f9ff" : theme === "brand" ? "#f5f3d8" : "#ffffff"
   };
 
-  // High-Res dimensions
+  // High-Res dimensions for each aspect ratio
   const dimensions: Record<AspectRatioType, { width: number; height: number }> = {
     "6:16": { width: 720, height: 1920 },
     "1:1": { width: 1000, height: 1000 },
@@ -171,7 +171,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
 
   const currentSize = dimensions[aspectRatio];
 
-  // Adjust preview scaling to fit container
+  // Adjust preview scaling dynamically to fit container
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
@@ -201,7 +201,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(posterRef.current, {
         useCORS: true,
-        scale: 2, // 2x resolution for printing
+        scale: 2, // 2x resolution
         backgroundColor: theme === "midnight" ? "#0b0f19" : "#ffffff",
         logging: false
       });
@@ -238,33 +238,29 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       num: "1",
       title: "LOGIN & DAFTAR",
       desc: "Pindai QR masuk di pintu masuk pameran, login dengan akun Google, dan isi nama & kategori Anda.",
-      mascot: `${origin}/hero.webp`,
-      rotation: "-2.5deg",
-      shiftX: "-30px"
+      mascot: `${origin}/sticker7.webp`,
+      rotation: "-2.5deg"
     },
     {
       num: "2",
       title: "SHORTLIST FAVORIT",
       desc: "Jelajahi pameran, scan QR kelompok di booth, lalu tambahkan proyek terfavorit Anda ke shortlist.",
       mascot: `${origin}/like.webp`,
-      rotation: "3deg",
-      shiftX: "30px"
+      rotation: "3deg"
     },
     {
       num: "3",
       title: "SCAN PINTU KELUAR",
       desc: "Jika Anda telah selesai menjelajah, berjalanlah ke pintu keluar dan pindai QR Exit untuk membuka kunci voting.",
       mascot: `${origin}/exit.webp`,
-      rotation: "-2deg",
-      shiftX: "-30px"
+      rotation: "-2deg"
     },
     {
       num: "4",
       title: "VOTE & BUKTI SAH",
       desc: "Gunakan kuota 3 suara Anda untuk proyek favorit, tekan kirim, lalu screenshot bukti kode unik vote Anda.",
       mascot: `${origin}/okay.webp`,
-      rotation: "2.5deg",
-      shiftX: "30px"
+      rotation: "2.5deg"
     }
   ];
 
@@ -439,6 +435,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
           >
             {/* High-res Poster Canvas */}
             <div
+              poster-canvas="true"
               ref={posterRef}
               style={{
                 width: `${currentSize.width}px`,
@@ -459,7 +456,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
               }}
             >
               
-              {/* Decorative Hand Drawing Accent Behind (Grid lines & scrapbook elements) */}
+              {/* Giant Watermark background text */}
               <div style={{
                 position: "absolute",
                 top: "100px",
@@ -518,21 +515,24 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                 }} />
               </div>
 
-              {/* 2. MIDDLE FLOW SECTION: Tilted Polaroid Cards & Connector Lines */}
+              {/* 2. MIDDLE FLOW SECTION: Tilted Polaroid Cards & SVG Connection Strings */}
               <div style={{ 
                 position: "relative",
-                display: "flex", 
-                flexDirection: aspectRatio === "6:16" ? "column" : "row",
-                gap: aspectRatio === "6:16" ? "48px" : "24px",
+                display: aspectRatio === "6:16" ? "flex" : "grid",
+                flexDirection: aspectRatio === "6:16" ? "column" : undefined,
+                gridTemplateColumns: aspectRatio === "6:16" ? undefined : "1fr 1fr",
+                rowGap: aspectRatio === "6:16" ? "48px" : "80px",
+                columnGap: aspectRatio === "6:16" ? undefined : "60px",
                 width: "100%",
                 flex: 1,
                 alignItems: "center",
-                justifyContent: "space-between",
+                justifyContent: aspectRatio === "6:16" ? "space-between" : undefined,
+                justifyItems: "center",
                 margin: "48px 0",
                 zIndex: 4
               }}>
                 
-                {/* SVG Connecting String (Curved path between pushpins) */}
+                {/* SVG Connecting String (Snaking perfectly through pushpin centers) */}
                 <svg 
                   style={{ 
                     position: "absolute", 
@@ -545,10 +545,9 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                   }}
                 >
                   {aspectRatio === "6:16" ? (
-                    // Winding path for vertical layout connecting pins: Card 1 -> Card 2 -> Card 3 -> Card 4
-                    // Pins are approximately centered on each card
+                    // Winding path for vertical layout (720x1920) connecting cards stagger-aligned
                     <path 
-                      d="M 280 120 C 370 200, 390 400, 480 470 C 390 540, 290 730, 280 820 C 370 890, 390 1090, 480 1170" 
+                      d="M 260 145 C 380 230, 390 380, 460 470 C 330 550, 230 730, 260 825 C 390 910, 390 1060, 460 1150" 
                       fill="none" 
                       stroke={currentTheme.lineColor} 
                       strokeWidth="5" 
@@ -556,9 +555,10 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                       style={{ filter: currentTheme.lineShadow }}
                     />
                   ) : aspectRatio === "1:1" ? (
-                    // Connection path for 2x2 grid (1000x1000)
+                    // Connection path for 2x2 grid (1000x1000) linking Pins: 1 -> 2 -> 3 -> 4
+                    // Pin 1 (270, 160) -> Pin 2 (730, 160) -> Pin 3 (270, 520) -> Pin 4 (730, 520)
                     <path 
-                      d="M 240 180 C 400 120, 520 120, 720 180 C 720 300, 240 450, 240 570 C 440 500, 520 500, 720 570" 
+                      d="M 270 160 C 450 60, 550 60, 730 160 C 810 320, 190 360, 270 520 C 450 620, 550 620, 730 520" 
                       fill="none" 
                       stroke={currentTheme.lineColor} 
                       strokeWidth="5" 
@@ -567,8 +567,9 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                     />
                   ) : (
                     // Connection path for 4:5 grid (800x1000)
+                    // Pin 1 (220, 160) -> Pin 2 (580, 160) -> Pin 3 (220, 520) -> Pin 4 (580, 520)
                     <path 
-                      d="M 190 200 C 320 120, 420 120, 570 200 C 570 330, 190 440, 190 580 C 350 510, 420 510, 570 580" 
+                      d="M 220 160 C 350 60, 450 60, 580 160 C 650 320, 150 360, 220 520 C 350 620, 450 620, 580 520" 
                       fill="none" 
                       stroke={currentTheme.lineColor} 
                       strokeWidth="5" 
@@ -580,7 +581,6 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
 
                 {/* Polaroid Cards rendering */}
                 {steps.map((item, idx) => {
-                  // Custom margins/shifts based on ratio
                   let alignmentStyle: React.CSSProperties = {};
                   
                   if (aspectRatio === "6:16") {
@@ -593,83 +593,128 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                   return (
                     <div
                       key={item.num}
+                      className="brutalist-card"
                       style={{
-                        width: aspectRatio === "6:16" ? "420px" : "215px",
-                        height: aspectRatio === "6:16" ? "320px" : "330px",
+                        width: aspectRatio === "6:16" ? "420px" : "330px",
+                        height: aspectRatio === "6:16" ? "330px" : "340px",
                         backgroundColor: currentTheme.cardBg,
-                        border: currentTheme.cardBorder,
-                        boxShadow: currentTheme.cardShadow,
-                        borderRadius: "4px",
-                        padding: "16px 16px 0px 16px", // Bottom space left for title bar
+                        border: theme === "brutalist" ? "5px solid #000" : currentTheme.cardBorder,
+                        boxShadow: theme === "brutalist" ? "8px 8px 0px 0px #000" : currentTheme.cardShadow,
+                        borderRadius: "12px",
                         display: "flex",
                         flexDirection: "column",
                         position: "relative",
                         transform: `rotate(${item.rotation})`,
                         zIndex: 3,
                         flexShrink: 0,
-                        transition: "all 0.3s",
+                        overflow: "visible",
                         ...alignmentStyle
                       }}
                     >
+                      {/* Sub-patterns inside the card to replicate the BrutalistCard reference */}
+                      <div className="brutalist-card-pattern-grid" style={{ zIndex: 1, opacity: 0.4 }} />
+                      <div className="brutalist-card-overlay-dots" style={{ zIndex: 1, opacity: 0.2 }} />
+
                       {/* Pushpin at the top center of card */}
                       <PushPin color={currentTheme.pinColor} />
 
-                      {/* Photo Area (Holds Mascot Image) */}
+                      {/* Header Title Area (replicates brutalist-card-title-area) */}
+                      <div 
+                        className="brutalist-card-title-area"
+                        style={{ 
+                          backgroundColor: currentTheme.badgeBg, 
+                          color: currentTheme.badgeText,
+                          borderBottom: theme === "brutalist" ? "4px solid #000" : `3px solid ${currentTheme.textColor}`,
+                          padding: "10px 16px",
+                          fontSize: "13px",
+                          fontWeight: "900",
+                          letterSpacing: "0.05em",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          zIndex: 2,
+                          fontFamily: "var(--font-heading)",
+                          borderRadius: "8px 8px 0 0",
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        <span>LANGKAH {item.num}</span>
+                        <span 
+                          className="brutalist-card-tag"
+                          style={{
+                            backgroundColor: currentTheme.numberBg,
+                            color: currentTheme.numberText,
+                            fontSize: "10px",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            border: `2px solid ${currentTheme.textColor}`,
+                            fontWeight: "bold"
+                          }}
+                        >
+                          CODEX
+                        </span>
+                      </div>
+
+                      {/* Mascot/Photo Container (replicates brutalist card photo area) */}
                       <div style={{
-                        backgroundColor: theme === "midnight" ? "#0f172a" : "#fafaf9",
-                        border: theme === "brutalist" ? "3px solid #000" : "1.5px solid rgba(29, 42, 98, 0.15)",
-                        borderRadius: "2px",
-                        flex: 1,
+                        width: "100%",
+                        height: "150px",
+                        backgroundColor: theme === "midnight" ? "#0f172a" : "var(--color-beige)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        padding: "12px",
+                        borderBottom: theme === "brutalist" ? "4px solid #000" : `3.5px solid ${currentTheme.textColor}`,
                         position: "relative",
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        zIndex: 2
                       }}>
                         <img
                           src={item.mascot}
                           alt={item.title}
                           style={{
-                            maxHeight: "100%",
-                            maxWidth: "100%",
+                            height: "90%",
+                            width: "auto",
                             objectFit: "contain",
-                            display: "block"
+                            filter: `drop-shadow(4px 4px 0px ${currentTheme.textColor})`,
+                            pointerEvents: "none",
+                            zIndex: 5
                           }}
                         />
                       </div>
 
-                      {/* Description Area */}
+                      {/* Action/Description Row (replicates brutalist card action section) */}
                       <div style={{
-                        padding: "10px 4px",
-                        textAlign: "center"
+                        padding: "14px 16px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        position: "relative",
+                        zIndex: 2,
+                        backgroundColor: currentTheme.cardBg,
+                        flex: 1,
+                        justifyContent: "center",
+                        borderRadius: "0 0 8px 8px"
                       }}>
-                        <p style={{
-                          fontSize: "12px",
-                          lineHeight: "1.35",
-                          fontWeight: "500",
+                        <h4 style={{
+                          fontSize: "14px",
+                          fontWeight: "900",
+                          fontFamily: "var(--font-heading)",
                           color: currentTheme.textColor,
-                          margin: 0
+                          margin: 0,
+                          letterSpacing: "0.03em"
+                        }}>
+                          {item.title}
+                        </h4>
+                        <p style={{
+                          fontSize: "11px",
+                          lineHeight: "1.4",
+                          fontWeight: "600",
+                          color: currentTheme.textColor,
+                          margin: 0,
+                          opacity: 0.95
                         }}>
                           {item.desc}
                         </p>
-                      </div>
-
-                      {/* Title Bar (Brutalist Polaroid style footer) */}
-                      <div style={{
-                        backgroundColor: currentTheme.badgeBg,
-                        color: currentTheme.badgeText,
-                        borderTop: theme === "brutalist" ? "3px solid #000" : currentTheme.cardBorder,
-                        margin: "0 -16px", // expand to touch card borders
-                        padding: "10px 0",
-                        textAlign: "center",
-                        fontWeight: "900",
-                        fontSize: "14px",
-                        fontFamily: "var(--font-heading)",
-                        letterSpacing: "0.05em",
-                        borderRadius: "0 0 2px 2px"
-                      }}>
-                        {item.num}. {item.title}
                       </div>
 
                     </div>
