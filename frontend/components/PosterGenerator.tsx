@@ -30,7 +30,7 @@ interface ThemeStyles {
   lineShadow: string;
 }
 
-// 3D Pushpin Component
+// 3D Pushpin Component with vector shadow (works perfectly in html2canvas)
 const PushPin = ({ color = "#ef4444" }: { color?: string }) => (
   <svg 
     width="44" 
@@ -41,14 +41,20 @@ const PushPin = ({ color = "#ef4444" }: { color?: string }) => (
       top: "-22px", 
       left: "50%", 
       transform: "translateX(-50%) rotate(-8deg)", 
-      zIndex: 10,
-      filter: "drop-shadow(2px 5px 3px rgba(0,0,0,0.3))" 
+      zIndex: 10
     }}
   >
     {/* Metal needle */}
     <line x1="60" y1="75" x2="60" y2="105" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round" />
+    
+    {/* Point tip shadow */}
     <ellipse cx="60" cy="105" rx="3" ry="1.5" fill="rgba(0,0,0,0.4)" />
     
+    {/* Vector Shadow of pushpin body (drawn behind plastic body, shifted slightly) */}
+    <ellipse cx="66" cy="41" rx="22" ry="12" fill="rgba(0,0,0,0.15)" />
+    <rect x="52" y="41" width="28" height="22" rx="4" fill="rgba(0,0,0,0.15)" />
+    <polygon points="48,63 84,63 76,78 56,78" fill="rgba(0,0,0,0.15)" />
+
     {/* Plastic body */}
     <ellipse cx="60" cy="35" rx="22" ry="12" fill={color} />
     <rect x="46" y="35" width="28" height="22" rx="4" fill={color} filter="brightness(0.9)" />
@@ -79,7 +85,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       subTextColor: "rgba(29, 42, 98, 0.8)",
       cardBg: "#ffffff",
       cardBorder: "3px solid #1d2a62",
-      cardShadow: "6px 6px 0px 0px #1d2a62",
+      cardShadow: "12px 12px 0px 0px #1d2a62",
       badgeBg: "#87aece", // Carolina Blue
       badgeText: "#1d2a62",
       numberBg: "#afd06e", // Pistachio
@@ -98,7 +104,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       subTextColor: "#94a3b8",
       cardBg: "#131c2e",
       cardBorder: "3px solid #1e293b",
-      cardShadow: "0px 0px 20px rgba(59, 130, 246, 0.2)",
+      cardShadow: "0px 0px 30px rgba(59, 130, 246, 0.45)",
       badgeBg: "#3b82f6",
       badgeText: "#ffffff",
       numberBg: "#10b981",
@@ -117,7 +123,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       subTextColor: "#333333",
       cardBg: "#ffffff",
       cardBorder: "4px solid #000000",
-      cardShadow: "8px 8px 0px 0px #000000",
+      cardShadow: "16px 16px 0px 0px #000000",
       badgeBg: "#000000",
       badgeText: "#ffffff",
       numberBg: "#facc15",
@@ -136,7 +142,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       subTextColor: "#0ea5e9",
       cardBg: "#ffffff",
       cardBorder: "2px solid #0ea5e9",
-      cardShadow: "5px 5px 15px rgba(14, 165, 233, 0.15)",
+      cardShadow: "10px 10px 0px 0px #0ea5e9",
       badgeBg: "#0ea5e9",
       badgeText: "#ffffff",
       numberBg: "#38bdf8",
@@ -201,7 +207,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(posterRef.current, {
         useCORS: true,
-        scale: 2, // 2x resolution
+        scale: 4, // 4x resolution (Ultra HD Sharpness)
         backgroundColor: theme === "midnight" ? "#0b0f19" : "#ffffff",
         logging: false
       });
@@ -236,8 +242,8 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
   const steps = [
     {
       num: "1",
-      title: "LOGIN & DAFTAR",
-      desc: "Pindai QR masuk di pintu masuk pameran, login dengan akun Google, dan isi nama & kategori Anda.",
+      title: "SCAN WEBSITE UTAMA",
+      desc: "Pindai QR Code di area masuk pameran untuk mengakses website utama CODEX Voter.",
       mascot: `${origin}/sticker7.webp`,
       rotation: "-2.5deg"
     },
@@ -250,15 +256,15 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
     },
     {
       num: "3",
-      title: "SCAN PINTU KELUAR",
-      desc: "Jika Anda telah selesai menjelajah, berjalanlah ke pintu keluar dan pindai QR Exit untuk membuka kunci voting.",
+      title: "SCAN KELUAR & LOGIN",
+      desc: "Berjalanlah ke pintu keluar, pindai QR Exit, lalu login dengan akun Google & isi nama Anda untuk membuka kunci voting.",
       mascot: `${origin}/exit.webp`,
       rotation: "-2deg"
     },
     {
       num: "4",
-      title: "VOTE & BUKTI SAH",
-      desc: "Gunakan kuota 3 suara Anda untuk proyek favorit, tekan kirim, lalu screenshot bukti kode unik vote Anda.",
+      title: "VOTE & SELESAI",
+      desc: "Gunakan hak suara Anda untuk memilih kelompok terbaik, kirim suara Anda, dan simpan bukti voting sebelum keluar.",
       mascot: `${origin}/okay.webp`,
       rotation: "2.5deg"
     }
@@ -472,6 +478,51 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                 VOTE
               </div>
 
+              {/* SVG Connecting String (Covering the entire canvas to prevent clipping) */}
+              <svg 
+                style={{ 
+                  position: "absolute", 
+                  top: 0, 
+                  left: 0, 
+                  width: "100%", 
+                  height: "100%", 
+                  pointerEvents: "none", 
+                  zIndex: 2 
+                }}
+              >
+                {aspectRatio === "6:16" ? (
+                  // Winding path for vertical layout (720x1920) connecting cards stagger-aligned
+                  <path 
+                    d="M 260 480 C 380 560, 390 750, 460 850 C 330 950, 230 1120, 260 1220 C 390 1310, 390 1490, 460 1590" 
+                    fill="none" 
+                    stroke={currentTheme.lineColor} 
+                    strokeWidth="5" 
+                    strokeLinecap="round"
+                    style={{ filter: currentTheme.lineShadow }}
+                  />
+                ) : aspectRatio === "1:1" ? (
+                  // Connection path for 2x2 grid (1000x1000) linking Pins: 1 -> 2 -> 3 -> 4
+                  <path 
+                    d="M 270 310 C 450 200, 550 200, 730 310 C 810 460, 190 490, 270 640 C 450 750, 550 750, 730 640" 
+                    fill="none" 
+                    stroke={currentTheme.lineColor} 
+                    strokeWidth="5" 
+                    strokeLinecap="round"
+                    style={{ filter: currentTheme.lineShadow }}
+                  />
+                ) : (
+                  // Connection path for 4:5 grid (800x1000)
+                  <path 
+                    d="M 220 310 C 350 200, 450 200, 580 310 C 650 460, 150 490, 220 640 C 350 750, 450 750, 580 640" 
+                    fill="none" 
+                    stroke={currentTheme.lineColor} 
+                    strokeWidth="5" 
+                    strokeLinecap="round"
+                    style={{ filter: currentTheme.lineShadow }}
+                  />
+                )}
+              </svg>
+
               {/* 1. HEADER SECTION */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%", zIndex: 5 }}>
                 <div style={{ 
@@ -515,7 +566,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                 }} />
               </div>
 
-              {/* 2. MIDDLE FLOW SECTION: Tilted Polaroid Cards & SVG Connection Strings */}
+              {/* 2. MIDDLE FLOW SECTION: Tilted Polaroid Cards */}
               <div style={{ 
                 position: "relative",
                 display: aspectRatio === "6:16" ? "flex" : "grid",
@@ -532,51 +583,6 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                 zIndex: 4
               }}>
                 
-                {/* SVG Connecting String (Snaking perfectly through pushpin centers) */}
-                <svg 
-                  style={{ 
-                    position: "absolute", 
-                    top: 0, 
-                    left: 0, 
-                    width: "100%", 
-                    height: "100%", 
-                    pointerEvents: "none", 
-                    zIndex: 2 
-                  }}
-                >
-                  {aspectRatio === "6:16" ? (
-                    // Winding path for vertical layout (720x1920) connecting cards stagger-aligned
-                    <path 
-                      d="M 260 145 C 380 230, 390 380, 460 470 C 330 550, 230 730, 260 825 C 390 910, 390 1060, 460 1150" 
-                      fill="none" 
-                      stroke={currentTheme.lineColor} 
-                      strokeWidth="5" 
-                      strokeLinecap="round"
-                      style={{ filter: currentTheme.lineShadow }}
-                    />
-                  ) : aspectRatio === "1:1" ? (
-                    // Connection path for 2x2 grid (1000x1000) linking Pins: 1 -> 2 -> 3 -> 4
-                    // Pin 1 (270, 160) -> Pin 2 (730, 160) -> Pin 3 (270, 520) -> Pin 4 (730, 520)
-                    <path 
-                      d="M 270 160 C 450 60, 550 60, 730 160 C 810 320, 190 360, 270 520 C 450 620, 550 620, 730 520" 
-                      fill="none" 
-                      stroke={currentTheme.lineColor} 
-                      strokeWidth="5" 
-                      strokeLinecap="round"
-                      style={{ filter: currentTheme.lineShadow }}
-                    />
-                  ) : (
-                    <path 
-                      d="M 220 160 C 350 60, 450 60, 580 160 C 650 320, 150 360, 220 520 C 350 620, 450 620, 580 520" 
-                      fill="none" 
-                      stroke={currentTheme.lineColor} 
-                      strokeWidth="5" 
-                      strokeLinecap="round"
-                      style={{ filter: currentTheme.lineShadow }}
-                    />
-                  )}
-                </svg>
-
                 {/* Polaroid Cards rendering */}
                 {steps.map((item, idx) => {
                   let alignmentStyle: React.CSSProperties = {};
@@ -595,133 +601,170 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                   const bodyPadding = isTall ? "14px 16px" : "8px 12px";
                   const descFontSize = isTall ? "11px" : "9.5px";
 
+                  const shadowOffset = theme === "brutalist" ? 14 : theme === "brand" ? 10 : 8;
+
                   return (
                     <div
                       key={item.num}
-                      className="brutalist-card"
                       style={{
+                        position: "relative",
                         width: cardWidth,
                         height: cardHeight,
-                        backgroundColor: currentTheme.cardBg,
-                        border: theme === "brutalist" ? "5px solid #000" : currentTheme.cardBorder,
-                        boxShadow: theme === "brutalist" ? "8px 8px 0px 0px #000" : currentTheme.cardShadow,
-                        borderRadius: "12px",
-                        display: "flex",
-                        flexDirection: "column",
-                        position: "relative",
-                        transform: `rotate(${item.rotation})`,
-                        zIndex: 3,
+                        transform: `rotate(${item.rotation})`, // Rotate wrapper to tilt shadow, card, and pin as a single unit
+                        transformOrigin: "center center",
                         flexShrink: 0,
-                        overflow: "visible",
+                        overflow: "visible", // Allow PushPin to exceed wrapper boundaries
                         ...alignmentStyle
                       }}
                     >
-                      {/* Sub-patterns inside the card to replicate the BrutalistCard reference */}
-                      <div className="brutalist-card-pattern-grid" style={{ zIndex: 1, opacity: 0.4 }} />
-                      <div className="brutalist-card-overlay-dots" style={{ zIndex: 1, opacity: 0.2 }} />
-
-                      {/* Pushpin at the top center of card */}
-                      <PushPin color={currentTheme.pinColor} />
-
-                      {/* Header Title Area (replicates brutalist-card-title-area) */}
+                      {/* Physical Shadow Div behind the card */}
                       <div 
-                        className="brutalist-card-title-area"
-                        style={{ 
-                          backgroundColor: currentTheme.badgeBg, 
-                          color: currentTheme.badgeText,
-                          borderBottom: theme === "brutalist" ? "4px solid #000" : `3px solid ${currentTheme.textColor}`,
-                          padding: isTall ? "10px 16px" : "6px 12px",
-                          fontSize: isTall ? "13px" : "11px",
-                          fontWeight: "900",
-                          letterSpacing: "0.05em",
+                        style={{
+                          position: "absolute",
+                          top: `${shadowOffset}px`,
+                          left: `${shadowOffset}px`,
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: theme === "brutalist" ? "#000000" : theme === "midnight" ? "#1d2a62" : currentTheme.textColor,
+                          borderRadius: "12px",
+                          zIndex: 1,
+                          opacity: theme === "midnight" ? 0.4 : 1,
+                          boxShadow: theme === "midnight" ? "0 0 25px rgba(59, 130, 246, 0.3)" : "none"
+                        }}
+                      />
+
+                      {/* Card Body (with overflow: visible to allow mascot pop-out effect) */}
+                      <div
+                        className="brutalist-poster-card"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: currentTheme.cardBg,
+                          border: theme === "brutalist" ? "5px solid #000" : currentTheme.cardBorder,
+                          borderRadius: "12px",
                           display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          zIndex: 2,
-                          fontFamily: "var(--font-heading)",
-                          borderRadius: "8px 8px 0 0",
-                          textTransform: "uppercase"
+                          flexDirection: "column",
+                          position: "relative",
+                          zIndex: 3,
+                          overflow: "visible"
                         }}
                       >
-                        <span>LANGKAH {item.num}</span>
-                        <span 
-                          className="brutalist-card-tag"
-                          style={{
-                            backgroundColor: currentTheme.numberBg,
-                            color: currentTheme.numberText,
-                            fontSize: isTall ? "10px" : "8.5px",
-                            padding: "2px 8px",
-                            borderRadius: "4px",
-                            border: `2px solid ${currentTheme.textColor}`,
-                            fontWeight: "bold"
+                        {/* Sub-patterns inside the card to replicate the BrutalistCard reference */}
+                        <div className="brutalist-card-pattern-grid" style={{ zIndex: 1, opacity: 0.4 }} />
+                        <div className="brutalist-card-overlay-dots" style={{ zIndex: 1, opacity: 0.2 }} />
+
+                        {/* Header Title Area (replicates brutalist-card-title-area) */}
+                        <div 
+                          className="brutalist-card-title-area"
+                          style={{ 
+                            backgroundColor: currentTheme.badgeBg, 
+                            color: currentTheme.badgeText,
+                            borderBottom: theme === "brutalist" ? "4px solid #000" : `3px solid ${currentTheme.textColor}`,
+                            padding: isTall ? "10px 16px" : "6px 12px",
+                            fontSize: isTall ? "13px" : "11px",
+                            fontWeight: "900",
+                            letterSpacing: "0.05em",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            zIndex: 2,
+                            fontFamily: "var(--font-heading)",
+                            borderRadius: "8px 8px 0 0",
+                            textTransform: "uppercase"
                           }}
                         >
-                          CODEX
-                        </span>
-                      </div>
+                          <span>LANGKAH {item.num}</span>
+                          <span 
+                            className="brutalist-card-tag"
+                            style={{
+                              backgroundColor: currentTheme.numberBg,
+                              color: currentTheme.numberText,
+                              fontSize: isTall ? "10px" : "8.5px",
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              border: `2px solid ${currentTheme.textColor}`,
+                              fontWeight: "bold"
+                            }}
+                          >
+                            CODEX
+                          </span>
+                        </div>
 
-                      {/* Mascot/Photo Container (replicates brutalist card photo area) */}
-                      <div style={{
-                        width: "100%",
-                        height: mascotHeight,
-                        backgroundColor: theme === "midnight" ? "#0f172a" : "var(--color-beige)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderBottom: theme === "brutalist" ? "4px solid #000" : `3.5px solid ${currentTheme.textColor}`,
-                        position: "relative",
-                        overflow: "hidden",
-                        zIndex: 2
-                      }}>
-                        <img
-                          src={item.mascot}
-                          alt={item.title}
-                          style={{
-                            height: "90%",
-                            width: "auto",
-                            objectFit: "contain",
-                            filter: `drop-shadow(4px 4px 0px ${currentTheme.textColor})`,
-                            pointerEvents: "none",
-                            zIndex: 5
-                          }}
-                        />
-                      </div>
-
-                      {/* Action/Description Row (replicates brutalist card action section) */}
-                      <div style={{
-                        padding: bodyPadding,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                        position: "relative",
-                        zIndex: 2,
-                        backgroundColor: currentTheme.cardBg,
-                        flex: 1,
-                        justifyContent: "center",
-                        borderRadius: "0 0 8px 8px"
-                      }}>
-                        <h4 style={{
-                          fontSize: isTall ? "14px" : "12px",
-                          fontWeight: "900",
-                          fontFamily: "var(--font-heading)",
-                          color: currentTheme.textColor,
-                          margin: 0,
-                          letterSpacing: "0.03em"
+                        {/* Mascot/Photo Container (replicates brutalist card photo area) */}
+                        <div style={{
+                          width: "100%",
+                          height: mascotHeight,
+                          backgroundColor: theme === "midnight" ? "#0f172a" : "var(--color-beige)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderBottom: theme === "brutalist" ? "4px solid #000" : `3.5px solid ${currentTheme.textColor}`,
+                          position: "relative",
+                          overflow: "visible", // Set overflow to visible for pop-out effect
+                          zIndex: 2
                         }}>
-                          {item.title}
-                        </h4>
-                        <p style={{
-                          fontSize: descFontSize,
-                          lineHeight: "1.35",
-                          fontWeight: "600",
-                          color: currentTheme.textColor,
-                          margin: 0,
-                          opacity: 0.95
+                          <img
+                            src={item.mascot}
+                            alt={item.title}
+                            style={{
+                              // ==========================================
+                              // EDIT UKURAN MASKOT DI SINI:
+                              // - "height" menentukan tinggi maskot (rasio tall 6:16 vs persegi 1:1/4:5)
+                              // - "bottom" menentukan seberapa jauh maskot menjorok ke bawah keluar bingkai
+                              // ==========================================
+                              height: isTall ? "240px" : "150px",
+                              width: "auto",
+                              objectFit: "contain",
+                              position: "absolute",
+                              bottom: isTall ? "-55px" : "-30px",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              filter: "none",
+                              pointerEvents: "none",
+                              zIndex: 5
+                            }}
+                          />
+                        </div>
+
+                        {/* Action/Description Row (replicates brutalist card action section) */}
+                        <div style={{
+                          padding: bodyPadding,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          position: "relative",
+                          zIndex: 2,
+                          backgroundColor: currentTheme.cardBg,
+                          flex: 1,
+                          justifyContent: "center",
+                          borderRadius: "0 0 8px 8px"
                         }}>
-                          {item.desc}
-                        </p>
+                          <h4 style={{
+                            fontSize: isTall ? "14px" : "12px",
+                            fontWeight: "900",
+                            fontFamily: "var(--font-heading)",
+                            color: currentTheme.textColor,
+                            margin: 0,
+                            letterSpacing: "0.03em"
+                          }}>
+                            {item.title}
+                          </h4>
+                          <p style={{
+                            fontSize: descFontSize,
+                            lineHeight: "1.35",
+                            fontWeight: "600",
+                            color: currentTheme.textColor,
+                            margin: 0,
+                            opacity: 0.95
+                          }}>
+                            {item.desc}
+                          </p>
+                        </div>
+
                       </div>
 
+                      {/* Pushpin (rendered outside card body to avoid overflow clipping) */}
+                      <PushPin color={currentTheme.pinColor} />
                     </div>
                   );
                 })}
@@ -740,40 +783,62 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                   const warningGap = isTall ? "24px" : "14px";
                   const warningIconSize = isTall ? 26 : 20;
                   const warningIconBoxSize = isTall ? "48px" : "36px";
+                  const shadowOffset = theme === "brutalist" ? 10 : 6;
 
                   return (
-                    <div style={{ 
-                      backgroundColor: currentTheme.rulesBg,
-                      border: theme === "brutalist" ? "4px solid #000" : currentTheme.rulesBorder,
-                      boxShadow: theme === "brutalist" ? "6px 6px 0px 0px #000" : currentTheme.cardShadow,
-                      borderRadius: "8px",
-                      padding: warningPadding,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: warningGap
-                    }}>
-                      <div style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        borderRadius: "50%",
-                        width: warningIconBoxSize,
-                        height: warningIconBoxSize,
+                    <div style={{ position: "relative", width: "100%" }}>
+                      {/* Physical Shadow Div for Warning Banner */}
+                      <div 
+                        style={{
+                          position: "absolute",
+                          top: `${shadowOffset}px`,
+                          left: `${shadowOffset}px`,
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: theme === "brutalist" ? "#000000" : theme === "midnight" ? "#1e293b" : currentTheme.textColor,
+                          borderRadius: "8px",
+                          zIndex: 1,
+                          opacity: theme === "midnight" ? 0.4 : 1,
+                          boxShadow: theme === "midnight" ? "0 0 20px rgba(59, 130, 246, 0.25)" : "none"
+                        }}
+                      />
+
+                      {/* Warning Body */}
+                      <div style={{ 
+                        position: "relative",
+                        zIndex: 3,
+                        backgroundColor: currentTheme.rulesBg,
+                        border: theme === "brutalist" ? "4px solid #000" : currentTheme.rulesBorder,
+                        borderRadius: "8px",
+                        padding: warningPadding,
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        border: theme === "brutalist" ? "3px solid #000" : "none"
+                        gap: warningGap,
+                        width: "100%"
                       }}>
-                        <ShieldAlert size={warningIconSize} />
-                      </div>
-                      
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "left" }}>
-                        <span style={{ fontSize: warningTitleSize, fontWeight: "900", color: "#ef4444", textTransform: "uppercase", fontFamily: "var(--font-heading)", letterSpacing: "0.05em" }}>
-                          🚨 SISTEM KEAMANAN & VERIFIKASI VOTE AKTIF
-                        </span>
-                        <p style={{ fontSize: warningFontSize, margin: 0, opacity: 0.9, lineHeight: "1.4", color: currentTheme.textColor, fontWeight: "500" }}>
-                          Setiap perangkat fisik dikunci hanya untuk **1 Akun Google** saja. Tindakan mencurigakan seperti berganti-ganti akun Google di perangkat yang sama akan secara otomatis diblokir oleh sistem *fingerprinting* perangkat keras. **Proses audit manual suara** oleh panitia akan dilakukan sebelum rilis final untuk mencoret suara tidak sah.
-                        </p>
+                        <div style={{
+                          backgroundColor: "#ef4444",
+                          color: "white",
+                          borderRadius: "50%",
+                          width: warningIconBoxSize,
+                          height: warningIconBoxSize,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          border: theme === "brutalist" ? "3px solid #000" : "none"
+                         }}>
+                          <ShieldAlert size={warningIconSize} />
+                        </div>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "left" }}>
+                          <span style={{ fontSize: warningTitleSize, fontWeight: "900", color: "#ef4444", textTransform: "uppercase", fontFamily: "var(--font-heading)", letterSpacing: "0.05em" }}>
+                            🚨 SISTEM KEAMANAN & VERIFIKASI VOTE AKTIF
+                          </span>
+                          <p style={{ fontSize: warningFontSize, margin: 0, opacity: 0.9, lineHeight: "1.4", color: currentTheme.textColor, fontWeight: "500" }}>
+                            Setiap perangkat fisik dikunci hanya untuk <strong>1 Akun Google</strong> saja. Tindakan mencurigakan seperti berganti-ganti akun Google di perangkat yang sama akan secara otomatis diblokir oleh sistem <em>fingerprinting</em> perangkat keras. <strong>Proses audit manual suara</strong> oleh panitia akan dilakukan sebelum rilis final untuk mencoret suara tidak sah.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   );
