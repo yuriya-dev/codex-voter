@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import AdminLayout from "@/components/AdminLayout";
 import AdminLoginForm from "@/components/AdminLoginForm";
+import PosterGenerator from "@/components/PosterGenerator";
 import { Upload, Plus, Trash2, Edit, CheckCircle2, FileText, AlertCircle, Users, LayoutDashboard, QrCode, Printer, Download, Play, Square, RotateCcw, Eye, EyeOff, AlertTriangle, Archive, History, Clock, Award } from "lucide-react";
 import { getBackendUrl, getGroupImageUrl, EXIT_UNLOCK_TOKEN } from "@/lib/config";
 import { compressImageClient } from "@/lib/imageCompressor";
@@ -16,7 +17,7 @@ const BACKEND_URL = getBackendUrl();
 function AdminManagementContent() {
   const { groupsList, refreshGroupsList } = useVoter();
   const [adminToken, setAdminToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"groups" | "qr" | "voting">("groups");
+  const [activeTab, setActiveTab] = useState<"groups" | "qr" | "voting" | "poster">("groups");
   const [origin, setOrigin] = useState("http://localhost:3030");
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -28,8 +29,8 @@ function AdminManagementContent() {
   }, []);
 
   useEffect(() => {
-    if (tabParam === "groups" || tabParam === "qr" || tabParam === "voting") {
-      setActiveTab(tabParam as "groups" | "qr" | "voting");
+    if (tabParam === "groups" || tabParam === "qr" || tabParam === "voting" || tabParam === "poster") {
+      setActiveTab(tabParam as "groups" | "qr" | "voting" | "poster");
     }
   }, [tabParam]);
 
@@ -1285,7 +1286,7 @@ function AdminManagementContent() {
           >
             📷 Manajemen QR Code
           </button>
-          <button
+           <button
             onClick={() => setActiveTab("voting")}
             style={{
               padding: "12px 20px",
@@ -1306,6 +1307,28 @@ function AdminManagementContent() {
             }}
           >
             🗳️ Manajemen Voting
+          </button>
+          <button
+            onClick={() => setActiveTab("poster")}
+            style={{
+              padding: "12px 20px",
+              fontSize: "0.9rem",
+              fontWeight: "700",
+              fontFamily: "var(--font-heading)",
+              textTransform: "uppercase",
+              border: "2px solid var(--color-delft-blue)",
+              borderBottom: activeTab === "poster" ? "2px solid white" : "2px solid var(--color-delft-blue)",
+              backgroundColor: activeTab === "poster" ? "white" : "var(--color-beige)",
+              color: "var(--color-delft-blue)",
+              cursor: "pointer",
+              borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
+              marginBottom: "-2px",
+              zIndex: activeTab === "poster" ? 2 : 1,
+              boxShadow: activeTab === "poster" ? "none" : "3px 3px 0 0 var(--color-delft-blue)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            🎨 Generator Poster
           </button>
         </div>
 
@@ -2328,6 +2351,10 @@ function AdminManagementContent() {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === "poster" && (
+          <PosterGenerator origin={origin} />
         )}
       </>
     )}
