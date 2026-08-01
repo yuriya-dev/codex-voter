@@ -566,8 +566,6 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                       style={{ filter: currentTheme.lineShadow }}
                     />
                   ) : (
-                    // Connection path for 4:5 grid (800x1000)
-                    // Pin 1 (220, 160) -> Pin 2 (580, 160) -> Pin 3 (220, 520) -> Pin 4 (580, 520)
                     <path 
                       d="M 220 160 C 350 60, 450 60, 580 160 C 650 320, 150 360, 220 520 C 350 620, 450 620, 580 520" 
                       fill="none" 
@@ -590,13 +588,20 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                     };
                   }
 
+                  const isTall = aspectRatio === "6:16";
+                  const cardWidth = isTall ? "420px" : aspectRatio === "1:1" ? "350px" : "315px";
+                  const cardHeight = isTall ? "330px" : "240px";
+                  const mascotHeight = isTall ? "150px" : "90px";
+                  const bodyPadding = isTall ? "14px 16px" : "8px 12px";
+                  const descFontSize = isTall ? "11px" : "9.5px";
+
                   return (
                     <div
                       key={item.num}
                       className="brutalist-card"
                       style={{
-                        width: aspectRatio === "6:16" ? "420px" : "330px",
-                        height: aspectRatio === "6:16" ? "330px" : "340px",
+                        width: cardWidth,
+                        height: cardHeight,
                         backgroundColor: currentTheme.cardBg,
                         border: theme === "brutalist" ? "5px solid #000" : currentTheme.cardBorder,
                         boxShadow: theme === "brutalist" ? "8px 8px 0px 0px #000" : currentTheme.cardShadow,
@@ -625,8 +630,8 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                           backgroundColor: currentTheme.badgeBg, 
                           color: currentTheme.badgeText,
                           borderBottom: theme === "brutalist" ? "4px solid #000" : `3px solid ${currentTheme.textColor}`,
-                          padding: "10px 16px",
-                          fontSize: "13px",
+                          padding: isTall ? "10px 16px" : "6px 12px",
+                          fontSize: isTall ? "13px" : "11px",
                           fontWeight: "900",
                           letterSpacing: "0.05em",
                           display: "flex",
@@ -644,7 +649,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                           style={{
                             backgroundColor: currentTheme.numberBg,
                             color: currentTheme.numberText,
-                            fontSize: "10px",
+                            fontSize: isTall ? "10px" : "8.5px",
                             padding: "2px 8px",
                             borderRadius: "4px",
                             border: `2px solid ${currentTheme.textColor}`,
@@ -658,7 +663,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                       {/* Mascot/Photo Container (replicates brutalist card photo area) */}
                       <div style={{
                         width: "100%",
-                        height: "150px",
+                        height: mascotHeight,
                         backgroundColor: theme === "midnight" ? "#0f172a" : "var(--color-beige)",
                         display: "flex",
                         alignItems: "center",
@@ -684,10 +689,10 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
 
                       {/* Action/Description Row (replicates brutalist card action section) */}
                       <div style={{
-                        padding: "14px 16px",
+                        padding: bodyPadding,
                         display: "flex",
                         flexDirection: "column",
-                        gap: "6px",
+                        gap: "4px",
                         position: "relative",
                         zIndex: 2,
                         backgroundColor: currentTheme.cardBg,
@@ -696,7 +701,7 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                         borderRadius: "0 0 8px 8px"
                       }}>
                         <h4 style={{
-                          fontSize: "14px",
+                          fontSize: isTall ? "14px" : "12px",
                           fontWeight: "900",
                           fontFamily: "var(--font-heading)",
                           color: currentTheme.textColor,
@@ -706,8 +711,8 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                           {item.title}
                         </h4>
                         <p style={{
-                          fontSize: "11px",
-                          lineHeight: "1.4",
+                          fontSize: descFontSize,
+                          lineHeight: "1.35",
                           fontWeight: "600",
                           color: currentTheme.textColor,
                           margin: 0,
@@ -724,43 +729,55 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
               </div>
 
               {/* 3. RULES & AUDIT WARNING SECTION (No QRs) */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", zIndex: 5 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%", zIndex: 5 }}>
                 
                 {/* Warning Polaroid Container */}
-                <div style={{ 
-                  backgroundColor: currentTheme.rulesBg,
-                  border: theme === "brutalist" ? "4px solid #000" : currentTheme.rulesBorder,
-                  boxShadow: theme === "brutalist" ? "6px 6px 0px 0px #000" : currentTheme.cardShadow,
-                  borderRadius: "8px",
-                  padding: "24px 32px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "24px"
-                }}>
-                  <div style={{
-                    backgroundColor: "#ef4444",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "48px",
-                    height: "48px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    border: theme === "brutalist" ? "3px solid #000" : "none"
-                  }}>
-                    <ShieldAlert size={26} />
-                  </div>
-                  
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
-                    <span style={{ fontSize: "15px", fontWeight: "900", color: "#ef4444", textTransform: "uppercase", fontFamily: "var(--font-heading)", letterSpacing: "0.05em" }}>
-                      🚨 SISTEM KEAMANAN & VERIFIKASI VOTE AKTIF
-                    </span>
-                    <p style={{ fontSize: "13px", margin: 0, opacity: 0.9, lineHeight: "1.45", color: currentTheme.textColor, fontWeight: "500" }}>
-                      Setiap perangkat fisik dikunci hanya untuk **1 Akun Google** saja. Tindakan mencurigakan seperti berganti-ganti akun Google di perangkat yang sama akan secara otomatis diblokir oleh sistem *fingerprinting* perangkat keras. **Proses audit manual suara** oleh panitia akan dilakukan sebelum rilis final untuk mencoret suara tidak sah.
-                    </p>
-                  </div>
-                </div>
+                {(() => {
+                  const isTall = aspectRatio === "6:16";
+                  const warningPadding = isTall ? "24px 32px" : "12px 20px";
+                  const warningFontSize = isTall ? "13px" : "10px";
+                  const warningTitleSize = isTall ? "15px" : "12px";
+                  const warningGap = isTall ? "24px" : "14px";
+                  const warningIconSize = isTall ? 26 : 20;
+                  const warningIconBoxSize = isTall ? "48px" : "36px";
+
+                  return (
+                    <div style={{ 
+                      backgroundColor: currentTheme.rulesBg,
+                      border: theme === "brutalist" ? "4px solid #000" : currentTheme.rulesBorder,
+                      boxShadow: theme === "brutalist" ? "6px 6px 0px 0px #000" : currentTheme.cardShadow,
+                      borderRadius: "8px",
+                      padding: warningPadding,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: warningGap
+                    }}>
+                      <div style={{
+                        backgroundColor: "#ef4444",
+                        color: "white",
+                        borderRadius: "50%",
+                        width: warningIconBoxSize,
+                        height: warningIconBoxSize,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        border: theme === "brutalist" ? "3px solid #000" : "none"
+                      }}>
+                        <ShieldAlert size={warningIconSize} />
+                      </div>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "left" }}>
+                        <span style={{ fontSize: warningTitleSize, fontWeight: "900", color: "#ef4444", textTransform: "uppercase", fontFamily: "var(--font-heading)", letterSpacing: "0.05em" }}>
+                          🚨 SISTEM KEAMANAN & VERIFIKASI VOTE AKTIF
+                        </span>
+                        <p style={{ fontSize: warningFontSize, margin: 0, opacity: 0.9, lineHeight: "1.4", color: currentTheme.textColor, fontWeight: "500" }}>
+                          Setiap perangkat fisik dikunci hanya untuk **1 Akun Google** saja. Tindakan mencurigakan seperti berganti-ganti akun Google di perangkat yang sama akan secara otomatis diblokir oleh sistem *fingerprinting* perangkat keras. **Proses audit manual suara** oleh panitia akan dilakukan sebelum rilis final untuk mencoret suara tidak sah.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Footer Brand info */}
                 <div style={{ 
@@ -768,9 +785,9 @@ export default function PosterGenerator({ origin }: PosterGeneratorProps) {
                   justifyContent: "space-between", 
                   alignItems: "center", 
                   borderTop: `2.5px dashed ${currentTheme.textColor}`, 
-                  paddingTop: "16px", 
+                  paddingTop: "12px", 
                   opacity: 0.7, 
-                  fontSize: "13px",
+                  fontSize: aspectRatio === "6:16" ? "13px" : "11px",
                   fontWeight: "bold" 
                 }}>
                   <span>© 2026 CODEX VOTER</span>
