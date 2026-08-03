@@ -329,11 +329,11 @@ function AdminManagementContent() {
             }
             .card.large-card {
               width: 500px;
-              padding: 40px 45px;
+              padding: 24px 28px;
             }
             .qr-container.large-qr {
-              width: 360px;
-              height: 360px;
+              width: 440px;
+              height: 440px;
               padding: 16px;
             }
             .large-card h1 {
