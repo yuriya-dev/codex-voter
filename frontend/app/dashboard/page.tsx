@@ -62,6 +62,7 @@ function DashboardPageContent() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [detailedVotes, setDetailedVotes] = useState<any[]>([]);
   const [isExportingDetail, setIsExportingDetail] = useState(false);
+  const [isExportingVisitors, setIsExportingVisitors] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [adminToken, setAdminToken] = useState<string | null>(null);
 
@@ -256,6 +257,74 @@ function DashboardPageContent() {
     }
   };
 
+  const handleExportVisitorsCSV = async () => {
+    if (!adminToken) return;
+    try {
+      setIsExportingVisitors(true);
+      const res = await fetch(`${BACKEND_URL}/api/dashboard/visitors-detail`, {
+        headers: {
+          "Authorization": `Bearer ${adminToken}`
+        }
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          handleLogout();
+          alert("Sesi admin berakhir. Silakan login kembali.");
+          return;
+        }
+        throw new Error("Gagal mengambil data presensi pengunjung");
+      }
+      const data = await res.json();
+      
+      const headers = [
+        "Waktu Registrasi",
+        "ID Pengunjung",
+        "Nama Lengkap",
+        "Email",
+        "Kategori",
+        "Universitas",
+        "Sekolah",
+        "Instansi",
+        "Device Fingerprint",
+        "IP Address",
+        "Status Flagged",
+        "Alasan Flagged"
+      ];
+      
+      const rows = data.map((v: any) => [
+        v.verified_at || v.created_at ? new Date(v.verified_at || v.created_at).toLocaleString("id-ID") : "N/A",
+        v.identifier || "N/A",
+        v.name || "N/A",
+        v.email || "N/A",
+        v.category || "N/A",
+        v.universitas || "",
+        v.sekolah || "",
+        v.instansi || "",
+        v.device_fingerprint || "N/A",
+        v.ip || "N/A",
+        v.is_flagged ? "Flagged" : "Normal",
+        v.flag_reason || ""
+      ]);
+      
+      const csvString = [headers.join(","), ...rows.map((e: any) => e.map((val: any) => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+      const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `laporan_presensi_pengunjung_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengunduh laporan presensi pengunjung.");
+    } finally {
+      setIsExportingVisitors(false);
+    }
+  };
+
   // Hitung pemenang per kategori (perolehan terbanyak)
   const categoryWinners: { [key: string]: typeof groupsList[0] } = {};
   groupsList.forEach((group) => {
@@ -317,6 +386,23 @@ function DashboardPageContent() {
               >
                 <Download size={16} />
                 {isExportingDetail ? "Mengunduh..." : "Ekspor Detail Vote - Transparan (CSV)"}
+              </button>
+
+              <button 
+                onClick={handleExportVisitorsCSV} 
+                disabled={isExportingVisitors}
+                className="btn btn-primary" 
+                style={{ 
+                  gap: "8px", 
+                  fontSize: "0.85rem",
+                  borderWidth: "2px",
+                  boxShadow: "3px 3px 0px var(--color-delft-blue)",
+                  backgroundColor: "var(--color-carolina-blue)",
+                  color: "white"
+                }}
+              >
+                <Download size={16} />
+                {isExportingVisitors ? "Mengunduh..." : "Ekspor Presensi Pengunjung (CSV)"}
               </button>
             </div>
 

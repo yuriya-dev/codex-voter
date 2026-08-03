@@ -160,4 +160,22 @@ router.get("/votes-detail", adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/visitors-detail
+router.get("/visitors-detail", adminAuth, async (req, res) => {
+  try {
+    // Fetch all registered visitors from DB
+    const { data: visitors, error } = await supabase
+      .from('visitors')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(visitors || []);
+  } catch (error) {
+    console.error("GET /api/dashboard/visitors-detail error:", error);
+    res.status(500).json({ error: "Failed to fetch detailed visitors list" });
+  }
+});
+
 module.exports = router;
