@@ -328,24 +328,56 @@ function AdminManagementContent() {
               opacity: 0.8;
             }
             .card.large-card {
-              width: 500px;
-              padding: 24px 28px;
+              width: 700px;
+              padding: 30px 40px;
             }
             .qr-container.large-qr {
-              width: 440px;
-              height: 440px;
-              padding: 16px;
+              width: 620px;
+              height: 620px;
+              padding: 24px;
             }
             .large-card h1 {
-              font-size: 28px;
+              font-size: 38px;
             }
             .large-card .desc {
-              font-size: 15px;
+              font-size: 20px;
               line-height: 1.6;
             }
             .large-card .cta-badge {
-              font-size: 16px;
-              padding: 12px 32px;
+              font-size: 22px;
+              padding: 16px 44px;
+              margin-top: 10px;
+            }
+            .large-card .logo-container img {
+              height: 48px;
+            }
+            .large-card .mascot-bottom-right {
+              height: 320px;
+              bottom: -80px;
+              right: -80px;
+            }
+            .large-card .mascot-top-left {
+              height: 220px;
+              top: -80px;
+              left: -80px;
+            }
+            @media print {
+              @page {
+                size: portrait;
+                margin: 0;
+              }
+              body {
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                background-color: #ffffff;
+              }
+              .card {
+                box-shadow: none !important;
+                margin: 0 !important;
+              }
             }
           </style>
         </head>
