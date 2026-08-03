@@ -327,10 +327,30 @@ function AdminManagementContent() {
               gap: 8px;
               opacity: 0.8;
             }
+            .card.large-card {
+              width: 500px;
+              padding: 40px 45px;
+            }
+            .qr-container.large-qr {
+              width: 360px;
+              height: 360px;
+              padding: 16px;
+            }
+            .large-card h1 {
+              font-size: 28px;
+            }
+            .large-card .desc {
+              font-size: 15px;
+              line-height: 1.6;
+            }
+            .large-card .cta-badge {
+              font-size: 16px;
+              padding: 12px 32px;
+            }
           </style>
         </head>
         <body>
-          <div class="card">
+          <div class="card ${isWebsite || isExitGate ? 'large-card' : ''}">
             <!-- Tech corners -->
             <div class="tech-corner tl"></div>
             <div class="tech-corner tr"></div>
@@ -348,7 +368,7 @@ function AdminManagementContent() {
             
             <p class="desc">${cardSubtitle}</p>
             
-            <div class="qr-container">
+            <div class="qr-container ${isWebsite || isExitGate ? 'large-qr' : ''}">
               <div class="scanner-bracket tl"></div>
               <div class="scanner-bracket tr"></div>
               <div class="scanner-bracket bl"></div>
