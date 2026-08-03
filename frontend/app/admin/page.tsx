@@ -76,7 +76,7 @@ function AdminManagementContent() {
       // It's a group
       cardTitle = subtitle; // Group Name
       cardSubtitle = "Project Showcase";
-      badgeText = `BOOTH ${title}`;
+      badgeText = "KARYA MAHASISWA";
       badgeClass = "group-badge";
       
       const groupItem = groupsList.find(g => g.booth_number === title || g.name === subtitle);
@@ -85,6 +85,7 @@ function AdminManagementContent() {
       }
     }
 
+    const cleanedBooth = title.replace(/booth\s*/gi, "");
     const mascotUrl = `${origin}/${mascotFile}`;
     
     printWindow.document.write(`
@@ -219,6 +220,25 @@ function AdminManagementContent() {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
+            .corner-booth {
+              position: absolute;
+              top: 24px;
+              right: 24px;
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 32px;
+              font-weight: 700;
+              color: #1d2a62;
+              background-color: #afd06e;
+              border: 2px solid #1d2a62;
+              border-radius: 6px;
+              padding: 4px 10px;
+              box-shadow: 3px 3px 0px #1d2a62;
+              line-height: 1;
+              z-index: 10;
+              text-transform: uppercase;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
             
             h1 {
               font-family: 'Space Grotesk', sans-serif;
@@ -321,6 +341,7 @@ function AdminManagementContent() {
               <img src="${origin}/logo.svg" alt="CODEX Logo" />
             </div>
             
+            ${!isWebsite && !isExitGate ? `<div class="corner-booth">${cleanedBooth}</div>` : ""}
             <div class="badge ${badgeClass}">${badgeText}</div>
             <h1>${cardTitle}</h1>
             ${categoryHtml}
@@ -375,6 +396,7 @@ function AdminManagementContent() {
     
     let qrPagesHtml = groupsList.map(group => {
       const groupUrl = `${origin}/kelompok/${group.slug}?from=qr`;
+      const cleanedBooth = group.booth_number.replace(/booth\s*/gi, "");
       const cardHtml = `
         <div class="card">
           <!-- Tech corners -->
@@ -383,11 +405,13 @@ function AdminManagementContent() {
           <div class="tech-corner bl"></div>
           <div class="tech-corner br"></div>
           
+          <div class="corner-booth">${cleanedBooth}</div>
+          
           <div class="logo-container">
             <img src="${origin}/logo.svg" alt="CODEX Logo" />
           </div>
           
-          <div class="badge group-badge">BOOTH ${group.booth_number}</div>
+          <div class="badge group-badge">KARYA MAHASISWA</div>
           <h2>${group.name}</h2>
           <div class="category">${group.category}</div>
 
@@ -402,7 +426,7 @@ function AdminManagementContent() {
           <div class="cta-badge">TAMBAHKAN KE FAVORIT</div>
           
           <div class="tech-metadata">
-            <span>BOOTH ${group.booth_number}</span>
+            <span>${cleanedBooth.toUpperCase()}</span>
             <span>•</span>
             <span>SHOWCASE</span>
           </div>
@@ -467,6 +491,25 @@ function AdminManagementContent() {
               justify-content: space-between;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+            }
+            .corner-booth {
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              font-family: 'Space Grotesk', sans-serif;
+              font-size: 30px;
+              font-weight: 700;
+              color: #1d2a62;
+              background-color: #afd06e;
+              border: 2px solid #1d2a62;
+              border-radius: 6px;
+              padding: 4px 10px;
+              box-shadow: 3px 3px 0px #1d2a62;
+              line-height: 1;
+              z-index: 10;
+              text-transform: uppercase;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             
             /* Mascot Bottom Right Illustration */
