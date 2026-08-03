@@ -5,7 +5,7 @@ const { mapVisitor, mapVote, addAuditLog, getClientIp } = require("../utils/help
 
 // 2. Verify & Register Visitor using Name & Category & Google Auth Token
 router.post("/verify", async (req, res) => {
-  const { name, category, deviceFingerprint } = req.body;
+  const { name, category, deviceFingerprint, universitas, sekolah, instansi } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = req.headers["user-agent"] || "Unknown UA";
 
@@ -89,7 +89,10 @@ router.post("/verify", async (req, res) => {
         device_fingerprint: deviceFingerprint || ("fingerprint_" + Math.random().toString(36).substr(2, 9)),
         ip: ipAddress,
         is_flagged: false,
-        flag_reason: ""
+        flag_reason: "",
+        universitas: universitas || null,
+        sekolah: sekolah || null,
+        instansi: instansi || null
       };
       
       const { data: insertedVisitor, error: insertErr } = await supabase
@@ -99,12 +102,24 @@ router.post("/verify", async (req, res) => {
         .single();
         
       if (insertErr) {
-        // Fallback if schema migration has not been run (missing columns is_flagged, flag_reason, or email)
-        if (insertErr.message && (insertErr.message.includes("is_flagged") || insertErr.message.includes("flag_reason") || insertErr.message.includes("email"))) {
+        // Fallback if schema migration has not been run (missing columns is_flagged, flag_reason, email, universitas, sekolah, or instansi)
+        const isColumnError = insertErr.message && (
+          insertErr.message.includes("is_flagged") || 
+          insertErr.message.includes("flag_reason") || 
+          insertErr.message.includes("email") ||
+          insertErr.message.includes("universitas") ||
+          insertErr.message.includes("sekolah") ||
+          insertErr.message.includes("instansi")
+        );
+
+        if (isColumnError) {
           const fallbackVisitor = { ...newVisitor };
-          delete fallbackVisitor.is_flagged;
-          delete fallbackVisitor.flag_reason;
-          delete fallbackVisitor.email;
+          if (insertErr.message.includes("is_flagged")) delete fallbackVisitor.is_flagged;
+          if (insertErr.message.includes("flag_reason")) delete fallbackVisitor.flag_reason;
+          if (insertErr.message.includes("email")) delete fallbackVisitor.email;
+          if (insertErr.message.includes("universitas")) delete fallbackVisitor.universitas;
+          if (insertErr.message.includes("sekolah")) delete fallbackVisitor.sekolah;
+          if (insertErr.message.includes("instansi")) delete fallbackVisitor.instansi;
           
           const { data: fbVisitor, error: fbErr } = await supabase
             .from('visitors')
@@ -112,8 +127,26 @@ router.post("/verify", async (req, res) => {
             .select()
             .single();
             
-          if (fbErr) throw fbErr;
-          visitor = mapVisitor(fbVisitor);
+          if (fbErr) {
+            // Ultimate fallback (just minimal structure)
+            const ultraFallback = {
+              identifier: identifierHash,
+              name: name.trim(),
+              category,
+              verified_at: new Date().toISOString(),
+              device_fingerprint: deviceFingerprint || ("fingerprint_" + Math.random().toString(36).substr(2, 9)),
+              ip: ipAddress
+            };
+            const { data: ultraVisitor, error: ultraErr } = await supabase
+              .from('visitors')
+              .insert([ultraFallback])
+              .select()
+              .single();
+            if (ultraErr) throw ultraErr;
+            visitor = mapVisitor(ultraVisitor);
+          } else {
+            visitor = mapVisitor(fbVisitor);
+          }
         } else {
           throw insertErr;
         }
@@ -128,6 +161,9 @@ router.post("/verify", async (req, res) => {
         existingVisitors[0].name !== name.trim() || 
         existingVisitors[0].category !== category || 
         existingVisitors[0].email !== user.email ||
+        existingVisitors[0].universitas !== universitas ||
+        existingVisitors[0].sekolah !== sekolah ||
+        existingVisitors[0].instansi !== instansi ||
         (deviceFingerprint && existingVisitors[0].device_fingerprint !== deviceFingerprint)
       ) {
         const updateData = { 
@@ -135,7 +171,10 @@ router.post("/verify", async (req, res) => {
           category,
           email: user.email,
           ip: ipAddress, 
-          device_fingerprint: deviceFingerprint || existingVisitors[0].device_fingerprint 
+          device_fingerprint: deviceFingerprint || existingVisitors[0].device_fingerprint,
+          universitas: universitas || existingVisitors[0].universitas || null,
+          sekolah: sekolah || existingVisitors[0].sekolah || null,
+          instansi: instansi || existingVisitors[0].instansi || null
         };
         
         const { error: updErr } = await supabase
@@ -143,12 +182,17 @@ router.post("/verify", async (req, res) => {
           .update(updateData)
           .eq('identifier', identifierHash);
           
-        if (updErr && updErr.message && updErr.message.includes("email")) {
-          // Fallback if email column not present in visitors
-          delete updateData.email;
+        if (updErr) {
+          // Fallback update if columns do not exist
+          const fallbackUpdate = { ...updateData };
+          if (updErr.message.includes("email")) delete fallbackUpdate.email;
+          if (updErr.message.includes("universitas")) delete fallbackUpdate.universitas;
+          if (updErr.message.includes("sekolah")) delete fallbackUpdate.sekolah;
+          if (updErr.message.includes("instansi")) delete fallbackUpdate.instansi;
+          
           await supabase
             .from('visitors')
-            .update(updateData)
+            .update(fallbackUpdate)
             .eq('identifier', identifierHash);
         }
       }

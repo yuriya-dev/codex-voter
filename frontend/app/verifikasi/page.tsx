@@ -13,6 +13,9 @@ export default function VerifikasiPage() {
   // Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState("mahasiswa");
+  const [universitas, setUniversitas] = useState("");
+  const [sekolah, setSekolah] = useState("");
+  const [instansi, setInstansi] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Redirect if already verified
@@ -33,9 +36,19 @@ export default function VerifikasiPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
+    if (category === "mahasiswa" && !universitas.trim()) return;
+    if (category === "siswa" && !sekolah.trim()) return;
+    if ((category === "dosen_karyawan" || category === "umum") && !instansi.trim()) return;
+
     setLoading(true);
     try {
-      const success = await verifyOTP(name.trim(), category);
+      const extraFields = {
+        universitas: category === "mahasiswa" ? universitas.trim() : "",
+        sekolah: category === "siswa" ? sekolah.trim() : "",
+        instansi: (category === "dosen_karyawan" || category === "umum") ? instansi.trim() : ""
+      };
+
+      const success = await verifyOTP(name.trim(), category, extraFields);
       if (success) {
         router.push("/vote");
       }
@@ -45,6 +58,12 @@ export default function VerifikasiPage() {
       setLoading(false);
     }
   };
+
+  const isFormInvalid = 
+    !name.trim() || 
+    (category === "mahasiswa" && !universitas.trim()) ||
+    (category === "siswa" && !sekolah.trim()) ||
+    ((category === "dosen_karyawan" || category === "umum") && !instansi.trim());
 
   return (
     <>
@@ -221,11 +240,60 @@ export default function VerifikasiPage() {
                   />
                 </div>
 
+                {/* 3. Input Tambahan Berdasarkan Kategori */}
+                {category === "mahasiswa" && (
+                  <div className="form-group" style={{ marginTop: "20px" }}>
+                    <label htmlFor="universitas">Nama Universitas / Kampus</label>
+                    <input
+                      type="text"
+                      id="universitas"
+                      className="form-control"
+                      placeholder="Masukkan nama universitas Anda..."
+                      value={universitas}
+                      onChange={(e) => setUniversitas(e.target.value)}
+                      required
+                      style={{ height: "52px" }}
+                    />
+                  </div>
+                )}
+
+                {category === "siswa" && (
+                  <div className="form-group" style={{ marginTop: "20px" }}>
+                    <label htmlFor="sekolah">Nama Sekolah / Instansi Pendidikan</label>
+                    <input
+                      type="text"
+                      id="sekolah"
+                      className="form-control"
+                      placeholder="Masukkan nama sekolah Anda..."
+                      value={sekolah}
+                      onChange={(e) => setSekolah(e.target.value)}
+                      required
+                      style={{ height: "52px" }}
+                    />
+                  </div>
+                )}
+
+                {(category === "dosen_karyawan" || category === "umum") && (
+                  <div className="form-group" style={{ marginTop: "20px" }}>
+                    <label htmlFor="instansi">Nama Instansi / Perusahaan / Lembaga</label>
+                    <input
+                      type="text"
+                      id="instansi"
+                      className="form-control"
+                      placeholder="Masukkan nama instansi atau tempat bekerja..."
+                      value={instansi}
+                      onChange={(e) => setInstansi(e.target.value)}
+                      required
+                      style={{ height: "52px" }}
+                    />
+                  </div>
+                )}
+
                 <button 
                   type="submit" 
-                  disabled={loading || !name.trim()} 
+                  disabled={loading || isFormInvalid} 
                   className="btn btn-primary"
-                  style={{ width: "100%", height: "52px", marginTop: "20px", gap: "10px" }}
+                  style={{ width: "100%", height: "52px", marginTop: "24px", gap: "10px" }}
                 >
                   {loading ? "Mendaftarkan Perangkat..." : "Lanjut ke Halaman Voting"}
                   <ArrowRight size={18} />

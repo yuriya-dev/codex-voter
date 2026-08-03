@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS visitors (
     ip TEXT,
     is_flagged BOOLEAN DEFAULT FALSE,
     flag_reason TEXT,
+    universitas TEXT,
+    sekolah TEXT,
+    instansi TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -100,10 +103,13 @@ image = EXCLUDED.image,
 votes = EXCLUDED.votes;
 
 -- ==========================================================
--- MIGRATION FOR GOOGLE AUTH SECURITY (RUN IN SUPABASE SQL EDITOR)
+-- MIGRATION FOR GOOGLE AUTH SECURITY & EXTRA FIELDS (RUN IN SUPABASE SQL EDITOR)
 -- ==========================================================
 -- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS flag_reason TEXT;
 -- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS email TEXT;
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS universitas TEXT;
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS sekolah TEXT;
+-- ALTER TABLE visitors ADD COLUMN IF NOT EXISTS instansi TEXT;
 -- ALTER TABLE votes ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE votes ADD COLUMN IF NOT EXISTS flag_reason TEXT;

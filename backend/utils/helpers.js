@@ -27,7 +27,10 @@ function mapVisitor(dbVisitor) {
     email: dbVisitor.email,
     verifiedAt: dbVisitor.verified_at,
     deviceFingerprint: dbVisitor.device_fingerprint,
-    ip: dbVisitor.ip
+    ip: dbVisitor.ip,
+    universitas: dbVisitor.universitas || "",
+    sekolah: dbVisitor.sekolah || "",
+    instansi: dbVisitor.instansi || ""
   };
 }
 

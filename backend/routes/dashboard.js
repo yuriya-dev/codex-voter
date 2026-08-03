@@ -109,7 +109,10 @@ router.get("/votes-detail", adminAuth, async (req, res) => {
         visitors (
           name,
           category,
-          email
+          email,
+          universitas,
+          sekolah,
+          instansi
         ),
         group_id,
         groups (
@@ -136,7 +139,10 @@ router.get("/votes-detail", adminAuth, async (req, res) => {
           identifier: v.visitor_identifier,
           name: visitorObj ? visitorObj.name : "N/A",
           category: visitorObj ? visitorObj.category : "Umum",
-          email: visitorObj ? visitorObj.email : "N/A"
+          email: visitorObj ? visitorObj.email : "N/A",
+          universitas: visitorObj ? visitorObj.universitas : "",
+          sekolah: visitorObj ? visitorObj.sekolah : "",
+          instansi: visitorObj ? visitorObj.instansi : ""
         },
         group: {
           id: v.group_id,

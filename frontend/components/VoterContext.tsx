@@ -71,6 +71,9 @@ interface Visitor {
   category: string;
   verifiedAt: string;
   deviceFingerprint: string;
+  universitas?: string;
+  sekolah?: string;
+  instansi?: string;
 }
 
 interface Vote {
@@ -91,7 +94,7 @@ interface VoterContextType {
   maxVotesLimit: number;
   votingStatus: string;
   votingEndTime: string;
-  verifyOTP: (name: string, category: string) => Promise<boolean>;
+  verifyOTP: (name: string, category: string, extraFields?: { universitas?: string; sekolah?: string; instansi?: string }) => Promise<boolean>;
   submitVote: (groupId: string) => Promise<string | null>;
   isDrawerOpen: boolean;
   setIsDrawerOpen: (open: boolean) => void;
@@ -223,6 +226,14 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setGoogleUser(session.user);
+        
+        // Redirect if they just returned from Google login to the home page instead of /verifikasi
+        if (typeof window !== "undefined" && window.location.pathname === "/") {
+          const hasAuthParams = window.location.hash.includes("access_token") || window.location.search.includes("code=");
+          if (hasAuthParams) {
+            window.location.href = "/verifikasi";
+          }
+        }
       } else {
         setGoogleUser(null);
       }
@@ -232,6 +243,14 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setGoogleUser(session.user);
+        
+        // Redirect if they just returned from Google login to the home page instead of /verifikasi
+        if (typeof window !== "undefined" && window.location.pathname === "/") {
+          const hasAuthParams = window.location.hash.includes("access_token") || window.location.search.includes("code=");
+          if (hasAuthParams) {
+            window.location.href = "/verifikasi";
+          }
+        }
       }
     });
     
@@ -323,7 +342,11 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Register Visitor using Name & Category via Backend API
-  const verifyOTP = async (name: string, category: string): Promise<boolean> => {
+  const verifyOTP = async (
+    name: string,
+    category: string,
+    extraFields?: { universitas?: string; sekolah?: string; instansi?: string }
+  ): Promise<boolean> => {
     try {
       let fingerprint = "";
       if (typeof window !== "undefined") {
@@ -349,7 +372,12 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ name, category, deviceFingerprint: fingerprint })
+        body: JSON.stringify({ 
+          name, 
+          category, 
+          deviceFingerprint: fingerprint,
+          ...extraFields 
+        })
       });
 
       if (res.ok) {
