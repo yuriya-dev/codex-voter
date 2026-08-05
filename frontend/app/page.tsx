@@ -599,7 +599,7 @@ export default function Home() {
 
               <div style={{ display: "flex", justifyContent: "center", marginTop: "48px", width: "100%" }}>
                 <Link href="/tutorial" className="btn btn-primary" style={{ gap: "12px", textTransform: "uppercase", padding: "16px 32px", fontSize: "1rem" }}>
-                  Buka Panduan & Simulasi Voting (GSAP)
+                  Buka Panduan & Simulasi Voting
                   <ArrowRight size={18} />
                 </Link>
               </div>

@@ -29,7 +29,7 @@ export default function RootLayout({
           </Suspense>
           
           {/* Floating Tutorial Badge for Mobile Devices */}
-          <Link href="/tutorial" className="mobile-tutorial-floating-badge" title="Panduan Voting" style={{ position: "relative" }}>
+          <Link href="/tutorial" className="mobile-tutorial-floating-badge" title="Panduan Voting">
             <img 
               src="/sticker7.webp" 
               alt="Panduan" 
