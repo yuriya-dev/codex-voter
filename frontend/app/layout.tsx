@@ -29,12 +29,34 @@ export default function RootLayout({
           </Suspense>
           
           {/* Floating Tutorial Badge for Mobile Devices */}
-          <Link href="/tutorial" className="mobile-tutorial-floating-badge" title="Panduan Voting">
+          <Link href="/tutorial" className="mobile-tutorial-floating-badge" title="Panduan Voting" style={{ position: "relative" }}>
             <img 
               src="/sticker7.webp" 
               alt="Panduan" 
-              style={{ width: "38px", height: "38px", objectFit: "contain" }} 
+              style={{ width: "38px", height: "38px", objectFit: "contain", display: "block" }} 
             />
+            {/* "?" Indicator Badge Overlay */}
+            <span
+              style={{
+                position: "absolute",
+                top: "-4px",
+                right: "-4px",
+                width: "18px",
+                height: "18px",
+                borderRadius: "50%",
+                backgroundColor: "var(--color-fern-green)",
+                color: "white",
+                border: "2px solid var(--color-delft-blue)",
+                fontSize: "10px",
+                fontWeight: "900",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "1px 1px 0px var(--color-delft-blue)"
+              }}
+            >
+              ?
+            </span>
           </Link>
         </VoterProvider>
       </body>
