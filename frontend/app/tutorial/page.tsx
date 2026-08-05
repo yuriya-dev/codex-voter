@@ -162,7 +162,7 @@ export default function TutorialPage() {
       newTl.set(".drawer-inner-item-sim", { display: "none", opacity: 0 });
       newTl.set(".pointer-sim", { x: 200, y: 480, scale: 1 });
       
-      newTl.to(".pointer-sim", { x: 250, y: 360, duration: 1, delay: 0.8 })
+      newTl.to(".pointer-sim", { x: 240, y: 375, duration: 1, delay: 0.8 })
         .to(".pointer-sim", { scale: 0.8, duration: 0.2 })
         .to(".mobile-heart-btn-sim", { scale: 1.15, backgroundColor: "var(--color-pistachio)", duration: 0.1 })
         .to(".pointer-sim", { scale: 1, duration: 0.1 })
@@ -214,9 +214,9 @@ export default function TutorialPage() {
       newTl.set(".vote-ballot-box-sim", { display: "none", opacity: 0 });
       newTl.set(".success-result-box-sim", { display: "none", opacity: 0 });
       newTl.set(".receipt-card-replica-sim", { y: 150, opacity: 0 });
-      newTl.set(".pointer-sim", { x: 200, y: 480, scale: 1 });
+      newTl.set(".pointer-sim", { x: 200, y: 435, scale: 1 });
  
-      newTl.to(".pointer-sim", { x: 148, y: 425, duration: 0.8, delay: 0.6 }) // tap google login
+      newTl.to(".pointer-sim", { x: 148, y: 375, duration: 0.8, delay: 0.6 }) // tap google login
         .to(".pointer-sim", { scale: 0.8, duration: 0.2 })
         .to(".google-login-btn-replica", { scale: 0.96, duration: 0.1 })
         .to(".pointer-sim", { scale: 1, duration: 0.1 })
@@ -224,7 +224,7 @@ export default function TutorialPage() {
         .to(".google-auth-box-sim", { opacity: 0, display: "none", duration: 0.3 })
         .to(".identity-form-box-sim", { display: "flex", opacity: 1, duration: 0.3 })
         
-        .to(".pointer-sim", { x: 148, y: 435, duration: 0.8, delay: 0.6 }) // tap submit identity
+        .to(".pointer-sim", { x: 148, y: 395, duration: 0.8, delay: 0.6 }) // tap submit identity
         .to(".pointer-sim", { scale: 0.8, duration: 0.2 })
         .to(".identity-submit-btn-replica", { scale: 0.95, duration: 0.1 })
         .to(".pointer-sim", { scale: 1, duration: 0.1 })
@@ -310,7 +310,7 @@ export default function TutorialPage() {
                   >
                     {step.num}
                   </span>
-                  <span className="category-tab-title" style={{ fontSize: "0.7rem", whiteSpace: "nowrap" }}>
+                  <span className="category-tab-title" style={{ fontSize: "0.7rem" }}>
                     {step.shortTitle}
                   </span>
                 </button>
@@ -319,7 +319,7 @@ export default function TutorialPage() {
 
             {/* Detail Box (Brutalist card sama persis dengan yang kita miliki di homepage) */}
             <div 
-              className="card" 
+              className="card stepper-detail-card" 
               style={{ 
                 padding: "36px", 
                 backgroundColor: "white", 
@@ -327,12 +327,7 @@ export default function TutorialPage() {
                 minHeight: "480px",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
-                border: "3.5px solid var(--color-delft-blue)",
-                boxShadow: "8px 8px 0 var(--color-delft-blue)",
-                borderRadius: "var(--radius-md)",
-                overflow: "visible",
-                transform: "rotate(-0.5deg)"
+                justifyContent: "space-between"
               }}
             >
               {/* PushPin (Atas tengah) */}
@@ -507,6 +502,7 @@ export default function TutorialPage() {
 
               {/* Navigasi */}
               <div 
+                className="stepper-actions"
                 style={{ 
                   display: "flex", 
                   justifyContent: "space-between", 
@@ -527,7 +523,7 @@ export default function TutorialPage() {
                   Sebelumnya
                 </button>
 
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <div className="right-buttons-group" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                   <button 
                     onClick={() => setIsPlaying(!isPlaying)}
                     className="btn btn-secondary"
@@ -757,7 +753,6 @@ export default function TutorialPage() {
                         borderRadius: "8px", 
                         padding: "0 10px", 
                         display: "flex", 
-                        justifyContent: "space-between", 
                         alignItems: "center", 
                         boxShadow: "2px 2px 0 var(--color-delft-blue)",
                         marginBottom: "12px",
@@ -765,12 +760,12 @@ export default function TutorialPage() {
                       }}
                     >
                       {/* Logo */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <img src="/logo.svg" alt="Logo" style={{ height: "14px", width: "auto" }} />
+                        <span style={{ fontSize: "0.65rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+                        <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "14px", width: "auto" }} />
+                        <span style={{ fontSize: "0.6rem", fontWeight: "900", color: "var(--color-delft-blue)", marginLeft: "2px" }}>COMIT UPB</span>
                       </div>
-                      
-                      {/* Menu burger */}
-                      <Menu size={16} style={{ color: "var(--color-delft-blue)" }} />
                     </header>
 
                     {/* 2. Page Contents Replika */}
@@ -1277,11 +1272,78 @@ export default function TutorialPage() {
             display: none !important;
           }
           
-          /* Mobile Responsiveness for Stepper card */
+          /* Mobile Responsiveness for Stepper card and Tabs */
+          html, body {
+            overflow-x: hidden !important;
+            max-width: 100% !important;
+          }
+          .left-stepper-container {
+            width: 100%;
+            max-width: 100%;
+            overflow: visible;
+          }
+          .left-stepper-container .stepper-detail-card {
+            border: 3.5px solid var(--color-delft-blue) !important;
+            box-shadow: 8px 8px 0 var(--color-delft-blue) !important;
+            border-radius: var(--radius-md) !important;
+            overflow: visible !important;
+            transform: rotate(-0.5deg);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+          .category-tab-title {
+            white-space: nowrap;
+          }
           @media (max-width: 768px) {
-            .left-stepper-container .card {
+            .left-stepper-container {
+              overflow-x: hidden !important;
+              padding-right: 8px !important; /* leaves room for card's 4px shadow */
+            }
+            .left-stepper-container .stepper-detail-card {
               min-height: auto !important;
-              padding: 24px !important;
+              padding: 20px !important;
+              transform: none !important; /* disable rotation on mobile to prevent overflow-x */
+              box-shadow: 4px 4px 0 var(--color-delft-blue) !important; /* smaller shadow */
+            }
+            .category-tabs {
+              gap: 6px !important;
+            }
+            .category-tabs .category-tab {
+              padding: 8px 2px !important;
+              font-size: 0.7rem !important;
+              min-width: 0 !important;
+            }
+            .category-tabs .category-tab span {
+              font-size: 0.7rem !important;
+            }
+            .category-tab-title {
+              white-space: normal !important;
+              line-height: 1.1 !important;
+              text-align: center !important;
+            }
+            .bg-text-shadow {
+              font-size: 4.5rem !important;
+              top: -1rem !important;
+            }
+            
+            /* Stack stepper actions vertically on smaller viewports to prevent button overflows */
+            .stepper-actions {
+              flex-direction: column-reverse !important;
+              gap: 12px !important;
+              align-items: stretch !important;
+            }
+            .stepper-actions .btn {
+              width: 100% !important;
+              justify-content: center !important;
+              padding: 10px 16px !important;
+              font-size: 0.8rem !important;
+            }
+            .stepper-actions .right-buttons-group {
+              width: 100% !important;
+              display: flex !important;
+              gap: 10px !important;
+            }
+            .stepper-actions .right-buttons-group .btn {
+              flex: 1 !important;
             }
           }
 

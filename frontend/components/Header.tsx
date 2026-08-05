@@ -35,10 +35,28 @@ export default function Header() {
       return (
         <header className="site-header">
           <div className="nav-container">
-            <Link href="/" className="logo">
-              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-              <span>Admin</span>
-            </Link>
+            <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+              <Link href="/" className="logo" style={{ textDecoration: "none" }}>
+                <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+                <span>Admin</span>
+              </Link>
+              <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+              <a 
+                href="https://comitupb.xyz" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="logo" 
+                style={{ 
+                  textDecoration: "none", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "var(--space-xs)" 
+                }}
+              >
+                <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+                <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+              </a>
+            </div>
             <nav className="nav-links">
               <Link href="/" className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
                 Kembali ke Halaman Publik
@@ -52,9 +70,27 @@ export default function Header() {
     return (
       <header className="site-header">
         <div className="nav-container">
-          <Link href="/" className="logo">
-            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-          </Link>
+          <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+            <Link href="/" className="logo" style={{ textDecoration: "none" }}>
+              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+            </Link>
+            <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+            <a 
+              href="https://comitupb.xyz" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="logo" 
+              style={{ 
+                textDecoration: "none", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "var(--space-xs)" 
+              }}
+            >
+              <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+              <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+            </a>
+          </div>
 
           <nav className="nav-links">
             <Link href="/kelompok">Daftar Kelompok</Link>
@@ -95,10 +131,28 @@ export default function Header() {
     return (
       <header className="site-header admin-header">
         <div className="nav-container">
-          <Link href="/admin" className="logo">
-            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-            <span>Admin</span>
-          </Link>
+          <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+            <Link href="/admin" className="logo" style={{ textDecoration: "none" }}>
+              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+              <span>Admin</span>
+            </Link>
+            <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+            <a 
+              href="https://comitupb.xyz" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="logo" 
+              style={{ 
+                textDecoration: "none", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "var(--space-xs)" 
+              }}
+            >
+              <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+              <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+            </a>
+          </div>
 
           <nav className="nav-links" style={{ alignItems: "center", gap: "24px" }}>
             <Link 
@@ -167,10 +221,28 @@ export default function Header() {
     return (
       <header className="site-header">
         <div className="nav-container">
-          <Link href="/" className="logo">
-            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-            <span>Admin</span>
-          </Link>
+          <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+            <Link href="/" className="logo" style={{ textDecoration: "none" }}>
+              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+              <span>Admin</span>
+            </Link>
+            <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+            <a 
+              href="https://comitupb.xyz" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="logo" 
+              style={{ 
+                textDecoration: "none", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "var(--space-xs)" 
+              }}
+            >
+              <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+              <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+            </a>
+          </div>
           <nav className="nav-links">
             <Link href="/" className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
               Kembali ke Halaman Publik
@@ -185,9 +257,27 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="nav-container">
-        <Link href="/" className="logo">
-          <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-        </Link>
+        <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+          <Link href="/" className="logo" style={{ textDecoration: "none" }}>
+            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+          </Link>
+          <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+          <a 
+            href="https://comitupb.xyz" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="logo" 
+            style={{ 
+              textDecoration: "none", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "var(--space-xs)" 
+            }}
+          >
+            <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+            <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+          </a>
+        </div>
 
         <nav className="nav-links">
           <Link href="/kelompok">Daftar Kelompok</Link>

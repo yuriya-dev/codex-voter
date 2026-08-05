@@ -84,10 +84,28 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar - Desktop Only (Hidden on Mobile via CSS) */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-brand">
-          <Link href="/admin" className="logo">
-            <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
-            <span>Admin</span>
-          </Link>
+          <div className="logo-group" style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+            <Link href="/admin" className="logo" style={{ textDecoration: "none" }}>
+              <img src="/logo.svg" alt="Logo" style={{ height: "24px", width: "auto" }} />
+              <span>Admin</span>
+            </Link>
+            <span style={{ fontSize: "0.9rem", fontWeight: "bold", opacity: 0.6 }}>x</span>
+            <a 
+              href="https://comitupb.xyz" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="logo" 
+              style={{ 
+                textDecoration: "none", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "var(--space-xs)" 
+              }}
+            >
+              <img src="/logo-comit.svg" alt="COMIT Logo" style={{ height: "24px", width: "auto" }} />
+              <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "var(--color-delft-blue)" }}>COMIT UPB</span>
+            </a>
+          </div>
         </div>
 
         <nav className="admin-sidebar-menu">
