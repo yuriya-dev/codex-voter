@@ -294,6 +294,7 @@ export default function TutorialPage() {
                   }}
                 >
                   <span 
+                    className="category-tab-num"
                     style={{ 
                       display: "flex",
                       alignItems: "center",
@@ -1305,19 +1306,26 @@ export default function TutorialPage() {
               box-shadow: 4px 4px 0 var(--color-delft-blue) !important; /* smaller shadow */
             }
             .category-tabs {
-              gap: 6px !important;
+              gap: 4px !important;
+              margin-bottom: 16px !important;
             }
             .category-tabs .category-tab {
-              padding: 8px 2px !important;
-              font-size: 0.7rem !important;
+              padding: 6px 2px !important;
+              font-size: 0.65rem !important;
               min-width: 0 !important;
+              height: auto !important;
+              gap: 4px !important;
             }
-            .category-tabs .category-tab span {
-              font-size: 0.7rem !important;
+            .category-tab-num {
+              width: 18px !important;
+              height: 18px !important;
+              font-size: 0.6rem !important;
+              border-width: 1.5px !important;
             }
             .category-tab-title {
+              font-size: 0.6rem !important;
               white-space: normal !important;
-              line-height: 1.1 !important;
+              line-height: 1.0 !important;
               text-align: center !important;
             }
             .bg-text-shadow {
