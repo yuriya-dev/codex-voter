@@ -1308,6 +1308,7 @@ export default function TutorialPage() {
             .category-tabs {
               gap: 4px !important;
               margin-bottom: 16px !important;
+              padding: 4px 4px 6px 4px !important; /* leaves room for top, left, right, and bottom borders/shadows */
             }
             .category-tabs .category-tab {
               padding: 6px 2px !important;
