@@ -357,6 +357,7 @@ export default function TutorialPage() {
 
               {/* Mascot Badge (Atas kanan melayang miring) */}
               <div 
+                className="mascot-badge-container"
                 style={{ 
                   position: "absolute",
                   top: "-24px",
@@ -1332,6 +1333,9 @@ export default function TutorialPage() {
             .bg-text-shadow {
               font-size: 4.5rem !important;
               top: -1rem !important;
+            }
+            .mascot-badge-container {
+              display: none !important;
             }
             
             /* Stack stepper actions vertically on smaller viewports to prevent button overflows */
