@@ -1519,3 +1519,40 @@ a:hover {
     background-position: 0% 50%;
   }
 }
+
+/* --- Floating Mobile Tutorial Badge --- */
+.mobile-tutorial-floating-badge {
+  position: fixed;
+  bottom: 84px; /* Rendered above the MobileNavBar */
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-white);
+  border: 2px solid var(--color-delft-blue);
+  border-radius: var(--radius-full);
+  box-shadow: 3px 3px 0px var(--color-delft-blue);
+  display: none; /* hidden by default on desktop */
+  align-items: center;
+  justify-content: center;
+  z-index: 85; /* above regular layout content, below overlay drawers */
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: mobile-badge-bobbing 2.5s ease-in-out infinite;
+}
+
+.mobile-tutorial-floating-badge:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px var(--color-delft-blue);
+}
+
+@media (max-width: 768px) {
+  .mobile-tutorial-floating-badge {
+    display: flex;
+  }
+}
+
+@keyframes mobile-badge-bobbing {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}

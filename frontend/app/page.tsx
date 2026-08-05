@@ -3,9 +3,10 @@
 import { Fragment, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useVoter } from "@/components/VoterContext";
-import { Leaf, ArrowRight, ShieldCheck, Heart, QrCode } from "lucide-react";
+import { Leaf, ArrowRight, ShieldCheck, Heart, QrCode, HelpCircle } from "lucide-react";
 import Header from "@/components/Header";
 import BrutalistCard from "@/components/BrutalistCard";
+import { gsap } from "gsap";
 
 export default function Home() {
   const { setQrScannerOpen, maxVotesLimit } = useVoter();
@@ -38,6 +39,37 @@ export default function Home() {
       clearTimeout(timer);
     };
   }, []);
+
+  useEffect(() => {
+    // Marching dotted line animation
+    const lineAnim = gsap.to(".connector-path", {
+      strokeDashoffset: -20,
+      duration: 1.2,
+      repeat: -1,
+      ease: "none"
+    });
+
+    // Staggered entrance animation for cards
+    const cards = cardRefs.current.filter(Boolean);
+    if (cards.length > 0) {
+      gsap.fromTo(cards, 
+        { opacity: 0, y: 30, scale: 0.95 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1, 
+          duration: 0.6, 
+          stagger: 0.1, 
+          ease: "back.out(1.5)",
+          overwrite: "auto"
+        }
+      );
+    }
+
+    return () => {
+      lineAnim.kill();
+    };
+  }, [points]);
 
   return (
     <>
@@ -77,6 +109,10 @@ export default function Home() {
                 <QrCode size={18} />
                 Scan QR Booth
               </button>
+              <Link href="/tutorial" className="btn btn-secondary" style={{ gap: "12px", background: "var(--color-carolina-blue)", color: "var(--color-delft-blue)" }}>
+                <HelpCircle size={18} />
+                Panduan Voting
+              </Link>
             </div>
 
             {/* Asymmetric Quote Block */}
@@ -232,8 +268,9 @@ export default function Home() {
             ];
 
             return (
-              <div 
-                ref={containerRef}
+              <>
+                <div 
+                  ref={containerRef}
                 style={{ 
                   display: "flex",
                   flexWrap: "wrap",
@@ -282,16 +319,17 @@ export default function Home() {
                           pathD += `C ${startX + dx} ${startY + dy/4}, ${startX} ${startY + 3*dy/4}, ${endX} ${endY} `;
                         }
                       }
-                      return (
-                        <path 
-                          d={pathD} 
-                          fill="none" 
-                          stroke="var(--color-delft-blue)" 
-                          strokeWidth="4" 
-                          strokeLinecap="round" 
-                          strokeDasharray="6 6"
-                        />
-                      );
+                        return (
+                          <path 
+                            className="connector-path"
+                            d={pathD} 
+                            fill="none" 
+                            stroke="var(--color-delft-blue)" 
+                            strokeWidth="4" 
+                            strokeLinecap="round" 
+                            strokeDasharray="6 6"
+                          />
+                        );
                     })()}
                   </svg>
                 )}
@@ -313,9 +351,86 @@ export default function Home() {
                         overflow: "visible",
                         zIndex: 3 // Set zIndex to 3 to render above the SVG line (zIndex 1)
                       }}
+                      onMouseEnter={(e) => {
+                        const target = e.currentTarget;
+                        const shadow = target.querySelector(".brutalist-card-shadow");
+                        const mascot = target.querySelector(".brutalist-card-mascot");
+                        
+                        // Lift card, rotate to 0, scale slightly
+                        gsap.to(target, {
+                          scale: 1.05,
+                          rotate: 0,
+                          y: -8,
+                          duration: 0.3,
+                          ease: "power2.out",
+                          overwrite: "auto"
+                        });
+                        
+                        // Push shadow deeper and turn green
+                        if (shadow) {
+                          gsap.to(shadow, {
+                            top: "16px",
+                            left: "16px",
+                            backgroundColor: "var(--color-fern-green)",
+                            duration: 0.3,
+                            ease: "power2.out",
+                            overwrite: "auto"
+                          });
+                        }
+                        
+                        // Pop mascot up
+                        if (mascot) {
+                          gsap.to(mascot, {
+                            y: -15,
+                            scale: 1.1,
+                            duration: 0.3,
+                            ease: "back.out(2)",
+                            overwrite: "auto"
+                          });
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        const target = e.currentTarget;
+                        const shadow = target.querySelector(".brutalist-card-shadow");
+                        const mascot = target.querySelector(".brutalist-card-mascot");
+                        
+                        // Restore card
+                        gsap.to(target, {
+                          scale: 1,
+                          rotate: item.rotation,
+                          y: 0,
+                          duration: 0.3,
+                          ease: "power2.out",
+                          overwrite: "auto"
+                        });
+                        
+                        // Restore shadow
+                        if (shadow) {
+                          gsap.to(shadow, {
+                            top: `${shadowOffset}px`,
+                            left: `${shadowOffset}px`,
+                            backgroundColor: "var(--color-delft-blue)",
+                            duration: 0.3,
+                            ease: "power2.out",
+                            overwrite: "auto"
+                          });
+                        }
+                        
+                        // Restore mascot
+                        if (mascot) {
+                          gsap.to(mascot, {
+                            y: 0,
+                            scale: 1,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            overwrite: "auto"
+                          });
+                        }
+                      }}
                     >
                       {/* Physical Shadow Div */}
                       <div 
+                        className="brutalist-card-shadow"
                         style={{
                           position: "absolute",
                           top: `${shadowOffset}px`,
@@ -399,6 +514,7 @@ export default function Home() {
                           zIndex: 2
                         }}>
                           <img
+                            className="brutalist-card-mascot"
                             src={item.mascot}
                             alt={item.title}
                             style={{
@@ -480,6 +596,14 @@ export default function Home() {
                   );
                 })}
               </div>
+
+              <div style={{ display: "flex", justifyContent: "center", marginTop: "48px", width: "100%" }}>
+                <Link href="/tutorial" className="btn btn-primary" style={{ gap: "12px", textTransform: "uppercase", padding: "16px 32px", fontSize: "1rem" }}>
+                  Buka Panduan & Simulasi Voting (GSAP)
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
+            </>
             );
           })()}
         </section>

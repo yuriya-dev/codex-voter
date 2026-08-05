@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVoter } from "@/components/VoterContext";
-import { Heart, Trophy, KeyRound } from "lucide-react";
+import { Heart, Trophy, KeyRound, HelpCircle } from "lucide-react";
 
 export default function Header() {
   const { shortlist, setIsDrawerOpen, visitor } = useVoter();
@@ -58,6 +58,10 @@ export default function Header() {
 
           <nav className="nav-links">
             <Link href="/kelompok">Daftar Kelompok</Link>
+            <Link href="/tutorial" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <HelpCircle size={16} />
+              Panduan
+            </Link>
             <Link href="/verifikasi" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <KeyRound size={16} />
               Verifikasi
@@ -187,6 +191,10 @@ export default function Header() {
 
         <nav className="nav-links">
           <Link href="/kelompok">Daftar Kelompok</Link>
+          <Link href="/tutorial" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <HelpCircle size={16} />
+            Panduan
+          </Link>
           
           {visitor ? (
             <Link href="/vote" style={{ display: "flex", alignItems: "center", gap: "6px" }}>

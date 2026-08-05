@@ -5,6 +5,7 @@ import ShortlistDrawer from "@/components/ShortlistDrawer";
 import QRScannerModal from "@/components/QRScannerModal";
 import MobileNavBar from "@/components/MobileNavBar";
 import { Suspense } from "react";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "CODEX Voter — Capstone Voting",
@@ -26,6 +27,15 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <MobileNavBar />
           </Suspense>
+          
+          {/* Floating Tutorial Badge for Mobile Devices */}
+          <Link href="/tutorial" className="mobile-tutorial-floating-badge" title="Panduan Voting">
+            <img 
+              src="/sticker7.webp" 
+              alt="Panduan" 
+              style={{ width: "38px", height: "38px", objectFit: "contain" }} 
+            />
+          </Link>
         </VoterProvider>
       </body>
     </html>
