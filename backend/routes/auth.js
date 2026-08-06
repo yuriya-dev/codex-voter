@@ -155,6 +155,18 @@ router.post("/verify", async (req, res) => {
         visitor = mapVisitor(insertedVisitor);
       }
     } else {
+      // Validate that the submitted name matches the existing registered name for this Google Account
+      if (existingVisitors[0].name && existingVisitors[0].name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+        await addAuditLog(
+          "Registration Denied",
+          `Mencegah registrasi nama '${name.trim()}' menggunakan akun Google yang sudah terdaftar atas nama '${existingVisitors[0].name}' (Email: ${user.email}).`,
+          "error"
+        );
+        return res.status(400).json({
+          error: `Akun Google ini (${user.email}) sudah terdaftar atas nama '${existingVisitors[0].name}'. Jika ini bukan akun Anda, silakan klik tombol 'Bukan Akun Anda? Keluar' untuk masuk dengan akun Google Anda sendiri.`
+        });
+      }
+
       visitor = mapVisitor(existingVisitors[0]);
       // Update IP, name, category, email, or device_fingerprint if empty or changed
       if (

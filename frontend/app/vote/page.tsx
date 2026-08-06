@@ -9,7 +9,7 @@ import { CheckCircle2, Copy, Check, Leaf, Heart, ArrowRight, Lock, Unlock } from
 
 export default function VotePage() {
   const router = useRouter();
-  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, votingStatus, votingEndTime, refreshSettings } = useVoter();
+  const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, votingStatus, votingEndTime, refreshSettings, logoutGoogle } = useVoter();
 
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -629,18 +629,48 @@ export default function VotePage() {
                 padding: "16px", 
                 borderLeft: "4px solid var(--color-fern-green)", 
                 backgroundColor: "rgba(67, 113, 24, 0.05)",
-                borderRadius: "var(--radius-sm)"
+                borderRadius: "var(--radius-sm)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                flexWrap: "wrap"
               }}
             >
-              <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
-                Identitas Pemilih
-              </span>
-              <p style={{ fontSize: "0.9rem", fontWeight: "600", marginTop: "4px", color: "var(--color-delft-blue)" }}>
-                {visitor.name}
-              </p>
-              <p style={{ fontSize: "0.8rem", opacity: 0.8, marginTop: "2px", color: "var(--color-delft-blue)" }}>
-                Kategori: {visitor.category}
-              </p>
+              <div>
+                <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-delft-blue)" }}>
+                  Identitas Pemilih
+                </span>
+                <p style={{ fontSize: "0.9rem", fontWeight: "600", marginTop: "4px", color: "var(--color-delft-blue)" }}>
+                  {visitor.name}
+                </p>
+                <p style={{ fontSize: "0.8rem", opacity: 0.8, marginTop: "2px", color: "var(--color-delft-blue)" }}>
+                  Kategori: {visitor.category}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (confirm("Apakah Anda ingin keluar dari akun ini untuk mengganti pemilih?")) {
+                    await logoutGoogle();
+                    router.push("/verifikasi");
+                  }
+                }}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid #e53e3e",
+                  color: "#e53e3e",
+                  padding: "6px 12px",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  transition: "all 0.2s"
+                }}
+              >
+                Ganti Akun
+              </button>
             </div>
           </div>
 

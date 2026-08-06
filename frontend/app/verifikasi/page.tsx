@@ -159,7 +159,9 @@ export default function VerifikasiPage() {
                   border: "1px solid var(--color-delft-blue)",
                   borderRadius: "var(--radius-sm)",
                   marginBottom: "24px",
-                  fontSize: "0.85rem"
+                  fontSize: "0.85rem",
+                  gap: "12px",
+                  flexWrap: "wrap"
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -169,6 +171,28 @@ export default function VerifikasiPage() {
                     <strong>{googleUser.email}</strong>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm("Apakah Anda ingin keluar dari akun Google ini?")) {
+                      await logoutGoogle();
+                    }
+                  }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #e53e3e",
+                    color: "#e53e3e",
+                    padding: "6px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    transition: "all 0.2s"
+                  }}
+                >
+                  Bukan Anda? Keluar
+                </button>
               </div>
 
               <form onSubmit={handleSubmit}>
