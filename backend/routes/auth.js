@@ -61,7 +61,7 @@ router.post("/verify", async (req, res) => {
     
     let visitor;
     if (existingVisitors.length === 0) {
-      // IP-based Rate Limiting per Hour: Max 3 new registrations per IP per hour
+      /* IP-based Rate Limiting per Hour: Max 3 new registrations per IP per hour (DISABLED)
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { data: recentVisitorsFromIp, error: ripErr } = await supabase
         .from('visitors')
@@ -79,6 +79,7 @@ router.post("/verify", async (req, res) => {
           error: "Batas pendaftaran tercapai. Maksimum 3 akun Google baru yang dapat mendaftar dari koneksi IP yang sama dalam 1 jam."
         });
       }
+      */
 
       const newVisitor = {
         identifier: identifierHash,

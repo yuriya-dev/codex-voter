@@ -156,7 +156,7 @@ router.post("/", async (req, res) => {
       console.error("Gagal memvalidasi fingerprint perangkat:", err);
     }
 
-    // 2. Enforce unique visitors count per IP to prevent spam (max 300 unique visitors per IP)
+    /* Enforce unique visitors count per IP to prevent spam (max 300 unique visitors per IP) - DISABLED
     const { data: ipVotes, error: ipvErr } = await supabase
       .from('votes')
       .select('*')
@@ -168,6 +168,7 @@ router.post("/", async (req, res) => {
       await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress} (batas 300 pengunjung unik terlampaui)`, "error");
       return res.status(403).json({ error: "Perangkat/IP ini sudah melebihi batas kuota pemilih unik pameran!" });
     }
+    */
 
     // 3. Verify group exists
     const { data: matchedGroups, error: gErr } = await supabase
