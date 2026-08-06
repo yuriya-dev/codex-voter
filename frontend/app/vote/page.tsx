@@ -11,7 +11,7 @@ export default function VotePage() {
   const router = useRouter();
   const { visitor, shortlist, groupsList, submitVote, activeVotes, maxVotesLimit, isVoteUnlocked, setQrScannerOpen, votingStatus, votingEndTime, refreshSettings, logoutGoogle } = useVoter();
 
-  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<number[]>([]);
@@ -68,14 +68,28 @@ export default function VotePage() {
     }
   }, [hasFinishedVoting]);
 
-  // Pre-fill selected group if only 1 item in shortlist (and they haven't voted for it yet)
+  // Pre-fill selected groups from unvoted shortlist up to the remaining vote limit
   useEffect(() => {
     const votedIds = activeVotes.map((v) => v.groupId);
     const unvotedShortlist = shortlist.filter(id => !votedIds.includes(id));
-    if (unvotedShortlist.length === 1) {
-      setSelectedGroupId(unvotedShortlist[0]);
+    const maxSelectable = maxVotesLimit - activeVotes.length;
+    
+    setSelectedGroupIds(unvotedShortlist.slice(0, maxSelectable));
+  }, [shortlist, activeVotes.length, maxVotesLimit]);
+
+  const handleToggleGroup = (groupId: string) => {
+    const maxSelectable = maxVotesLimit - activeVotes.length;
+    
+    if (selectedGroupIds.includes(groupId)) {
+      setSelectedGroupIds(selectedGroupIds.filter(id => id !== groupId));
+    } else {
+      if (selectedGroupIds.length >= maxSelectable) {
+        alert(`Anda hanya dapat memilih maksimal ${maxSelectable} kelompok.`);
+        return;
+      }
+      setSelectedGroupIds([...selectedGroupIds, groupId]);
     }
-  }, [shortlist, activeVotes.length]);
+  };
 
   if (!visitor) {
     return (
@@ -99,13 +113,13 @@ export default function VotePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedGroupId) return;
+    if (selectedGroupIds.length === 0) return;
 
     setSubmitting(true);
     try {
-      const code = await submitVote(selectedGroupId);
-      if (code) {
-        setSelectedGroupId(""); // Clear selection for next vote
+      const codes = await submitVote(selectedGroupIds);
+      if (codes) {
+        setSelectedGroupIds([]); // Clear selection for next vote
       }
     } catch (err) {
       console.error("Gagal mengirim suara:", err);
@@ -467,41 +481,44 @@ export default function VotePage() {
                   Pilihan Cepat dari Shortlist Anda:
                 </label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {shortlistedGroups.map((group) => (
-                    <label 
-                      key={group.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "16px",
-                        padding: "16px",
-                        border: `2px solid ${selectedGroupId === group.id ? "var(--color-fern-green)" : "var(--color-delft-blue)"}`,
-                        borderRadius: "var(--radius-sm)",
-                        cursor: "pointer",
-                        backgroundColor: selectedGroupId === group.id ? "rgba(67, 113, 24, 0.05)" : "white",
-                        boxShadow: selectedGroupId === group.id ? "3px 3px 0px var(--color-fern-green)" : "3px 3px 0px var(--color-delft-blue)",
-                        transition: "var(--transition-fast)",
-                        position: "relative"
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="voteGroup"
-                        value={group.id}
-                        checked={selectedGroupId === group.id}
-                        onChange={() => setSelectedGroupId(group.id)}
-                        style={{ width: "20px", height: "20px", accentColor: "var(--color-fern-green)" }}
-                      />
-                      <div>
-                        <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-fern-green)" }}>
-                          {group.booth_number}
-                        </span>
-                        <h4 style={{ fontSize: "0.95rem", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
-                          {group.name}
-                        </h4>
-                      </div>
-                    </label>
-                  ))}
+                  {shortlistedGroups.map((group) => {
+                    const isChecked = selectedGroupIds.includes(group.id);
+                    return (
+                      <label 
+                        key={group.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                          padding: "16px",
+                          border: `2px solid ${isChecked ? "var(--color-fern-green)" : "var(--color-delft-blue)"}`,
+                          borderRadius: "var(--radius-sm)",
+                          cursor: "pointer",
+                          backgroundColor: isChecked ? "rgba(67, 113, 24, 0.05)" : "white",
+                          boxShadow: isChecked ? "3px 3px 0px var(--color-fern-green)" : "3px 3px 0px var(--color-delft-blue)",
+                          transition: "var(--transition-fast)",
+                          position: "relative"
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          name="voteGroup"
+                          value={group.id}
+                          checked={isChecked}
+                          onChange={() => handleToggleGroup(group.id)}
+                          style={{ width: "20px", height: "20px", accentColor: "var(--color-fern-green)" }}
+                        />
+                        <div>
+                          <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-fern-green)" }}>
+                            {group.booth_number}
+                          </span>
+                          <h4 style={{ fontSize: "0.95rem", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
+                            {group.name}
+                          </h4>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
@@ -516,7 +533,7 @@ export default function VotePage() {
                 }}
               >
                 <p style={{ fontSize: "0.85rem", fontWeight: "700" }}>
-                  {shortlist.length > 0 ? "Seluruh shortlist Anda sudah diberikan suara." : "Daftar favorit Anda kosong."}
+                  {shortlist.length > 0 ? "Seluruh shortlist Anda sudah terpilih/diberikan suara." : "Daftar favorit Anda kosong."}
                 </p>
                 <p style={{ fontSize: "0.8rem", opacity: 0.8, marginTop: "4px" }}>
                   Anda bisa memilih langsung melalui menu pilihan di bawah, atau kembali ke halaman utama untuk mengeksplorasi kelompok lainnya.
@@ -533,8 +550,13 @@ export default function VotePage() {
               <select
                 id="allGroupsSelect"
                 className="form-control"
-                value={selectedGroupId}
-                onChange={(e) => setSelectedGroupId(e.target.value)}
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    handleToggleGroup(val);
+                  }
+                }}
                 style={{ 
                   height: "52px", 
                   backgroundColor: "white", 
@@ -543,22 +565,81 @@ export default function VotePage() {
                 }}
               >
                 <option value="">-- Pilih Kelompok Capstone --</option>
-                {unvotedGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.booth_number} &bull; {group.name}
-                  </option>
-                ))}
+                {unvotedGroups.map((group) => {
+                  const isChecked = selectedGroupIds.includes(group.id);
+                  return (
+                    <option key={group.id} value={group.id} disabled={isChecked}>
+                      {group.booth_number} &bull; {group.name} {isChecked ? "(Terpilih)" : ""}
+                    </option>
+                  );
+                })}
               </select>
             </div>
+
+            {/* Tampilkan Kelompok Terpilih saat ini */}
+            {selectedGroupIds.length > 0 && (
+              <div className="form-group" style={{ marginTop: "24px" }}>
+                <label style={{ marginBottom: "12px", color: "var(--color-fern-green)", fontWeight: 700 }}>
+                  Kelompok Terpilih ({selectedGroupIds.length} / {maxVotesLimit - activeVotes.length}):
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {selectedGroupIds.map((id) => {
+                    const group = groupsList.find((g) => g.id === id);
+                    if (!group) return null;
+                    return (
+                      <div 
+                        key={group.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 16px",
+                          border: "2px solid var(--color-fern-green)",
+                          borderRadius: "var(--radius-sm)",
+                          backgroundColor: "rgba(67, 113, 24, 0.05)",
+                          boxShadow: "3px 3px 0px var(--color-fern-green)"
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", color: "var(--color-fern-green)" }}>
+                            {group.booth_number}
+                          </span>
+                          <h4 style={{ fontSize: "0.95rem", color: "var(--color-delft-blue)", marginTop: "2px", fontWeight: "700" }}>
+                            {group.name}
+                          </h4>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleGroup(group.id)}
+                          style={{
+                            backgroundColor: "transparent",
+                            border: "1px solid #e53e3e",
+                            color: "#e53e3e",
+                            padding: "6px 12px",
+                            borderRadius: "var(--radius-sm)",
+                            cursor: "pointer",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          Batal Pilih
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !selectedGroupId}
+              disabled={submitting || selectedGroupIds.length === 0}
               className="btn btn-primary"
-              style={{ width: "100%", height: "52px", marginTop: "20px", fontSize: "1rem", gap: "10px" }}
+              style={{ width: "100%", height: "52px", marginTop: "24px", fontSize: "1rem", gap: "10px" }}
             >
-              {submitting ? "Mengirim Suara..." : `Kirim Suara ke-${activeVotes.length + 1}`}
+              {submitting ? "Mengirim Suara..." : `Kirim ${selectedGroupIds.length} Suara Pilihan`}
               <CheckCircle2 size={20} />
             </button>
 

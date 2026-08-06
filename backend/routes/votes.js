@@ -43,11 +43,18 @@ async function getVotingStatusAndEndTime() {
 
 // 3. Cast Vote (Enforces max votes per visitor constraint with Google Auth verification)
 router.post("/", async (req, res) => {
-  const { visitorIdentifier, groupId } = req.body;
+  const { visitorIdentifier, groupId, groupIds } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = req.headers["user-agent"] || "Unknown UA";
   
-  if (!visitorIdentifier || !groupId) {
+  let idsToVote = [];
+  if (Array.isArray(groupIds)) {
+    idsToVote = groupIds;
+  } else if (groupId) {
+    idsToVote = [groupId];
+  }
+  
+  if (!visitorIdentifier || idsToVote.length === 0) {
     return res.status(400).json({ error: "Identitas pemilih dan pilihan kelompok wajib diisi" });
   }
 
@@ -118,16 +125,16 @@ router.post("/", async (req, res) => {
       .eq('visitor_identifier', visitorIdentifier);
     if (vvErr) throw vvErr;
 
-    // Check if already voted for this specific group
-    const alreadyVotedForGroup = visitorVotes.some(v => v.group_id === groupId);
-    if (alreadyVotedForGroup) {
-      return res.status(403).json({ error: "Anda sudah memberikan suara untuk kelompok ini!" });
+    // Check if already voted for any of these specific groups
+    const alreadyVotedGroups = idsToVote.filter(id => visitorVotes.some(v => v.group_id === id));
+    if (alreadyVotedGroups.length > 0) {
+      return res.status(403).json({ error: "Anda sudah memberikan suara untuk salah satu atau beberapa kelompok ini!" });
     }
 
     // Check if visitor has reached the maximum vote limit
-    if (visitorVotes.length >= maxVotes) {
+    if (visitorVotes.length + idsToVote.length > maxVotes) {
       await addAuditLog("Vote Denied", `Mencegah vote tambahan dari identitas: ${visitorIdentifier} (batas ${maxVotes} tercapai)`, "error");
-      return res.status(403).json({ error: `Anda sudah mencapai batas maksimum ${maxVotes} pilihan kelompok!` });
+      return res.status(403).json({ error: `Jumlah pilihan Anda melebihi batas maksimum ${maxVotes} pilihan kelompok! Saat ini Anda memiliki sisa ${maxVotes - visitorVotes.length} kuota suara.` });
     }
 
     // 1.5 Enforce device fingerprint vote limit to prevent multiple registrations on the same device
@@ -146,7 +153,7 @@ router.post("/", async (req, res) => {
             .in('visitor_identifier', siblingIdentifiers);
             
           // A single device fingerprint is allowed to cast at most maxVotes total votes in aggregate
-          if (siblingVotes && siblingVotes.length >= maxVotes && !siblingVotes.some(v => v.visitor_identifier === visitorIdentifier)) {
+          if (siblingVotes && siblingVotes.length + idsToVote.length > maxVotes && !siblingVotes.some(v => v.visitor_identifier === visitorIdentifier)) {
             await addAuditLog("Vote Denied", `Device ${visitorData.device_fingerprint} mencoba memilih menggunakan identitas baru: ${visitorIdentifier} (kuota device habis)`, "error");
             return res.status(403).json({ error: "Perangkat ini sudah digunakan untuk memberikan suara!" });
           }
@@ -156,31 +163,16 @@ router.post("/", async (req, res) => {
       console.error("Gagal memvalidasi fingerprint perangkat:", err);
     }
 
-    /* Enforce unique visitors count per IP to prevent spam (max 300 unique visitors per IP) - DISABLED
-    const { data: ipVotes, error: ipvErr } = await supabase
-      .from('votes')
-      .select('*')
-      .eq('ip', ipAddress);
-    if (ipvErr) throw ipvErr;
-
-    const uniqueVisitorsFromIp = new Set(ipVotes.map(v => v.visitor_identifier));
-    if (uniqueVisitorsFromIp.size >= 300 && !uniqueVisitorsFromIp.has(visitorIdentifier)) {
-      await addAuditLog("Duplicate IP Denied", `Mencegah vote ganda dari alamat IP: ${ipAddress} (batas 300 pengunjung unik terlampaui)`, "error");
-      return res.status(403).json({ error: "Perangkat/IP ini sudah melebihi batas kuota pemilih unik pameran!" });
-    }
-    */
-
-    // 3. Verify group exists
+    // 3. Verify groups exist
     const { data: matchedGroups, error: gErr } = await supabase
       .from('groups')
       .select('*')
-      .eq('id', groupId);
+      .in('id', idsToVote);
     if (gErr) throw gErr;
 
-    if (matchedGroups.length === 0) {
-      return res.status(404).json({ error: "Kelompok tidak ditemukan" });
+    if (!matchedGroups || matchedGroups.length !== idsToVote.length) {
+      return res.status(404).json({ error: "Satu atau beberapa kelompok tidak ditemukan" });
     }
-    const targetGroup = mapGroup(matchedGroups[0]);
 
     // Check Google Account Age (created_at in Supabase Auth user)
     const accountAgeMs = Date.now() - new Date(user.created_at).getTime();
@@ -192,45 +184,48 @@ router.post("/", async (req, res) => {
       suspiciousReason = `Akun Google terdaftar kurang dari 5 menit lalu (${Math.round(accountAgeMs / 1000)} detik).`;
     }
 
-    // 4. Cast Vote
-    const voteCode = `VOTE-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-    const newDbVote = {
-      visitor_identifier: visitorIdentifier,
-      group_id: groupId,
-      vote_code: voteCode,
-      voted_at: new Date().toISOString(),
-      ip: ipAddress,
-      is_flagged: isSuspicious,
-      flag_reason: suspiciousReason
-    };
+    // 4. Cast Votes
+    const newDbVotes = matchedGroups.map(targetGroup => {
+      const voteCode = `VOTE-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+      return {
+        visitor_identifier: visitorIdentifier,
+        group_id: targetGroup.id,
+        vote_code: voteCode,
+        voted_at: new Date().toISOString(),
+        ip: ipAddress,
+        is_flagged: isSuspicious,
+        flag_reason: suspiciousReason
+      };
+    });
 
-    let insertedVote;
+    let insertedVotes;
     let insErr;
     
     const { data: resData, error: resErr } = await supabase
       .from('votes')
-      .insert([newDbVote])
-      .select()
-      .single();
+      .insert(newDbVotes)
+      .select();
       
-    insertedVote = resData;
+    insertedVotes = resData;
     insErr = resErr;
 
     if (insErr) {
       // Fallback if the database migration hasn't been run yet (missing columns is_flagged or flag_reason)
       if (insErr.message && (insErr.message.includes("is_flagged") || insErr.message.includes("flag_reason"))) {
         console.warn("⚠️ Column is_flagged or flag_reason doesn't exist in votes table. Inserting without them.");
-        const fallbackVote = { ...newDbVote };
-        delete fallbackVote.is_flagged;
-        delete fallbackVote.flag_reason;
+        const fallbackVotes = newDbVotes.map(v => {
+          const fallback = { ...v };
+          delete fallback.is_flagged;
+          delete fallback.flag_reason;
+          return fallback;
+        });
         
         const { data: resDataFb, error: resErrFb } = await supabase
           .from('votes')
-          .insert([fallbackVote])
-          .select()
-          .single();
+          .insert(fallbackVotes)
+          .select();
           
-        insertedVote = resDataFb;
+        insertedVotes = resDataFb;
         insErr = resErrFb;
       }
     }
@@ -245,23 +240,26 @@ router.post("/", async (req, res) => {
       throw insErr;
     }
     
-    const newVote = mapVote(insertedVote);
+    const mappedVotes = insertedVotes.map(mapVote);
 
-    if (isSuspicious) {
-      await addAuditLog(
-        "Suspicious Vote", 
-        `Pemilih '${visitorData.name}' di-flag: ${suspiciousReason}. Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress}`, 
-        "warning"
-      );
-    } else {
-      await addAuditLog(
-        "Vote Submitted", 
-        `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress} (Suara ke-${visitorVotes.length + 1}/${maxVotes}) (UA: ${userAgent.substring(0, 120)})`, 
-        "success"
-      );
+    for (let i = 0; i < matchedGroups.length; i++) {
+      const targetGroup = mapGroup(matchedGroups[i]);
+      if (isSuspicious) {
+        await addAuditLog(
+          "Suspicious Vote", 
+          `Pemilih '${visitorData.name}' di-flag: ${suspiciousReason}. Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress}`, 
+          "warning"
+        );
+      } else {
+        await addAuditLog(
+          "Vote Submitted", 
+          `Suara diberikan ke ${targetGroup.name} (${targetGroup.booth_number}) dari IP: ${ipAddress} (Suara ke-${visitorVotes.length + i + 1}/${maxVotes}) (UA: ${userAgent.substring(0, 120)})`, 
+          "success"
+        );
+      }
     }
 
-    res.json(newVote);
+    res.json(Array.isArray(groupIds) ? mappedVotes : mappedVotes[0]);
   } catch (error) {
     console.error("POST /api/votes error:", error);
     res.status(500).json({ error: "Failed to cast vote" });

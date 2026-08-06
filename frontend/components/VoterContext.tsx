@@ -95,7 +95,7 @@ interface VoterContextType {
   votingStatus: string;
   votingEndTime: string;
   verifyOTP: (name: string, category: string, extraFields?: { universitas?: string; sekolah?: string; instansi?: string }) => Promise<boolean>;
-  submitVote: (groupId: string) => Promise<string | null>;
+  submitVote: (groupId: string | string[]) => Promise<any>;
   isDrawerOpen: boolean;
   setIsDrawerOpen: (open: boolean) => void;
   qrScannerOpen: boolean;
@@ -420,7 +420,7 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Submit vote to Backend API
-  const submitVote = async (groupId: string): Promise<string | null> => {
+  const submitVote = async (groupId: string | string[]): Promise<any> => {
     if (!visitor) return null;
     
     try {
@@ -433,32 +433,42 @@ export function VoterProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
+      const bodyData = Array.isArray(groupId) 
+        ? { visitorIdentifier: visitor.identifier, groupIds: groupId }
+        : { visitorIdentifier: visitor.identifier, groupId };
+
       const res = await fetch(`${BACKEND_URL}/api/votes`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ 
-          visitorIdentifier: visitor.identifier, 
-          groupId 
-        })
+        body: JSON.stringify(bodyData)
       });
 
       if (res.ok) {
-        const vote = await res.json();
+        const voteResult = await res.json();
         
-        const updatedVotes = [...activeVotes, vote];
+        let newVotes = [];
+        if (Array.isArray(voteResult)) {
+          newVotes = voteResult;
+        } else {
+          newVotes = [voteResult];
+        }
+
+        const updatedVotes = [...activeVotes, ...newVotes];
         setActiveVotes(updatedVotes);
         localStorage.setItem("voter_active_votes", JSON.stringify(updatedVotes));
         
-        setActiveVote(vote);
-        localStorage.setItem("voter_active_vote", JSON.stringify(vote));
+        if (newVotes.length > 0) {
+          setActiveVote(newVotes[newVotes.length - 1]);
+          localStorage.setItem("voter_active_vote", JSON.stringify(newVotes[newVotes.length - 1]));
+        }
         
         // Refresh counts
         refreshGroupsList();
         
-        return vote.voteCode;
+        return Array.isArray(groupId) ? newVotes.map((v: any) => v.voteCode) : newVotes[0].voteCode;
       } else {
         const errorData = await res.json();
         if (res.status === 401 || errorData.code === "VISITOR_NOT_FOUND") {
