@@ -35,21 +35,7 @@ router.post("/verify", async (req, res) => {
   const identifierHash = user.id; // Stable UUID from Google/Supabase Auth
 
   try {
-    // Check if this device fingerprint is already registered to a different user/Google Account
-    if (deviceFingerprint) {
-      const { data: siblingVisitors, error: sibErr } = await supabase
-        .from('visitors')
-        .select('identifier, name')
-        .eq('device_fingerprint', deviceFingerprint);
-      
-      if (!sibErr && siblingVisitors && siblingVisitors.length > 0) {
-        const otherVisitor = siblingVisitors.find(v => v.identifier !== identifierHash);
-        if (otherVisitor) {
-          await addAuditLog("Registration Denied", `Device ${deviceFingerprint} mencoba login/daftar dengan akun Google baru (Identifier: ${identifierHash}, Nama: ${name}) tapi device ini sudah terdaftar atas nama '${otherVisitor.name}' (Identifier: ${otherVisitor.identifier}).`, "error");
-          return res.status(403).json({ error: `Perangkat ini sudah terdaftar menggunakan akun Google lain (${otherVisitor.name}). Harap gunakan akun Google tersebut.` });
-        }
-      }
-    }
+
 
     // Check if visitor exists
     const { data: existingVisitors, error: visitorErr } = await supabase
